@@ -163,7 +163,7 @@ template <typename M> double FunFEM<M>::eval(const int k, const R *x, const R t,
 }
 
 template <typename M> void FunFEM<M>::eval(R *u, const int k) const {
-    assert(v && u);
+    assert(v.data() && u);
     const FElement &FK((*Vh)[k]);
     for (int ci = 0; ci < Vh->N; ++ci) { // loop over componant
         for (int j = FK.dfcbegin(ci); j < FK.dfcend(ci); ++j)

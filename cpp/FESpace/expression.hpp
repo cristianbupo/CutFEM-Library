@@ -272,14 +272,14 @@ template <typename M> class FunFEM : public FunFEMVirtual {
         pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
     }
 
-    friend void swap(FunFEM &f, FunFEM &g) {
-        assert(g.v.size() == f.v.size());
-        double *temp = g.data_;
-        g.data_      = f.data_;
-        f.data_      = temp;
-        g.v.set(g.data_, g.Vh->NbDoF());
-        f.v.set(f.data_, f.Vh->NbDoF());
-    }
+    // friend void swap(FunFEM &f, FunFEM &g) {
+    //     assert(g.v.size() == f.v.size());
+    //     double *temp = g.data_;
+    //     g.data_      = f.data_;
+    //     f.data_      = temp;
+    //     g.v.set(g.data_, g.Vh->NbDoF());
+    //     f.v.set(f.data_, f.Vh->NbDoF());
+    // }
 
     double &operator()(int i) { return v[i]; }
     double operator()(int i) const { return v[i]; }

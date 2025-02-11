@@ -27,7 +27,9 @@ MUMPS::MUMPS(const Solver &s, matmap &AA, std::span<double> bb)
    std::cout << " Using sequential MUMPS  " << std::endl;
 
    initializeSetting();
-   setDoF();
+   std::size_t N = rhs.size();
+   setDoF(N, 1);
+
    saveMatrixToCSR();
    analyzeMatrix();
    factorizationMatrix();
@@ -35,6 +37,18 @@ MUMPS::MUMPS(const Solver &s, matmap &AA, std::span<double> bb)
 
    // if(verbose > 1)
    info();
+}
+
+
+MUMPS::MUMPS(matmap &A, std::span<double> b, std::size_t nrhs, bool clean) : mat(A), rhs(b), cleanMatrix(clean) {
+
+   initializeSetting();
+   std::size_t N = rhs.size() / nrhs;
+   setDoF(N, nrhs);
+   saveMatrixToCSR();
+   analyzeMatrix();
+   factorizationMatrix();
+   solvingLinearSystem();
 }
 
 void MUMPS::setFormatMatrix() { mumps_par.ICNTL(18) = 0; }
@@ -79,12 +93,13 @@ void MUMPS::initializeSetting() {
    mumps_par.ICNTL(20) = 0;
 }
 
-void MUMPS::setDoF() {
+void MUMPS::setDoF(std::size_t n_matrix, std::size_t nrhs) {
    Uint nz_glob = mat.size(), nz_loc = mat.size();
 
-   mumps_par.n  = rhs.size();
+   mumps_par.n  = n_matrix;
    mumps_par.nz = nz_glob;
-
+   mumps_par.nrhs = nrhs;
+   mumps_par.lrhs = n_matrix;
    mumps_par.nz_loc = nz_loc;
 }
 

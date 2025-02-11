@@ -15,9 +15,11 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 */
 
 /**
-* @brief A space-time CutFEM for the coupled bulk-surface convection-diffusion equation with a non-linear Langmuir coupling term.
+* @brief A space-time CutFEM for the coupled bulk-surface convection-diffusion equation with a non-linear Langmuir
+coupling term.
 
-* @note See "A High-Order Conservative Cut Finite Element Method for Problems in Time-Dependent Domains" by Sebastian Myrbäck and 
+* @note See "A High-Order Conservative Cut Finite Element Method for Problems in Time-Dependent Domains" by Sebastian
+Myrbäck and
 *       Sara Zahedi for full model and methods.
 */
 
@@ -32,11 +34,10 @@ using namespace globalVariable; // to access some globally defined constants
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
-
 namespace Example1 {
 
-const double D = 0.01;           // diffusion bulk
-const double DGamma = 1.;        // diffusion surface
+const double D      = 0.01; // diffusion bulk
+const double DGamma = 1.;   // diffusion surface
 
 // Level-set function
 double fun_levelSet(double *P, const int i, const R t) {
@@ -76,7 +77,6 @@ template <int N> struct Levelset {
     }
 };
 
-
 // Velocity field
 R fun_velocity(double *P, const int i) {
     if (i == 0)
@@ -101,13 +101,13 @@ R fun_uBulkD(double *P, const int i, const int d, const R t) {
 R fun_uSurfInit(double *P, const int i) {
     double x = P[0], y = P[1];
 
-    return (0.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) 
-    - M_PI / 250 * sin(M_PI * x) * cos(M_PI * y) * (x - 0.5) / sqrt((y - 0.22) * (y - 0.22) + (x - 0.5) * (x - 0.5)) 
-    - M_PI / 250 * cos(M_PI * x) * sin(M_PI * y) * (y - 0.22) / sqrt((y - 0.22) * (y - 0.22) + (x - 0.5) * (x - 0.5)))
-    / (1.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y));
-
+    return (0.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) -
+            M_PI / 250 * sin(M_PI * x) * cos(M_PI * y) * (x - 0.5) /
+                sqrt((y - 0.22) * (y - 0.22) + (x - 0.5) * (x - 0.5)) -
+            M_PI / 250 * cos(M_PI * x) * sin(M_PI * y) * (y - 0.22) /
+                sqrt((y - 0.22) * (y - 0.22) + (x - 0.5) * (x - 0.5))) /
+           (1.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y));
 }
-
 
 // Exact solution surface
 R fun_uSurf(double *P, const int i, const R t) {
@@ -115,17 +115,20 @@ R fun_uSurf(double *P, const int i, const R t) {
 
     R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
 
-    return (0.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t)
-    - M_PI / 250 * sin(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t) * (x - xc) / sqrt((y - yc) * (y - yc) + (x - xc) * (x - xc)) 
-    - M_PI / 250 * cos(M_PI * x) * sin(M_PI * y) * cos(2 * M_PI * t) * (y - yc) / sqrt((y - yc) * (y - yc) + (x - xc) * (x - xc)))
-    / (1.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t));
+    return (0.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t) -
+            M_PI / 250 * sin(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t) * (x - xc) /
+                sqrt((y - yc) * (y - yc) + (x - xc) * (x - xc)) -
+            M_PI / 250 * cos(M_PI * x) * sin(M_PI * y) * cos(2 * M_PI * t) * (y - yc) /
+                sqrt((y - yc) * (y - yc) + (x - xc) * (x - xc))) /
+           (1.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t));
 }
 
 // RHS fB bulk
 R fun_rhsBulk(double *P, const int i, const R t) {
     R x = P[0], y = P[1];
 
-    // return M_PI*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*(-4.0/5.0)+((M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI))/1.25E+2-(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*(x-1.0/2.0)*(2.0/5.0)+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*(y-1.0/2.0)*(2.0/5.0);
+    // return
+    // M_PI*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*(-4.0/5.0)+((M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI))/1.25E+2-(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*(x-1.0/2.0)*(2.0/5.0)+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*(y-1.0/2.0)*(2.0/5.0);
 
     return (M_PI * M_PI * cos(2 * M_PI * t) * cos(M_PI * x) * cos(M_PI * y)) / 125 -
            (4 * M_PI * cos(M_PI * x) * cos(M_PI * y) * sin(2 * M_PI * t)) / 5 -
@@ -137,13 +140,2695 @@ R fun_rhsBulk(double *P, const int i, const R t) {
 R fun_rhsSurf(double *P, const int i, const R t) {
     R x = P[0], y = P[1];
 
-    return (M_PI*1.0/sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.0/pow(cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*4.0+1.5E+1,3.0)*(cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.23046875E+8+cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.23046875E+8+cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*8.26875E+6+cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*2.480625E+7+cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*4.6305E+6+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*7.03125E+7+pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*7.96875E+7+pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*7.96875E+7+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.515625E+7-M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.515625E+7+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*3.75E+7+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*5.0E+6+M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*2.109375E+8-M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.03125E+7-M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.03125E+7+cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9+cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9-cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*9.375E+6+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*9.375E+6-x*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.0546875E+8-x*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.515625E+8-y*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.515625E+8-y*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.0546875E+8-cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*9.84375E+7-cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*2.953125E+7+cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.953125E+7+cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*9.84375E+7+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.625E+7+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*1.0E+6+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.625E+7+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*1.0E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*4.6875E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*4.6875E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*2.5E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*2.5E+6+(x*x)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.0546875E+8+(x*x)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.1640625E+8-(x*x*x)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*2.109375E+8+(y*y)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.1640625E+8+(y*y)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.0546875E+8-(y*y*y)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*2.109375E+8+pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*2.480625E+7+pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*8.26875E+6-pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*4.6305E+6+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.05E+7-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.1E+7+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*2.1E+7+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*2.8E+6+M_PI*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.18125E+8-M_PI*cos(x*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*3.9375E+7-M_PI*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.875E+7-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*9.375E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*2.5E+6-M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.5E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*9.375E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.5E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.5E+6+x*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*5.90625E+7+x*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*5.90625E+7+y*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.771875E+8+y*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*5.90625E+7+cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9-cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*2.1E+7-M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.05E+7-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*9.375E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*9.375E+6-x*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*5.90625E+7-x*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.771875E+8-y*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*5.90625E+7-y*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*5.90625E+7+(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.40625E+8+(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.40625E+8-cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.65375E+7-cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.65375E+7+(x*x)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*2.53125E+8-(x*x*x)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.6875E+8-x*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*5.5E+7-x*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*4.0E+6+(x*x)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*8.4375E+7+(y*y)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*8.4375E+7-x*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.25E+7-y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.25E+7-x*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*2.0E+6-y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*2.0E+6+(y*y)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*2.53125E+8-(y*y*y)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.6875E+8-y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.5E+7-y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*4.0E+6+M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.1025E+7+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*9.84375E+6+x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*7.03125E+7-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*7.03125E+7+(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*2.109375E+8-(x*x)*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*7.03125E+7-(x*x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8-y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*7.03125E+7+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*7.03125E+7+(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*7.03125E+7-(y*y)*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*2.109375E+8+(y*y*y)*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*6.615E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*6.3E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*5.6E+5+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.9845E+7-pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.7044E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.54E+7-cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*1.12E+6+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*7.5E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.0E+7+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*1.1025E+7+M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*5.5125E+6-M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.65375E+7-(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.96875E+7+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.96875E+7+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*9.84375E+6+M_PI*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.087E+6+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*7.5E+7+(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.0E+7-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*7.03125E+7-(x*x)*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.40625E+8-(x*x)*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*4.21875E+8+(x*x*x)*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.8125E+8+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*7.03125E+7-(y*y)*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*4.21875E+8-(y*y)*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.40625E+8+(y*y*y)*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.8125E+8+pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*1.9845E+7+pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*3.7044E+6+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.54E+7+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*1.12E+6+pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*6.615E+6+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*6.3E+6+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(y*M_PI)*5.6E+5-(x*x)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.875E+10-(y*y)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.875E+10+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*5.88E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*5.25E+6+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*7.84E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*7.0E+5+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.875E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.875E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*7.5E+7-(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*3.75E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*1.0E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*5.0E+6+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.65375E+7-M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*5.5125E+6-M_PI*pow(cos(t*M_PI),2.0)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*3.3075E+7-M_PI*pow(cos(t*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.1025E+7+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*9.84375E+6-(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.96875E+7+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.96875E+7+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),3.0)*sin(y*M_PI)*3.087E+6+M_PI*pow(cos(t*M_PI),3.0)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*6.174E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.875E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.875E+7-(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.75E+7+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*7.5E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*5.0E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*1.0E+7-x*(y*y)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*2.109375E+8-(x*x)*y*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*2.109375E+8-pow(cos(t*M_PI),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.47E+9-M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.94E+6+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*5.88E+6+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*5.88E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*5.25E+6-(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.625E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*5.25E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*7.84E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*1.4E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*2.8E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*7.0E+5-M_PI*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.1025E+7-M_PI*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*3.3075E+7+(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*9.84375E+6-M_PI*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*6.174E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.25E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.5E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.25E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.5E+6-x*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.65375E+7-(x*x)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*5.90625E+7-y*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*4.96125E+7-(y*y)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.771875E+8-cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.47E+9+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*5.88E+6-M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.94E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*2.625E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*5.25E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*sin(t*M_PI)*pow(sin(y*M_PI),3.0)*2.8E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),3.0)*1.4E+6-x*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*4.96125E+7+(x*x)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.771875E+8-y*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.65375E+7+(y*y)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*5.90625E+7-cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*4.6305E+6+pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*4.6305E+6+(x*x)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*6.75E+7-(x*x*x)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*4.5E+7+(x*x)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*6.0E+6-(x*x*x)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*4.0E+6+(x*x)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.25E+7+(y*y)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.25E+7+(x*x)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*2.0E+6+(y*y)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*2.0E+6+(y*y)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*6.75E+7-(y*y*y)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*4.5E+7+(y*y)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*6.0E+6-(y*y*y)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*4.0E+6-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*5.5125E+6+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.5435E+6-(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*7.03125E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*2.109375E+8-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8+(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*2.109375E+8-(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*7.03125E+7-(y*y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.764E+6+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*1.568E+5+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.292E+6-pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*9.8784E+5+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*4.704E+5-pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*8.7808E+4+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*5.5125E+6+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.65375E+7-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*5.5125E+6+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*1.5435E+6-(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.087E+6+(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*2.109375E+8-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*2.8125E+8+(x*x*x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.40625E+8-(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*2.109375E+8+(y*y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*2.8125E+8-(y*y*y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.40625E+8-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.875E+7+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.875E+7+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*5.292E+6+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*9.8784E+5+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*4.704E+5+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*8.7808E+4+pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.764E+6+pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.568E+5-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*2.94E+6+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*8.232E+5-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*3.92E+5+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.0976E+5-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.8125E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.8125E+7+(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.875E+7-(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.875E+7-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*1.0E+7-(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*5.5125E+6+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*1.65375E+7-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*5.5125E+6+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*3.087E+6+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.5435E+6-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.8125E+7+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.8125E+7+(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.875E+7-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.875E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*1.0E+7+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9-cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.205E+6+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*7.35E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*2.94E+6+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*4.116E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*8.232E+5-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*7.84E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*3.92E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),3.0)*1.0976E+5+pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9+(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*5.5125E+6+(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*sin(y*M_PI)*1.5435E+6-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.40625E+8-y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.40625E+8+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.34375E+9-M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.34375E+9-x*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*2.4375E+8-x*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*8.4375E+7-y*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*8.4375E+7-y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*2.4375E+8-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*7.35E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.205E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*pow(sin(x*M_PI),2.0)*4.116E+5-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),3.0)*7.84E+5-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*3.9375E+7-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8+x*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*7.03125E+7+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9-y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*7.03125E+7+y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8+M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9-cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*2.3625E+7-cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*6.825E+7-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*7.5E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.0E+7-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.96875E+7+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.9375E+7+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*3.9375E+7-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*7.5E+7-y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.0E+7-x*M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*4.21875E+8+x*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.40625E+8+x*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.8125E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9-y*M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*4.21875E+8+y*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.8125E+8+y*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.40625E+8+pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*6.825E+7+pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.3625E+7-x*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+x*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.875E+10-y*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+y*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.875E+10-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*2.1E+7-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*2.8E+6-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*7.5E+7+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*3.75E+7-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.18125E+8+M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.875E+7+M_PI*cos(t*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*3.9375E+7+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.9375E+7-M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.96875E+7+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.75E+7-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*7.5E+7+x*y*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*2.109375E+8+x*y*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*2.109375E+8-cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9+cos(t*M_PI)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9-x*(y*y)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*4.5E+7-x*(y*y)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*4.0E+6-(x*x)*y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*4.5E+7-(x*x)*y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*4.0E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.1025E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*5.90625E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*3.087E+6-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*3.9375E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.1025E+7+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.96875E+7+x*(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8+(x*x)*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*8.82E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.6464E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*5.88E+6-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*6.25E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*6.25E+8-x*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*3.528E+6-x*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*3.136E+5-(x*x)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.26E+7-(x*x)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*1.12E+6-y*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0584E+7-(y*y)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*3.78E+7-y*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*9.408E+5-(y*y)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*3.36E+6-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*1.1025E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.1025E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.9375E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*1.96875E+7-y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*1.1025E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.3075E+7-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.18125E+8+(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*5.90625E+7-y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*3.087E+6-(y*y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*3.9375E+7+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*3.75E+7-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*7.5E+7+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*7.5E+7-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.75E+7-x*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*1.0584E+7+(x*x)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*3.78E+7-x*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*9.408E+5+(x*x)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*3.36E+6+(y*y)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.26E+7+(y*y)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*1.12E+6-y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*3.528E+6-y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*3.136E+5+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*5.88E+6+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*3.15E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*1.6464E+6-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*2.1E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*7.84E+5+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*4.2E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*2.1952E+5-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*2.8E+6+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*1.5435E+6+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*1.5435E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*5.88E+6+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*1.05E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*7.84E+5+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.4E+6-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*3.3075E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.1025E+7-(x*x)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.96875E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.18125E+8+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*5.625E+7-x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*5.625E+7+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*5.625E+7-(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*5.625E+7-x*(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.75E+7+x*(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*3.75E+7-(x*x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.75E+7+(x*x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*3.75E+7+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*2.0E+7+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*2.0E+7+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.1025E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*3.3075E+7+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.771875E+8-(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*3.9375E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*3.087E+6-(y*y*y)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.18125E+8+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*2.1E+7-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.05E+7-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9-y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*9.8784E+5+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*8.7808E+4-cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*9.8784E+5-cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*8.7808E+4+x*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9+y*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9-x*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*4.41E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.47E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*5.88E+6+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.575E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.05E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*8.232E+5-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.05E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*1.568E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*7.84E+5+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*5.6E+6+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.4E+6+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*3.087E+6-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*3.087E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*4.41E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.47E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*5.88E+6+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.575E+7-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.05E+7+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*3.15E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*1.6464E+6-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*2.1E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*7.84E+5+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*4.2E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),3.0)*2.1952E+5-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*2.8E+6-y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*3.3075E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.771875E+8-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*sin(y*M_PI)*3.087E+6-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.18125E+8+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*1.1025E+7-(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.96875E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*7.5E+6-(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.0E+6-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*1.05E+7-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*7.5E+6-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0E+7+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*7.5E+6-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.0E+7+(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*5.0E+6-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.0E+6-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.1E+7-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+x*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*7.5E+6+(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*5.0E+6-y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9+y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+x*y*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.6875E+8+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*8.232E+5+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*8.232E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*1.0976E+5+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.0976E+5+x*y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.6875E+8-cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.47E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*4.41E+6-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.05E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.575E+7+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*1.5435E+6+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.5435E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.47E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*4.41E+6+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.575E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*pow(sin(x*M_PI),2.0)*8.232E+5-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.05E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),3.0)*1.568E+6-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),3.0)*5.6E+6+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.96E+5-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*7.84E+5+y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*7.875E+7-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*5.88E+5+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.0976E+5-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+x*y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8-x*y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.3125E+9+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.3125E+9+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-x*M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9-y*M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9-cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*4.725E+7+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*4.725E+7+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*4.725E+7+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.4175E+8+pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*4.116E+5+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*4.116E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),3.0)*4.3904E+5-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),3.0)*4.3904E+5+x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.9375E+7-x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.9375E+7-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*7.875E+7+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*5.88E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.0976E+5-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8+y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.9375E+7-y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.18125E+8-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.96E+5-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*7.84E+5-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9+x*y*M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*8.4375E+8-x*y*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.8125E+8-x*y*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.8125E+8-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.3125E+9-M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.3125E+9-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9-x*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*1.4175E+8-x*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*4.725E+7-y*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*4.725E+7-y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*4.725E+7+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*4.2E+7+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*5.6E+6+x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*2.3625E+8-x*M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.875E+7-x*M_PI*cos(t*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.875E+7-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.18125E+8+x*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*3.9375E+7-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8-y*M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.3625E+8-y*M_PI*cos(t*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.875E+7-y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.9375E+7+y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*3.9375E+7+M_PI*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9-cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*1.323E+7-cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.323E+7-y*cos(t*M_PI)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.05E+10-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*4.2E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*5.6E+6-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.1025E+7+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.1025E+7-y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.1E+7+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*4.2E+7+x*M_PI*cos(x*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.875E+7+x*M_PI*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.3625E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9-y*M_PI*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.3625E+8+y*M_PI*cos(x*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.875E+7+y*M_PI*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.875E+7-(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*3.75E+7+x*M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.0E+7+x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*5.0E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*5.625E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*5.625E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.125E+8-(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.125E+8-(x*x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*7.5E+7+(y*y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*7.5E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.0E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0E+7-y*M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*2.0E+7+y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.0E+7+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.75E+7+y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.0E+7-y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.0E+6-x*y*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.18125E+8+x*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.05E+10-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+7+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*2.1E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.1025E+7-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*6.615E+7+M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.205E+7+M_PI*cos(t*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.205E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*3.3075E+7-M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*8.82E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.575E+7+M_PI*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.6464E+6-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.6E+6+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.8E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.875E+7+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*2.94E+6+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.8E+6-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.4E+6+(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*7.5E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*7.5E+7+(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.875E+7-(x*x)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9+x*y*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.18125E+8-(y*y)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9+(x*x)*(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*3.3075E+7-(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*1.1025E+7-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*2.94E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*2.1E+7-M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*2.8E+6-M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.4E+6+M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.35E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*8.82E+6-(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*5.25E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.575E+7+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*sin(y*M_PI)*1.6464E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*5.6E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*2.8E+6+(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.40625E+10-(x*x)*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9-(x*x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*4.6875E+9-(y*y)*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.40625E+10+(y*y*y)*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+x*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.3075E+7-pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.92E+8+y*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*3.3075E+7-x*(y*y)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.6875E+8+x*y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*4.5E+7+x*y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*4.0E+6-(x*x)*y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.6875E+8+x*y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*4.5E+7+x*y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*4.0E+6-x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*3.9375E+7-y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*1.96875E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-x*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8-x*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8-x*(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.40625E+8+(x*x)*y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.40625E+8+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*5.25E+6+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.35E+8+M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.675E+8-M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.675E+8+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*2.1E+7-cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.92E+8-x*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.323E+7+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.26E+7+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*1.12E+6-(x*x)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*4.725E+7+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.26E+7+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.26E+7+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*1.12E+6+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*1.12E+6-y*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.969E+7-(y*y)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.4175E+8+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*3.78E+7+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(y*M_PI)*3.36E+6-x*M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.1025E+7-x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*3.9375E+7-x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.9375E+7-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*1.96875E+7+(x*x)*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.9375E+7+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.96E+8+y*M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.3075E+7+y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*1.18125E+8-y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*3.9375E+7-y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*3.9375E+7+(y*y)*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*1.18125E+8+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9+x*(y*y)*M_PI*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.8125E+8+(x*x)*y*M_PI*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.8125E+8+M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.675E+8-M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.675E+8+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9-x*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*3.969E+7+(x*x)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*1.4175E+8-x*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*3.78E+7-x*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*3.36E+6+(y*y)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*4.725E+7-x*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*1.26E+7-y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.26E+7-x*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(y*M_PI)*1.12E+6-y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*1.12E+6-y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.323E+7-y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*1.26E+7-y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(y*M_PI)*1.12E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*2.1E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*2.8E+6-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*1.05E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.4E+6-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*3.3075E+7+x*M_PI*pow(cos(t*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.205E+7+x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*1.96875E+7+x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.9375E+7-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.18125E+8+(x*x)*M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.875E+7+(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.18125E+8-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*5.625E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*5.625E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*2.0E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*2.0E+7+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.92E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.96E+8+y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*1.1025E+7+y*M_PI*pow(cos(t*M_PI),2.0)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*6.615E+7-y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*7.875E+7+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.9375E+7+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*3.9375E+7+(y*y)*M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.3625E+8+(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.9375E+7+pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*3.7044E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*3.528E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*3.136E+5-cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*3.7044E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*3.528E+6-cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(y*M_PI)*3.136E+5-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.575E+7+x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*5.25E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.05E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(sin(y*M_PI),3.0)*5.6E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*5.6E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.4E+6+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*3.087E+6+M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.087E+6+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.1025E+7+(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*1.1025E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.575E+7+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.05E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*2.1E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*5.6E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*2.8E+6+x*M_PI*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*6.615E+7-x*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*7.875E+7-(x*x)*M_PI*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.3625E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.92E+8+y*M_PI*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.205E+7+y*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.96875E+7-(y*y)*M_PI*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.875E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*5.625E+7-(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*3.75E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.0E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*5.0E+6-(x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.0E+7-(x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*5.0E+6-M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.875E+7-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*5.625E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*5.625E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*5.0E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.0E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.0E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.0E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.5E+7+(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*2.0E+7-(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.5E+7-(x*x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0E+7+(y*y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.0E+7-M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.875E+7+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*5.625E+7-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.75E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*5.0E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.0E+6-(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.0E+7+(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.0E+6+M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.625E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.05E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.575E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*sin(t*M_PI)*pow(sin(y*M_PI),3.0)*5.6E+6+M_PI*cos(t*M_PI)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(y*M_PI)*6.174E+6-M_PI*pow(cos(t*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*6.174E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*5.25E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.575E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*sin(t*M_PI)*pow(sin(y*M_PI),3.0)*5.6E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),3.0)*5.6E+6-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*4.41E+6+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.568E+6-M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.176E+6-(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*7.0E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.8E+6+M_PI*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.1952E+5+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.125E+8-(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*7.5E+7+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*4.41E+6-(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*8.232E+5-M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*7.84E+5+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*3.92E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.4E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.4E+6-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*7.5E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*7.5E+7+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.125E+8-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*7.5E+7+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.47E+6-(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.47E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*sin(t*M_PI)*pow(sin(y*M_PI),3.0)*1.568E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),3.0)*1.568E+6-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*5.88E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*4.41E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*8.232E+5-M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*7.84E+5-M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*3.92E+5+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.4E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.4E+6+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*8.82E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*4.41E+6-(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.6464E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.568E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.176E+6-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*7.0E+5-(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*2.8E+6+M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*sin(y*M_PI)*2.1952E+5-x*M_PI*cos(t*M_PI)*cos(x*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*4.41E+7-y*M_PI*cos(t*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*4.41E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*3.15E+7+(x*x)*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*2.1E+7-x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.8E+6-x*M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*5.88E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.15E+7+y*M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.764E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*3.15E+7+(y*y)*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*6.3E+7+x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.8E+6+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.12E+7-y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*8.4E+6-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.5E+8+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.15E+7-y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*5.6E+6+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.8E+6-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.8E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.5E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.8E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*3.15E+7+x*M_PI*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*5.6E+6+x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*2.8E+6-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.764E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*4.2E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.15E+7+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*5.88E+6-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*3.15E+7+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*6.3E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.12E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*8.4E+6+y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*2.8E+6+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*6.3E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*3.15E+7+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.1E+7-y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*2.8E+6-x*(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+(x*x)*y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.625E+7-(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*7.5E+7+(x*x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.75E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.625E+7+(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*7.5E+7-(y*y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.75E+7+x*y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*3.9375E+7+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*1.6464E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*8.82E+6+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*7.84E+5-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*6.3E+7+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.6464E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*8.82E+6-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*7.84E+5-x*M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.35E+8+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*4.2E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+7+y*M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.35E+8+(y*y)*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*4.2E+7-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.47E+6+(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*4.116E+5-x*y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.52E+7-x*y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(x*M_PI)*2.24E+6+x*y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*7.875E+7+x*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*3.9375E+7+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.176E+7+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.176E+7-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.35E+8+(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.35E+8+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*1.47E+6+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*sin(y*M_PI)*4.116E+5+x*y*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*2.52E+7+x*y*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(y*M_PI)*2.24E+6-x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*2.205E+7+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*2.1E+7+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*2.8E+6+y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*2.205E+7-x*y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*3.9375E+7-x*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*7.875E+7+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*7.056E+6+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*7.056E+6+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),4.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(y*M_PI)*6.272E+5+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),4.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),4.0)*sin(t*M_PI)*sin(x*M_PI)*6.272E+5-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9-x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.205E+7+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.15E+7-x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.1E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*2.1E+7+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),3.0)*1.12E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*2.8E+6-y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*2.205E+7-x*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.9375E+7+x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.5E+7+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.125E+8+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.5E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.0E+7+(x*x)*y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.0E+7+x*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*3.75E+7+y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*3.75E+7+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.125E+8-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.5E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.0E+7-x*(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0E+7+y*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.5E+7-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.125E+8-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.125E+8-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.176E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.568E+6+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.176E+7+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.568E+6-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*2.1E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*3.15E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*sin(t*M_PI)*pow(sin(y*M_PI),3.0)*1.12E+7+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*8.82E+6+x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.4E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*5.6E+6+(x*x)*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.8E+6+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.05E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.15E+7-x*M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*7.84E+5-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.6E+6+y*M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.352E+6+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*2.8E+6-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*5.6E+6+(y*y)*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*8.4E+6+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.1E+7+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.5E+8-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*8.82E+6-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*3.15E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+6+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.5E+8-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.15E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*5.88E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*sin(t*M_PI)*pow(sin(y*M_PI),3.0)*3.136E+6+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*5.88E+6-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),3.0)*3.136E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.176E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*8.82E+6+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*3.15E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*4.2E+6-M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.1E+7+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*4.2E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*3.15E+7-x*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*2.352E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*2.8E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*5.6E+6+y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*7.84E+5-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*4.2E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*5.6E+6+(x*x)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*8.4E+6-M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.05E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.764E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*8.82E+6-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*6.3E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.4E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*5.6E+6+(y*y)*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*2.8E+6+M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.15E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*2.205E+7-x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*3.9375E+7-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*2.4696E+6+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*2.1952E+5-(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*3.92E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.568E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*1.764E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*6.3E+7+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*2.4696E+6+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*2.1952E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*3.92E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*1.568E+6-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*1.176E+7+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9+x*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*2.205E+7-(x*x)*y*(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*3.9375E+7-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*3.2928E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*3.2928E+6-x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*7.5E+7+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.5E+8+x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*7.5E+7-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.5E+8-x*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*3.087E+6+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*2.205E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*1.176E+7-x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*2.1E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*1.568E+6-x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*2.8E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*3.087E+6-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*2.205E+7+(x*x)*y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*3.9375E+7-x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*2.1E+7+x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*2.1E+7-y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*6.3E+7+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*2.1E+7-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.5E+8+M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.5E+8-x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*8.82E+6+x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.94E+6+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*1.176E+7-x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.15E+7+x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.1E+7-(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*2.1E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*1.568E+6-(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*2.8E+6+x*(y*y)*(M_PI*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.9375E+7+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*2.1E+7-(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.125E+8+(x*x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.5E+7-x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.5E+7+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*2.0E+7-(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.5E+7+x*(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.0E+7+(x*x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*1.0E+7-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*6.3E+7+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*2.1E+7-(x*x)*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*3.75E+7-(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*3.75E+7+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.5E+7+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.5E+7+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*2.0E+7-x*(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.0E+7-(x*x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.0E+7+y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.1E+7-(y*y)*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.125E+8+(y*y*y)*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.5E+7+x*y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9-x*y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.375E+9-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.875E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.875E+7-y*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.8E+9-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*1.6464E+6+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.176E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*2.1952E+5+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.568E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.6464E+6-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*1.176E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*2.1952E+5-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*1.568E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.087E+6-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.94E+6+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*8.82E+6+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*2.1E+7-(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*3.15E+7-y*(M_PI*M_PI)*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*3.087E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*3.92E+5+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.568E+6+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*5.88E+6-M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.94E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.176E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*3.92E+5+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+6+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.6E+6-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*2.8E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.1952E+5-(x*x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.8E+6-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*5.88E+6-M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*8.82E+6+M_PI*pow(cos(t*M_PI),3.0)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.6464E+6+x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*1.176E+6+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*4.2E+6+y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9-y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+x*y*M_PI*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.875E+10+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.625E+6+x*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.8E+9-x*y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*9.45E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*8.232E+5+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*5.88E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*8.232E+5-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*5.88E+6-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.176E+6+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*4.2E+6-x*y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*7.875E+7-M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*8.82E+6-M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),3.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.6464E+6+x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.92E+5-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*1.176E+6-(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*2.8E+6+(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*4.2E+6-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*5.6E+6-y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),3.0)*pow(sin(x*M_PI),2.0)*2.1952E+5-(y*y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*2.8E+6+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9-M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.94E+6+x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9-x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+x*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*3.92E+5+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*1.568E+6+y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.625E+9+(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.625E+6+x*y*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*9.45E+7+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.0976E+5-(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*4.3904E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*1.0976E+5+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*4.3904E+5-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+x*y*M_PI*cos(t*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.575E+8-x*y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*7.875E+7+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(y*M_PI),2.0)*pow(sin(x*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.8E+9-y*M_PI*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9-(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.75E+9-(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.75E+9-(x*x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+(y*y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.25E+9+x*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.646E+7+y*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*2.646E+7-x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*2.205E+7+y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(y*M_PI)*2.205E+7-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.8E+9-x*y*M_PI*cos(x*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.575E+8-M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.47E+9-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*1.125E+8+(x*x)*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*7.5E+7-x*y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.0E+7-M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.8E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*1.125E+8-x*(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*7.5E+7+x*y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*1.0E+7+M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*9.8E+7+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.94E+6-M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.764E+7-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*8.82E+6-x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*8.82E+6+x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8-y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*2.94E+6+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8-x*y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*4.2E+7+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8-x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*4.2E+7+x*(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.5E+7+(x*x)*y*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.5E+7-x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*1.176E+7+x*M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*5.88E+6+x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*7.84E+5+x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.6E+6+(x*x)*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.1E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*2.352E+6-x*(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*8.4E+6+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.176E+7+y*M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.764E+7+(y*y)*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*6.3E+7-x*y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9+x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.25E+6-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.1E+7+x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.764E+7-(x*x)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*6.3E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(t*M_PI),2.0)*pow(sin(x*M_PI),2.0)*2.352E+6-(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*8.4E+6-(y*y)*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.1E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*7.84E+5+(x*x)*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*5.6E+6+y*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(y*M_PI)*5.88E+6-x*y*M_PI*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.25E+9-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.1E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.25E+6-M_PI*pow(cos(t*M_PI),2.0)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.6464E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*pow(sin(y*M_PI),2.0)*2.1952E+5-y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*2.1952E+5+(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.568E+6-(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.568E+6+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.6464E+6+(x*x)*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-x*(y*y)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-x*M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.96E+8+y*M_PI*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.96E+8+(y*y)*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(x*M_PI)*6.3E+7-x*y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(y*M_PI)*5.6E+6-x*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.96E+8+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.96E+8+(x*x)*M_PI*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*8.4E+7-x*y*M_PI*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*5.6E+6-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*6.3E+7-x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*1.568E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(y*M_PI)*1.764E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*1.764E+7+y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*1.568E+6-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*8.4E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.94E+6-(x*x)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.25E+6+y*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*8.82E+6+(y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*4.725E+7-y*(M_PI*M_PI)*pow(cos(t*M_PI),3.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*8.232E+5-(y*y*y)*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.15E+7-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*sin(y*M_PI)*2.352E+7-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*sin(t*M_PI)*sin(x*M_PI)*pow(sin(y*M_PI),2.0)*2.352E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*8.82E+6+(x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*4.725E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),3.0)*sin(x*M_PI)*sin(y*M_PI)*8.232E+5-(x*x*x)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*3.15E+7+y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*2.94E+6-(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*5.25E+6+(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*4.116E+5+(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*4.116E+5+x*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*2.5E+9-x*y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*7.5E+7-x*y*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*7.5E+7+x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*2.25E+8+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8-x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.1E+7-x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*pow(sin(x*M_PI),2.0)*5.6E+6+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(x*M_PI)*1.12E+7-x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.1E+7-y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.1E+7+x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*pow(sin(y*M_PI),2.0)*8.4E+6-y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*6.3E+7+x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*6.3E+7-M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*7.0E+8+x*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*6.3E+7+x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*8.4E+6+x*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.1E+7+y*M_PI*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*2.1E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*5.6E+6-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*1.12E+7+y*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*2.1E+7-y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*6.3E+7+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*5.88E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*cos(y*M_PI)*sin(t*M_PI)*pow(sin(y*M_PI),2.0)*1.568E+6-x*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),3.0)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(y*M_PI)*3.136E+6+y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*cos(x*M_PI)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*pow(sin(x*M_PI),2.0)*1.568E+6-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),3.0)*pow(cos(x*M_PI),2.0)*pow(cos(y*M_PI),3.0)*sin(t*M_PI)*sin(x*M_PI)*3.136E+6+M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*5.88E+6+(x*x)*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.05E+7+x*(y*y)*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.05E+7-x*(M_PI*M_PI)*pow(cos(t*M_PI),2.0)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*8.232E+5-y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*pow(sin(t*M_PI),2.0)*sin(x*M_PI)*sin(y*M_PI)*8.232E+5-x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*5.0E+9-x*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9+x*y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI*2.0)*sin(x*M_PI)*4.2E+7+y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9-x*y*M_PI*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*4.2E+7+M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*3.92E+8-x*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(y*M_PI)*1.176E+7-y*M_PI*cos(t*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(t*M_PI*2.0)*sin(x*M_PI)*1.176E+7-x*y*M_PI*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*pow(cos(x*M_PI),2.0)*cos(y*M_PI)*sin(y*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9-x*y*M_PI*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*pow(cos(y*M_PI),2.0)*sin(t*M_PI)*sin(x*M_PI)*sqrt(pow(y+cos(t*M_PI)*(7.0/2.5E+1)-1.0/2.0,2.0)+pow(-x+sin(t*M_PI)*(7.0/2.5E+1)+1.0/2.0,2.0))*1.4E+9-x*y*(M_PI*M_PI)*cos(t*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.05E+7-x*y*(M_PI*M_PI)*pow(cos(t*M_PI*2.0),2.0)*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI)*sin(x*M_PI)*sin(y*M_PI)*1.05E+7))/(x*-1.5625E+7-y*1.5625E+7-cos(t*M_PI)*4.375E+6+sin(t*M_PI)*4.375E+6+y*cos(t*M_PI)*8.75E+6-x*sin(t*M_PI)*8.75E+6+(x*x)*1.5625E+7+(y*y)*1.5625E+7+pow(cos(t*M_PI),2.0)*1.225E+6+pow(sin(t*M_PI),2.0)*1.225E+6+7.8125E+6);;
+    return (M_PI * 1.0 /
+            sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                 pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+            1.0 / pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 4.0 + 1.5E+1, 3.0) *
+            (cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.23046875E+8 +
+             cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.23046875E+8 +
+             cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 8.26875E+6 +
+             cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 2.480625E+7 +
+             cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * 4.6305E+6 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 7.03125E+7 +
+             pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 7.96875E+7 +
+             pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) * 7.96875E+7 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.515625E+7 -
+             M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.515625E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * 3.75E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) * 5.0E+6 +
+             M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.109375E+8 -
+             M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 7.03125E+7 -
+             M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 7.03125E+7 +
+             cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 +
+             cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 -
+             cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 9.375E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 9.375E+6 -
+             x * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0546875E+8 -
+             x * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.515625E+8 -
+             y * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.515625E+8 -
+             y * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0546875E+8 -
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 9.84375E+7 -
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 2.953125E+7 +
+             cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 2.953125E+7 +
+             cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 9.84375E+7 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(x * M_PI) *
+                 1.625E+7 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(x * M_PI) *
+                 1.0E+6 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(y * M_PI) *
+                 1.625E+7 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(y * M_PI) *
+                 1.0E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 4.6875E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 4.6875E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(sin(y * M_PI), 3.0) *
+                 2.5E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 3.0) *
+                 2.5E+6 +
+             (x * x) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0546875E+8 +
+             (x * x) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.1640625E+8 -
+             (x * x * x) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 2.109375E+8 +
+             (y * y) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.1640625E+8 +
+             (y * y) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0546875E+8 -
+             (y * y * y) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 2.109375E+8 +
+             pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 2.480625E+7 +
+             pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 8.26875E+6 -
+             pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 4.6305E+6 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 1.05E+7 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 2.1E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 2.1E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 2.8E+6 +
+             M_PI * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 1.18125E+8 -
+             M_PI * cos(x * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 3.9375E+7 -
+             M_PI * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 7.875E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 9.375E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) *
+                 2.5E+6 -
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(x * M_PI) *
+                 2.5E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 9.375E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) * pow(sin(y * M_PI), 2.0) *
+                 2.5E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(y * M_PI) *
+                 2.5E+6 +
+             x * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 5.90625E+7 +
+             x * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 5.90625E+7 +
+             y * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.771875E+8 +
+             y * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 5.90625E+7 +
+             cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 -
+             cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) * pow(sin(y * M_PI), 2.0) *
+                 2.1E+7 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 1.05E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) * pow(sin(y * M_PI), 2.0) *
+                 9.375E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) * sin(y * M_PI) *
+                 9.375E+6 -
+             x * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 5.90625E+7 -
+             x * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.771875E+8 -
+             y * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 5.90625E+7 -
+             y * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 5.90625E+7 +
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.40625E+8 +
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.40625E+8 -
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.65375E+7 -
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.65375E+7 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 2.53125E+8 -
+             (x * x * x) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 1.6875E+8 -
+             x * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(x * M_PI) *
+                 5.5E+7 -
+             x * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(x * M_PI) *
+                 4.0E+6 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 8.4375E+7 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 8.4375E+7 -
+             x * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(y * M_PI) *
+                 2.25E+7 -
+             y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(x * M_PI) *
+                 2.25E+7 -
+             x * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(y * M_PI) *
+                 2.0E+6 -
+             y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(x * M_PI) *
+                 2.0E+6 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 2.53125E+8 -
+             (y * y * y) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 1.6875E+8 -
+             y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(y * M_PI) *
+                 5.5E+7 -
+             y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(y * M_PI) *
+                 4.0E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.1025E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 9.84375E+6 +
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 7.03125E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 7.03125E+7 +
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 2.109375E+8 -
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 7.03125E+7 -
+             (x * x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 -
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 7.03125E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 7.03125E+7 +
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 7.03125E+7 -
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 2.109375E+8 +
+             (y * y * y) * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 6.615E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 6.3E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 5.6E+5 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 1.9845E+7 -
+             pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 3.7044E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.54E+7 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 1.12E+6 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 7.5E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 1.0E+7 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * 1.1025E+7 +
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 5.5125E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.65375E+7 -
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.96875E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.96875E+7 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * 9.84375E+6 +
+             M_PI * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.087E+6 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 7.5E+7 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 1.0E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 7.03125E+7 -
+             (x * x) * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.40625E+8 -
+             (x * x) * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 4.21875E+8 +
+             (x * x * x) * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.8125E+8 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 7.03125E+7 -
+             (y * y) * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 4.21875E+8 -
+             (y * y) * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.40625E+8 +
+             (y * y * y) * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.8125E+8 +
+             pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(x * M_PI) * 1.9845E+7 +
+             pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 3.0) *
+                 sin(x * M_PI) * 3.7044E+6 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.54E+7 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.12E+6 +
+             pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(y * M_PI) * 6.615E+6 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 6.3E+6 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 5.6E+5 -
+             (x * x) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.875E+10 -
+             (y * y) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.875E+10 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 5.88E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 5.25E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 7.84E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 7.0E+5 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 1.875E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 1.875E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 7.5E+7 -
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 3.75E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(sin(y * M_PI), 3.0) *
+                 1.0E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 3.0) *
+                 5.0E+6 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.65375E+7 -
+             M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 5.5125E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 3.3075E+7 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.1025E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 9.84375E+6 -
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.96875E+7 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.96875E+7 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 3.0) * sin(y * M_PI) * 3.087E+6 +
+             M_PI * pow(cos(t * M_PI), 3.0) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 6.174E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 1.875E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 1.875E+7 -
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 3.75E+7 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 7.5E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(sin(y * M_PI), 3.0) *
+                 5.0E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 3.0) *
+                 1.0E+7 -
+             x * (y * y) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 2.109375E+8 -
+             (x * x) * y * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 2.109375E+8 -
+             pow(cos(t * M_PI), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.47E+9 -
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 2.94E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.88E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * 5.88E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 5.25E+6 -
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.625E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * 5.25E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * 7.84E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(sin(y * M_PI), 3.0) * 1.4E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 2.8E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * 7.0E+5 -
+             M_PI * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.1025E+7 -
+             M_PI * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 3.3075E+7 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 9.84375E+6 -
+             M_PI * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 6.174E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.25E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 2.5E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.25E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 2.5E+6 -
+             x * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.65375E+7 -
+             (x * x) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 5.90625E+7 -
+             y * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 4.96125E+7 -
+             (y * y) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.771875E+8 -
+             cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.47E+9 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 5.88E+6 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.94E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.625E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 5.25E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 3.0) * 2.8E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 3.0) * 1.4E+6 -
+             x * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 4.96125E+7 +
+             (x * x) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.771875E+8 -
+             y * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.65375E+7 +
+             (y * y) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 5.90625E+7 -
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 4.6305E+6 +
+             pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 4.6305E+6 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 6.75E+7 -
+             (x * x * x) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 4.5E+7 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 6.0E+6 -
+             (x * x * x) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 4.0E+6 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 2.25E+7 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 2.25E+7 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 2.0E+6 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 2.0E+6 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 6.75E+7 -
+             (y * y * y) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 4.5E+7 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 6.0E+6 -
+             (y * y * y) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 4.0E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 5.5125E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.5435E+6 -
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 7.03125E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 2.109375E+8 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 2.109375E+8 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 7.03125E+7 -
+             (y * y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 1.764E+6 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 4.0) * sin(x * M_PI) * 1.568E+5 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 5.292E+6 -
+             pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 9.8784E+5 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(y * M_PI) * 4.704E+5 -
+             pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(y * M_PI) * 8.7808E+4 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * 5.5125E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 1.65375E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 5.5125E+6 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) * 1.5435E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.087E+6 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.109375E+8 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.8125E+8 +
+             (x * x * x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.40625E+8 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.109375E+8 +
+             (y * y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.8125E+8 -
+             (y * y * y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.40625E+8 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 1.875E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) * 1.875E+7 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 5.292E+6 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * 9.8784E+5 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 4.704E+5 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * 8.7808E+4 +
+             pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.764E+6 +
+             pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.568E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 2.94E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 8.232E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 3.92E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 1.0976E+5 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 2.8125E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.8125E+7 +
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.875E+7 -
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.875E+7 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(sin(y * M_PI), 3.0) * 1.0E+7 -
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 5.5125E+6 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 1.65375E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 5.5125E+6 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * 3.087E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.5435E+6 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 2.8125E+7 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.8125E+7 +
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.875E+7 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.875E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 1.0E+7 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 -
+             cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 2.205E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 7.35E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * 2.94E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 4.116E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 3.0) * 8.232E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 7.84E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * 3.92E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 3.0) * 1.0976E+5 +
+             pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 5.5125E+6 +
+             (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * sin(y * M_PI) * 1.5435E+6 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.40625E+8 -
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.40625E+8 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.34375E+9 -
+             M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.34375E+9 -
+             x * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 2.4375E+8 -
+             x * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) * 8.4375E+7 -
+             y * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 8.4375E+7 -
+             y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) * 2.4375E+8 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 7.35E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.205E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 4.116E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 3.0) * 7.84E+5 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 3.9375E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 7.03125E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 -
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 7.03125E+7 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 +
+             M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 2.3625E+7 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 6.825E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * 7.5E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) * 1.0E+7 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.96875E+7 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.9375E+7 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * 3.9375E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * 7.5E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) * 1.0E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 4.21875E+8 +
+             x * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.40625E+8 +
+             x * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.8125E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 -
+             y * M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 4.21875E+8 +
+             y * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.8125E+8 +
+             y * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.40625E+8 +
+             pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(x * M_PI) *
+                 6.825E+7 +
+             pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 2.3625E+7 -
+             x * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             x * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.875E+10 -
+             y * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             y * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.875E+10 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 2.1E+7 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 2.8E+6 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 7.5E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 3.75E+7 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.18125E+8 +
+             M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 7.875E+7 +
+             M_PI * cos(t * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 3.9375E+7 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 3.9375E+7 -
+             M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.96875E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 3.75E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 7.5E+7 +
+             x * y * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 2.109375E+8 +
+             x * y * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 2.109375E+8 -
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 +
+             cos(t * M_PI) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 -
+             x * (y * y) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 4.5E+7 -
+             x * (y * y) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 4.0E+6 -
+             (x * x) * y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 4.5E+7 -
+             (x * x) * y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 4.0E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 1.1025E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 5.90625E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 3.087E+6 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 3.9375E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 1.1025E+7 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 1.96875E+7 +
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 +
+             (x * x) * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 8.82E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 3.0) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.6464E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 5.88E+6 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 6.25E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 6.25E+8 -
+             x * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 3.528E+6 -
+             x * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 4.0) * sin(x * M_PI) * 3.136E+5 -
+             (x * x) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 1.26E+7 -
+             (x * x) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(y * M_PI) * 1.12E+6 -
+             y * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 1.0584E+7 -
+             (y * y) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 3.78E+7 -
+             y * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(y * M_PI) * 9.408E+5 -
+             (y * y) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(y * M_PI) * 3.36E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 1.1025E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 1.1025E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.9375E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 1.96875E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 1.1025E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 3.3075E+7 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 1.18125E+8 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 5.90625E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) *
+                 3.087E+6 -
+             (y * y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 3.9375E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 3.75E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 7.5E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 7.5E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 3.75E+7 -
+             x * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 1.0584E+7 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.78E+7 -
+             x * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 9.408E+5 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.36E+6 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 1.26E+7 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 1.12E+6 -
+             y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 3.528E+6 -
+             y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 3.136E+5 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 5.88E+6 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 3.15E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 1.6464E+6 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 2.1E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 7.84E+5 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 4.2E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 2.1952E+5 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 2.8E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * 1.5435E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * 1.5435E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 5.88E+6 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 1.05E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 7.84E+5 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 1.4E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 3.3075E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.1025E+7 -
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.96875E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 1.18125E+8 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 5.625E+7 -
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.625E+7 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 5.625E+7 -
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.625E+7 -
+             x * (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 3.75E+7 +
+             x * (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 3.75E+7 -
+             (x * x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 3.75E+7 +
+             (x * x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 3.75E+7 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 2.0E+7 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(sin(y * M_PI), 3.0) * 2.0E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) *
+                 1.1025E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.3075E+7 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.771875E+8 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 3.9375E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.087E+6 -
+             (y * y * y) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.18125E+8 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 2.1E+7 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 1.05E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 -
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * sin(x * M_PI) * 9.8784E+5 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 4.0) * sin(t * M_PI) * sin(x * M_PI) * 8.7808E+4 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 9.8784E+5 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 8.7808E+4 +
+             x * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 +
+             y * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 -
+             x * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 4.41E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.47E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * 5.88E+6 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.575E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 1.05E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 8.232E+5 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.05E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 1.568E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * 7.84E+5 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(sin(y * M_PI), 3.0) * 5.6E+6 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 1.4E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(y * M_PI) * 3.087E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * 3.087E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 4.41E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.47E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * 5.88E+6 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.575E+7 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.05E+7 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 3.15E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 3.0) * 1.6464E+6 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 2.1E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * 7.84E+5 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 4.2E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 3.0) * 2.1952E+5 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 2.8E+6 -
+             y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.3075E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.771875E+8 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.087E+6 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.18125E+8 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.1025E+7 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.96875E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 7.5E+6 -
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.0E+6 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.05E+7 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.5E+6 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 1.0E+7 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 7.5E+6 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 1.0E+7 +
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.0E+6 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.0E+6 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 2.1E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.5E+6 +
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.0E+6 -
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             x * y * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 1.6875E+8 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) * 8.232E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 8.232E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(t * M_PI), 2.0) * 1.0976E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 1.0976E+5 +
+             x * y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 1.6875E+8 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.47E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 4.41E+6 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.05E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.575E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 sin(y * M_PI) * 1.5435E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 1.5435E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.47E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 4.41E+6 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.575E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 8.232E+5 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.05E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 3.0) * 1.568E+6 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 3.0) * 5.6E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 1.96E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 7.84E+5 +
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 7.875E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 5.88E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 1.0976E+5 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.3125E+9 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.3125E+9 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             x * M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 -
+             y * M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 -
+             cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 4.725E+7 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 4.725E+7 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 4.725E+7 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 1.4175E+8 +
+             pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 4.116E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 4.116E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 3.0) * 4.3904E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 3.0) * 4.3904E+5 +
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.9375E+7 -
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.9375E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * 7.875E+7 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 5.88E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 1.0976E+5 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 +
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.9375E+7 -
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.18125E+8 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 1.96E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 7.84E+5 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 +
+             x * y * M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 8.4375E+8 -
+             x * y * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.8125E+8 -
+             x * y * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.8125E+8 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.3125E+9 -
+             M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.3125E+9 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 -
+             x * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.4175E+8 -
+             x * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 4.725E+7 -
+             y * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 4.725E+7 -
+             y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 4.725E+7 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 4.2E+7 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 5.6E+6 +
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.3625E+8 -
+             x * M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 7.875E+7 -
+             x * M_PI * cos(t * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 7.875E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.18125E+8 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 3.9375E+7 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 -
+             y * M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.3625E+8 -
+             y * M_PI * cos(t * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 7.875E+7 -
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 3.9375E+7 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 3.9375E+7 +
+             M_PI * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.323E+7 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 1.323E+7 -
+             y * cos(t * M_PI) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.05E+10 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * 4.2E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * 5.6E+6 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.1025E+7 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.1025E+7 -
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 2.1E+7 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 4.2E+7 +
+             x * M_PI * cos(x * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 7.875E+7 +
+             x * M_PI * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.3625E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) * pow(sin(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 -
+             y * M_PI * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 2.3625E+8 +
+             y * M_PI * cos(x * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 7.875E+7 +
+             y * M_PI * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 7.875E+7 -
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 3.75E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.0E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 5.0E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 5.625E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 5.625E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 1.125E+8 -
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 1.125E+8 -
+             (x * x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 7.5E+7 +
+             (y * y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 7.5E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.0E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.0E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.0E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.0E+7 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 3.75E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.0E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 5.0E+6 -
+             x * y * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.18125E+8 +
+             x * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.05E+10 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 4.2E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 2.1E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.1025E+7 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 6.615E+7 +
+             M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.205E+7 +
+             M_PI * cos(t * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.205E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.3075E+7 -
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 8.82E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 1.575E+7 +
+             M_PI * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 1.6464E+6 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.6E+6 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 2.8E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.875E+7 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 2.94E+6 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.8E+6 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.4E+6 +
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 7.5E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.5E+7 +
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.875E+7 -
+             (x * x) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 +
+             x * y * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.18125E+8 -
+             (y * y) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.3075E+7 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.1025E+7 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(x * M_PI) * 2.94E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.1E+7 -
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 2.8E+6 -
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.4E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.35E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(y * M_PI) * 8.82E+6 -
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 5.25E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 1.575E+7 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) *
+                 sin(y * M_PI) * 1.6464E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.6E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 2.8E+6 +
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.40625E+10 -
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 -
+             (x * x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 4.6875E+9 -
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.40625E+10 +
+             (y * y * y) * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             x * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 3.3075E+7 -
+             pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.92E+8 +
+             y * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 3.3075E+7 -
+             x * (y * y) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 1.6875E+8 +
+             x * y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(x * M_PI) *
+                 4.5E+7 +
+             x * y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(x * M_PI) *
+                 4.0E+6 -
+             (x * x) * y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 1.6875E+8 +
+             x * y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(y * M_PI) *
+                 4.5E+7 +
+             x * y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(y * M_PI) *
+                 4.0E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 3.9375E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.96875E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 -
+             x * (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.40625E+8 +
+             (x * x) * y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.40625E+8 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.25E+6 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.35E+8 +
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.675E+8 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.675E+8 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * sin(t * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 2.1E+7 -
+             cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.92E+8 -
+             x * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 1.323E+7 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.26E+7 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 1.12E+6 -
+             (x * x) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 4.725E+7 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.26E+7 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.26E+7 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 1.12E+6 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 1.12E+6 -
+             y * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 3.969E+7 -
+             (y * y) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 1.4175E+8 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 3.78E+7 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(y * M_PI) * 3.36E+6 -
+             x * M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.1025E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 3.9375E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.9375E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * 1.96875E+7 +
+             (x * x) * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.9375E+7 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.96E+8 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.3075E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.18125E+8 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 3.9375E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * 3.9375E+7 +
+             (y * y) * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.18125E+8 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 +
+             x * (y * y) * M_PI * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.8125E+8 +
+             (x * x) * y * M_PI * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.8125E+8 +
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.675E+8 -
+             M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.675E+8 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 -
+             x * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(x * M_PI) * 3.969E+7 +
+             (x * x) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.4175E+8 -
+             x * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 3.78E+7 -
+             x * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 3.36E+6 +
+             (y * y) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 4.725E+7 -
+             x * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 1.26E+7 -
+             y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.26E+7 -
+             x * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 1.12E+6 -
+             y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 1.12E+6 -
+             y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.323E+7 -
+             y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 1.26E+7 -
+             y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 1.12E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 2.1E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 2.8E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 1.05E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 1.4E+6 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 3.3075E+7 +
+             x * M_PI * pow(cos(t * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.205E+7 +
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.96875E+7 +
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 3.9375E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 1.18125E+8 +
+             (x * x) * M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 7.875E+7 +
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.18125E+8 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                 5.625E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                 5.625E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(sin(y * M_PI), 3.0) *
+                 2.0E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 3.0) *
+                 2.0E+7 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.92E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.96E+8 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 1.1025E+7 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 6.615E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 7.875E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 3.9375E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 3.9375E+7 +
+             (y * y) * M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.3625E+8 +
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 3.9375E+7 +
+             pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.7044E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.528E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.136E+5 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 3.7044E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 3.528E+6 -
+             cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 3.136E+5 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.575E+7 +
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.25E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * 1.05E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(sin(y * M_PI), 3.0) * 5.6E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 5.6E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * 1.4E+6 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 3.087E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 3.087E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 1.1025E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 1.1025E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.575E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.05E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * 2.1E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 5.6E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * 2.8E+6 +
+             x * M_PI * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 6.615E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 7.875E+7 -
+             (x * x) * M_PI * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.3625E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.92E+8 +
+             y * M_PI * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.205E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 1.96875E+7 -
+             (y * y) * M_PI * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 7.875E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 5.625E+7 -
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 3.75E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.0E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 5.0E+6 -
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.0E+7 -
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 5.0E+6 -
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 1.875E+7 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 5.625E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 5.625E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.0E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.0E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 5.0E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.0E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.0E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.5E+7 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.0E+7 -
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.5E+7 -
+             (x * x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.0E+7 +
+             (y * y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.0E+7 -
+             M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 1.875E+7 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 5.625E+7 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 3.75E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.0E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 5.0E+6 -
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.0E+7 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 5.0E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 5.625E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.05E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.575E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 3.0) * 5.6E+6 +
+             M_PI * cos(t * M_PI) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) * sin(y * M_PI) *
+                 6.174E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) *
+                 6.174E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.25E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.575E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 3.0) * 5.6E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 3.0) * 5.6E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 4.41E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.568E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 1.176E+6 -
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 7.0E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 2.8E+6 +
+             M_PI * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 2.1952E+5 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.125E+8 -
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.5E+7 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 4.41E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 8.232E+5 -
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.84E+5 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 3.92E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.4E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 1.4E+6 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 7.5E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.5E+7 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.125E+8 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 7.5E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.47E+6 -
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.47E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 3.0) * 1.568E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 3.0) * 1.568E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.88E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 4.41E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * 8.232E+5 -
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 7.84E+5 -
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 3.92E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 1.4E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 1.4E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 8.82E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 4.41E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 1.6464E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 1.568E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.176E+6 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 7.0E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 2.8E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 3.0) * sin(y * M_PI) * 2.1952E+5 -
+             x * M_PI * cos(t * M_PI) * cos(x * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 4.41E+7 -
+             y * M_PI * cos(t * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 4.41E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 3.15E+7 +
+             (x * x) * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 2.1E+7 -
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 2.8E+6 -
+             x * M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 5.88E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 3.15E+7 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 1.764E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 3.15E+7 +
+             (y * y) * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 6.3E+7 +
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 2.8E+6 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.12E+7 -
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 8.4E+6 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.5E+8 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 3.15E+7 -
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 5.6E+6 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 2.8E+6 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.8E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.5E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.8E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 4.2E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.15E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 5.6E+6 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 2.8E+6 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.764E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 4.2E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 3.15E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 5.88E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 4.2E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.15E+7 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 6.3E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.12E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 8.4E+6 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 2.8E+6 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 6.3E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 3.15E+7 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 2.1E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 2.8E+6 -
+             x * (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             (x * x) * y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 5.625E+7 -
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 7.5E+7 +
+             (x * x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 3.75E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 5.625E+7 +
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 7.5E+7 -
+             (y * y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 3.75E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 3.9375E+7 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 1.6464E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 8.82E+6 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 7.84E+5 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 6.3E+7 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 1.6464E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 8.82E+6 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 7.84E+5 -
+             x * M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.35E+8 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 4.2E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 4.2E+7 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.35E+8 +
+             (y * y) * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 4.2E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 1.47E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 4.116E+5 -
+             x * y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 2.52E+7 -
+             x * y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(x * M_PI) * 2.24E+6 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 7.875E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * 3.9375E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * pow(sin(y * M_PI), 2.0) * 1.176E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 1.176E+7 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.35E+8 +
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.35E+8 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(x * M_PI) * sin(y * M_PI) * 1.47E+6 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 3.0) *
+                 sin(x * M_PI) * sin(y * M_PI) * 4.116E+5 +
+             x * y * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 2.52E+7 +
+             x * y * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) * sin(t * M_PI) *
+                 sin(y * M_PI) * 2.24E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 2.205E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 2.1E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 2.8E+6 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 2.205E+7 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 3.9375E+7 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 7.875E+7 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 7.056E+6 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 7.056E+6 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 4.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 6.272E+5 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 4.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 4.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 6.272E+5 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 2.205E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 3.15E+7 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.1E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * 2.1E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 3.0) * 1.12E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * 2.8E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 2.205E+7 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 3.9375E+7 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 7.5E+7 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 1.125E+8 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.5E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 2.0E+7 +
+             (x * x) * y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.0E+7 +
+             x * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 3.75E+7 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 3.75E+7 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 1.125E+8 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.5E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 2.0E+7 -
+             x * (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.0E+7 +
+             y * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 7.5E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.125E+8 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 1.125E+8 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 1.176E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 1.568E+6 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 1.176E+7 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 1.568E+6 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.1E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 3.15E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 3.0) * 1.12E+7 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 8.82E+6 +
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 1.4E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 5.6E+6 +
+             (x * x) * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 2.8E+6 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.05E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 3.15E+7 -
+             x * M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 7.84E+5 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 4.2E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 5.6E+6 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 2.352E+6 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 2.8E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 5.6E+6 +
+             (y * y) * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 8.4E+6 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.1E+7 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.5E+8 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 8.82E+6 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) * 3.15E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 4.2E+6 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(x * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.5E+8 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 3.15E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 5.88E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 3.0) * 3.136E+6 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 5.88E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 3.0) * 3.136E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 sin(x * M_PI) * pow(sin(y * M_PI), 2.0) * 1.176E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 8.82E+6 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.15E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 4.2E+6 -
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.1E+7 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 4.2E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 3.15E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 2.352E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 2.8E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 5.6E+6 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 7.84E+5 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 4.2E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 5.6E+6 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 8.4E+6 -
+             M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.05E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 1.764E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 8.82E+6 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 6.3E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 1.4E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 5.6E+6 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 2.8E+6 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 3.15E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 2.205E+7 -
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 3.9375E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(x * M_PI) * 2.4696E+6 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * 2.1952E+5 -
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 3.92E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * sin(x * M_PI) * 1.568E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(x * M_PI) * pow(sin(y * M_PI), 2.0) * 1.764E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 6.3E+7 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 2.4696E+6 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(y * M_PI) * 2.1952E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 3.92E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(y * M_PI) * 1.568E+6 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 4.2E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 1.176E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 2.205E+7 -
+             (x * x) * y * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 3.9375E+7 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * pow(sin(y * M_PI), 2.0) * 3.2928E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 3.2928E+6 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 7.5E+7 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.5E+8 +
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 7.5E+7 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.5E+8 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * 3.087E+6 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * 2.205E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 1.176E+7 -
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * 2.1E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 1.568E+6 -
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * 2.8E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * 3.087E+6 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * 2.205E+7 +
+             (x * x) * y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.9375E+7 -
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 2.1E+7 +
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 2.1E+7 -
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 6.3E+7 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 2.1E+7 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.5E+8 +
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.5E+8 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 8.82E+6 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.94E+6 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * 1.176E+7 -
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 3.15E+7 +
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 2.1E+7 -
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 2.1E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * 1.568E+6 -
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 2.8E+6 +
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 3.9375E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 2.1E+7 -
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 1.125E+8 +
+             (x * x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 7.5E+7 -
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.5E+7 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 2.0E+7 -
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.5E+7 +
+             x * (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.0E+7 +
+             (x * x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(x * M_PI), 2.0) * 1.0E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 6.3E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 2.1E+7 -
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 3.75E+7 -
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 3.75E+7 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.5E+7 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.5E+7 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 2.0E+7 -
+             x * (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.0E+7 -
+             (x * x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 1.0E+7 +
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 2.1E+7 -
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 1.125E+8 +
+             (y * y * y) * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 7.5E+7 +
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.375E+9 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 1.875E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 1.875E+7 -
+             y * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.8E+9 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) * 1.6464E+6 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 1.176E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(t * M_PI), 2.0) * 2.1952E+5 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 1.568E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 1.6464E+6 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * 1.176E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 2.1952E+5 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * 1.568E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 3.087E+6 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(y * M_PI), 2.0) * 2.94E+6 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) * 8.82E+6 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 2.1E+7 -
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * 3.15E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 sin(y * M_PI) * 3.087E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 3.92E+5 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 1.568E+6 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 5.88E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.94E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 1.176E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 3.92E+5 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 4.2E+6 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 5.6E+6 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 2.8E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 2.1952E+5 -
+             (x * x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 2.8E+6 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 5.88E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 8.82E+6 +
+             M_PI * pow(cos(t * M_PI), 3.0) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.6464E+6 +
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 1.176E+6 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 4.2E+6 +
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 -
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             x * y * M_PI * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.875E+10 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 2.625E+6 +
+             x * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.8E+9 -
+             x * y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 9.45E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 8.232E+5 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 5.88E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 8.232E+5 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 5.88E+6 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 1.176E+6 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 4.2E+6 -
+             x * y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 7.875E+7 -
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 8.82E+6 -
+             M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 3.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.6464E+6 +
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 3.92E+5 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 1.176E+6 -
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 2.8E+6 +
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 4.2E+6 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * sin(x * M_PI) * 5.6E+6 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 2.1952E+5 -
+             (y * y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 2.8E+6 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 -
+             M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.94E+6 +
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 -
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 3.92E+5 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 1.568E+6 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.625E+9 +
+             (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 2.625E+6 +
+             x * y * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) * 9.45E+7 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 1.0976E+5 -
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * sin(x * M_PI) * 4.3904E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 1.0976E+5 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) * sin(y * M_PI) * 4.3904E+5 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             x * y * M_PI * cos(t * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.575E+8 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 7.875E+7 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(x * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.8E+9 -
+             y * M_PI * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 -
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.75E+9 -
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.75E+9 -
+             (x * x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             (y * y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.25E+9 +
+             x * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 2.646E+7 +
+             y * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 2.646E+7 -
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * 2.205E+7 +
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 2.205E+7 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * sin(t * M_PI) *
+                 pow(sin(y * M_PI), 2.0) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.8E+9 -
+             x * y * M_PI * cos(x * M_PI) * sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.575E+8 -
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.47E+9 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 1.125E+8 +
+             (x * x) * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) * 7.5E+7 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(x * M_PI) * 1.0E+7 -
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.8E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 1.125E+8 -
+             x * (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 7.5E+7 +
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(y * M_PI) * 1.0E+7 +
+             M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 9.8E+7 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 2.94E+6 -
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 1.764E+7 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 8.82E+6 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 8.82E+6 +
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 -
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.94E+6 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 -
+             x * y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) * 4.2E+7 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) * 4.2E+7 +
+             x * (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 7.5E+7 +
+             (x * x) * y * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 7.5E+7 -
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 1.176E+7 +
+             x * M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 5.88E+6 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 7.84E+5 +
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 5.6E+6 +
+             (x * x) * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.1E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 2.352E+6 -
+             x * (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 8.4E+6 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 1.176E+7 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.764E+7 +
+             (y * y) * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 6.3E+7 -
+             x * y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 +
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 5.25E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 2.1E+7 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * pow(sin(t * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.764E+7 -
+             (x * x) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 6.3E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) * 2.352E+6 -
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 8.4E+6 -
+             (y * y) * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.1E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 7.84E+5 +
+             (x * x) * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 5.6E+6 +
+             y * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * pow(sin(t * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 5.88E+6 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.25E+9 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 2.1E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 5.25E+6 -
+             M_PI * pow(cos(t * M_PI), 2.0) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.6464E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(t * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) * 2.1952E+5 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 2.1952E+5 +
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 1.568E+6 -
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 1.568E+6 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.6464E+6 +
+             (x * x) * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             x * (y * y) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             x * M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.96E+8 +
+             y * M_PI * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.96E+8 +
+             (y * y) * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(x * M_PI) * 6.3E+7 -
+             x * y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(y * M_PI) * 5.6E+6 -
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.96E+8 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.96E+8 +
+             (x * x) * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(x * M_PI) *
+                 pow(sin(y * M_PI), 2.0) * 8.4E+7 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * sin(x * M_PI) * 5.6E+6 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(y * M_PI) * 6.3E+7 -
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * sin(x * M_PI) * 1.568E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                 cos(y * M_PI) * sin(t * M_PI) * sin(y * M_PI) * 1.764E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(x * M_PI) * 1.764E+7 +
+             y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(y * M_PI) * 1.568E+6 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 8.4E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 2.94E+6 -
+             (x * x) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 5.25E+6 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 8.82E+6 +
+             (y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 4.725E+7 -
+             y * (M_PI * M_PI) * pow(cos(t * M_PI), 3.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 8.232E+5 -
+             (y * y * y) * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 3.15E+7 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 pow(sin(x * M_PI), 2.0) * sin(y * M_PI) * 2.352E+7 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * pow(sin(y * M_PI), 2.0) * 2.352E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 8.82E+6 +
+             (x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 4.725E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 3.0) * sin(x * M_PI) * sin(y * M_PI) * 8.232E+5 -
+             (x * x * x) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 3.15E+7 +
+             y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 2.94E+6 -
+             (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 5.25E+6 +
+             (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 4.116E+5 +
+             (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 4.116E+5 +
+             x * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 2.5E+9 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI * 2.0) *
+                 sin(x * M_PI) * 7.5E+7 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI * 2.0) *
+                 sin(y * M_PI) * 7.5E+7 +
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 2.25E+8 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 -
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.1E+7 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * pow(sin(x * M_PI), 2.0) * 5.6E+6 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(x * M_PI) * 1.12E+7 -
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.1E+7 -
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.1E+7 +
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * pow(sin(y * M_PI), 2.0) * 8.4E+6 -
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 6.3E+7 +
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 6.3E+7 -
+             M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 7.0E+8 +
+             x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 6.3E+7 +
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) * pow(cos(y * M_PI), 3.0) *
+                 sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 8.4E+6 +
+             x * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.1E+7 +
+             y * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 2.1E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * cos(y * M_PI) *
+                 sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 5.6E+6 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI) * sin(y * M_PI) * 1.12E+7 +
+             y * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 2.1E+7 -
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) * 6.3E+7 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 5.88E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 cos(y * M_PI) * sin(t * M_PI) * pow(sin(y * M_PI), 2.0) * 1.568E+6 -
+             x * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 3.0) *
+                 pow(cos(y * M_PI), 2.0) * sin(t * M_PI) * sin(y * M_PI) * 3.136E+6 +
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * cos(x * M_PI) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * pow(sin(x * M_PI), 2.0) * 1.568E+6 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 3.0) * pow(cos(x * M_PI), 2.0) *
+                 pow(cos(y * M_PI), 3.0) * sin(t * M_PI) * sin(x * M_PI) * 3.136E+6 +
+             M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 5.88E+6 +
+             (x * x) * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 1.05E+7 +
+             x * (y * y) * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 1.05E+7 -
+             x * (M_PI * M_PI) * pow(cos(t * M_PI), 2.0) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) *
+                 cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) * sin(y * M_PI) * 8.232E+5 -
+             y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 pow(sin(t * M_PI), 2.0) * sin(x * M_PI) * sin(y * M_PI) * 8.232E+5 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 5.0E+9 -
+             x * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 +
+             x * y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 4.2E+7 +
+             y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) * sin(x * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 -
+             x * y * M_PI * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 4.2E+7 +
+             M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 3.92E+8 -
+             x * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(y * M_PI) * 1.176E+7 -
+             y * M_PI * cos(t * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(t * M_PI * 2.0) * sin(x * M_PI) * 1.176E+7 -
+             x * y * M_PI * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * cos(y * M_PI) *
+                 sin(y * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 -
+             x * y * M_PI * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * pow(cos(y * M_PI), 2.0) * sin(t * M_PI) *
+                 sin(x * M_PI) *
+                 sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
+                      pow(-x + sin(t * M_PI) * (7.0 / 2.5E+1) + 1.0 / 2.0, 2.0)) *
+                 1.4E+9 -
+             x * y * (M_PI * M_PI) * cos(t * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 1.05E+7 -
+             x * y * (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI) *
+                 sin(x * M_PI) * sin(y * M_PI) * 1.05E+7)) /
+           (x * -1.5625E+7 - y * 1.5625E+7 - cos(t * M_PI) * 4.375E+6 + sin(t * M_PI) * 4.375E+6 +
+            y * cos(t * M_PI) * 8.75E+6 - x * sin(t * M_PI) * 8.75E+6 + (x * x) * 1.5625E+7 + (y * y) * 1.5625E+7 +
+            pow(cos(t * M_PI), 2.0) * 1.225E+6 + pow(sin(t * M_PI), 2.0) * 1.225E+6 + 7.8125E+6);
+    ;
 }
 
 R fun_one(double *P, const int i) { return 1.; }
 
 } // namespace Example1
-
 
 // Setup two-dimensional class types
 const int d = 2;
@@ -156,20 +2841,16 @@ using fespace_t     = GFESpace<mesh_t>;
 using cut_fespace_t = CutFESpace<mesh_t>;
 
 std::vector<const GTypeOfFE<mesh_t> *> FE_space = {&DataFE<mesh_t>::P1, &DataFE<mesh_t>::P2, &DataFE<mesh_t>::P3};
-std::vector<const GTypeOfFE<Mesh1> *> FE_time   = {&DataFE<Mesh1>::P0Poly, &DataFE<Mesh1>::P1Poly, &DataFE<Mesh1>::P2Poly,
-                                                   &DataFE<Mesh1>::P3Poly};
+std::vector<const GTypeOfFE<Mesh1> *> FE_time = {&DataFE<Mesh1>::P0Poly, &DataFE<Mesh1>::P1Poly, &DataFE<Mesh1>::P2Poly,
+                                                 &DataFE<Mesh1>::P3Poly};
 
 using namespace Example1;
 
-
 // Define method, stabilization, and polynomial order
-#define METHOD conservative     // method (conservative/non_conservative)
-#define STABILIZATION macro     // stabilization (fullstab/macro)
-#define K 1                     // polynomial order in time (0/1/2)
-#define M 1                     // polynomial order in space (1/2)
-
-
-
+#define METHOD conservative // method (conservative/non_conservative)
+#define STABILIZATION macro // stabilization (fullstab/macro)
+#define K 1                 // polynomial order in time (0/1/2)
+#define M 1                 // polynomial order in space (1/2)
 
 int main(int argc, char **argv) {
 
@@ -181,27 +2862,27 @@ int main(int argc, char **argv) {
     assert(k >= 0 && k <= 3);
     assert(m >= 1 && m <= 2);
 
-    // Mesh 
-    const size_t iterations = 3;                        // number of mesh refinements   
-    const double x0 = 0., y0 = 0., lx = 1., ly = 1.;    // background domain 
-    double h  = 0.1;                                    // starting mesh size
-    int nx, ny;                     
-    
-    const double cfl_number = 1./4;
+    // Mesh
+    const size_t iterations = 3;                     // number of mesh refinements
+    const double x0 = 0., y0 = 0., lx = 1., ly = 1.; // background domain
+    double h = 0.1;                                  // starting mesh size
+    int nx, ny;
+
+    const double cfl_number = 1. / 4;
     double dT;
-    int total_number_iteration; 
+    int total_number_iteration;
     const double t0 = 0., tfinal = .1;
 
     // Time integration quadrature
     const size_t quadrature_order_time = 3;
-    const QuadratureFormular1d &qTime(*Lobatto(quadrature_order_time));  // specify order of quadrature in time
+    const QuadratureFormular1d &qTime(*Lobatto(quadrature_order_time)); // specify order of quadrature in time
     const Uint nbTime       = qTime.n;
     const Uint lastQuadTime = nbTime - 1;
 
     // Matrix to hold non-linear part in Newton iteration
-    std::vector<std::map<std::pair<int, int>, double>> jacobian(1);
+    std::map<std::pair<int, int>, double> jacobian;
 
-    // Space integration quadrature 
+    // Space integration quadrature
     Levelset<2> phi;
     ProblemOption option;
 #ifdef USE_MPI
@@ -209,23 +2890,24 @@ int main(int argc, char **argv) {
 #else
     option.solver_name_ = "umfpack";
 #endif
-    const int quadrature_order_space       = 3;         // in each space dimension -> quadrature_order_space^2 quadrature points per element
+    const int quadrature_order_space =
+        3; // in each space dimension -> quadrature_order_space^2 quadrature points per element
     option.order_space_element_quadrature_ = quadrature_order_space;
     AlgoimCutFEM<mesh_t, Levelset<2>> convdiff(qTime, phi, option);
 
     // Method parameters
-    const double tau_F_bulk = 1.;    // face stabilization
-    const double tau_F_surf = 1.;    // face stabilization
-    const double tau_G = 1.;         // interface stabilization
-    
-    const double delta_bulk = 0.7;   // macro parameter
-    const double delta_surf = 0.5;   // macro parameter
+    const double tau_F_bulk = 1.; // face stabilization
+    const double tau_F_surf = 1.; // face stabilization
+    const double tau_G      = 1.; // interface stabilization
+
+    const double delta_bulk = 0.7; // macro parameter
+    const double delta_surf = 0.5; // macro parameter
 
     std::string method(TOSTRING(METHOD));
     std::string stabilization(TOSTRING(STABILIZATION));
 
     // Data file to hold problem data
-    
+
     std::ofstream output_data("../cpp/example/convection_diffusion/output_coupled.dat", std::ofstream::out);
     output_data << "Method: " << method << "\n";
     output_data << "Polynomial order time: " << k << "\n";
@@ -233,7 +2915,7 @@ int main(int argc, char **argv) {
     output_data << "Stabilization: " << stabilization << "\n";
     if (stabilization == "macro")
         output_data << "delta_bulk: " << delta_bulk << "\n";
-        output_data << "delta_surf: " << delta_surf << "\n";
+    output_data << "delta_surf: " << delta_surf << "\n";
 
     output_data << "tau_F_bulk: " << tau_F_bulk << "\n";
     output_data << "tau_F_surf: " << tau_F_surf << "\n";
@@ -252,14 +2934,14 @@ int main(int argc, char **argv) {
     for (int j = 0; j < iterations; ++j) {
 
         // Define background mesh
-        
+
         nx = (int)(lx / h) + 1, ny = (int)(ly / h) + 1;
         const mesh_t Th(nx, ny, x0 - Epsilon, y0 - Epsilon, lx, ly);
 
         // set time step size
-        dT = cfl_number * h;
+        dT                     = cfl_number * h;
         total_number_iteration = int(tfinal / dT);
-        dT        = tfinal / total_number_iteration;
+        dT                     = tfinal / total_number_iteration;
 
         hs.at(j)  = h;
         dts.at(j) = dT;
@@ -277,14 +2959,14 @@ int main(int argc, char **argv) {
         std::cout << "ny = " << ny << '\n';
         std::cout << "dT = " << dT << '\n';
 
-        fespace_t Vh(Th, *FE_space[m-1]); // Background FE Space
+        fespace_t Vh(Th, *FE_space[m - 1]); // Background FE Space
 
         // 1D Time mesh
         double final_time = total_number_iteration * dT;
         Mesh1 Qh(total_number_iteration + 1, t0, final_time);
         // 1D Time space
         FESpace1 Ih(Qh, *FE_time[k]); // FE Space in time
-        const Uint ndf_time_slab      = Ih[0].NbDoF();
+        const Uint ndf_time_slab = Ih[0].NbDoF();
 
         // Velocity field
         LagrangeQuad2 FEvelocity(1);
@@ -303,7 +2985,7 @@ int main(int argc, char **argv) {
 
         int iter = 0;
         double mass_last_previous, mass_last_previous_surf, mass_initial, mass_initial_surf;
-        double intF = 0, intF_surf = 0, intF_total = 0, intF_surf_total = 0; 
+        double intF = 0, intF_surf = 0, intF_total = 0, intF_surf_total = 0;
         double global_conservation_error = 0, local_conservation_error = 0, error_bulk = 0., error_surf = 0.,
                error_I = 0., error_I_surf = 0.;
         std::vector<double> local_conservation_errors, global_conservation_errors_t;
@@ -357,7 +3039,7 @@ int main(int argc, char **argv) {
 
             // Objects needed for the weak form
             Normal n;
-            
+
             // Data for initial solution
             int idx_s0  = Wh.NbDoF() * In.NbDoF();      // index where uS^0 start in the solution array
             int idx_s1  = WhGamma.NbDoF() * In.NbDoF(); // degrees of freedom in surface x time space
@@ -376,8 +3058,8 @@ int main(int argc, char **argv) {
             }
 
             std::vector<double> data_all(data_init);
-            std::span<double> data_uhB = std::span<double>(data_all.data(), Wh.NbDoF()*In.NbDoF());
-            std::span<double> data_uhS = std::span<double>(data_all.data() + idx_s0, WhGamma.NbDoF()*In.NbDoF());
+            std::span<double> data_uhB = std::span<double>(data_all.data(), Wh.NbDoF() * In.NbDoF());
+            std::span<double> data_uhS = std::span<double>(data_all.data() + idx_s0, WhGamma.NbDoF() * In.NbDoF());
 
             fct_t uhB0(Wh, data_uhB0);
             fct_t uhS0(WhGamma, data_uhS0);
@@ -395,7 +3077,7 @@ int main(int argc, char **argv) {
 
                 // Assemble linear part of Jacobian DF
                 if (newton_iterations == 0) {
-                    
+
                     if (method == "conservative") {
 
                         // Time derivative terms
@@ -408,11 +3090,9 @@ int main(int argc, char **argv) {
 
                         // Convection
                         convdiff.addBilinear(-innerProduct(uB, (vel.exprList() * grad(vB))), Thi, In);
-                        convdiff.addBilinear(-innerProduct(uS, (vel.exprList() * grad(vS))),
-                                            interface, In);
+                        convdiff.addBilinear(-innerProduct(uS, (vel.exprList() * grad(vS))), interface, In);
 
-                    }
-                    else if (method == "non_conservative") {
+                    } else if (method == "non_conservative") {
 
                         // Time derivative terms
                         convdiff.addBilinear(+innerProduct(dt(uB), vB), Thi, In);
@@ -424,14 +3104,11 @@ int main(int argc, char **argv) {
 
                         // Convection
                         convdiff.addBilinear(+innerProduct((vel.exprList() * grad(uB)), vB), Thi, In);
-                        
-                        convdiff.addBilinear(
-                            + innerProduct((vel.exprList() * grad(uS)), vS) 
-                            + innerProduct(uS * divS(vel), vS)
-                            , interface
-                            , In);
-                    }
-                    else {
+
+                        convdiff.addBilinear(+innerProduct((vel.exprList() * grad(uS)), vS) +
+                                                 innerProduct(uS * divS(vel), vS),
+                                             interface, In);
+                    } else {
                         std::cerr << "No method chosen!\n";
                         exit(1);
                     }
@@ -445,32 +3122,25 @@ int main(int argc, char **argv) {
 
                     if (stabilization == "fullstab") {
 
-                        convdiff.addPatchStabilization(
-                            + innerProduct(tau_F_bulk / h / h * jump(uB), jump(vB))
-                            , Thi
-                            , In
-                        );
+                        convdiff.addPatchStabilization(+innerProduct(tau_F_bulk / h / h * jump(uB), jump(vB)), Thi, In);
 
-                        convdiff.addPatchStabilization(
-                            + innerProduct(tau_F_surf / h / h / h * jump(uS), jump(vS))
-                            , ThGamma
-                            , In
-                        );
+                        convdiff.addPatchStabilization(+innerProduct(tau_F_surf / h / h / h * jump(uS), jump(vS)),
+                                                       ThGamma, In);
 
                         // convdiff.addFaceStabilization(
-                        //     + innerProduct(tau_F_bulk * h * jump(grad(uB) * n), jump(grad(vB) * n)) 
-                        //     + innerProduct(tau_F_bulk * h * h * h * jump(grad(grad(uB) * n) * n), jump(grad(grad(vB) * n) * n)),
-                        //     Thi, In);
+                        //     + innerProduct(tau_F_bulk * h * jump(grad(uB) * n), jump(grad(vB) * n))
+                        //     + innerProduct(tau_F_bulk * h * h * h * jump(grad(grad(uB) * n) * n), jump(grad(grad(vB)
+                        //     * n) * n)), Thi, In);
 
                         // convdiff.addFaceStabilization(
-                        //     + innerProduct(tau_F_surf * jump(grad(uS) * n), jump(grad(vS) * n)) 
-                        //     + innerProduct(tau_F_surf * h * h * jump(grad(grad(uS) * n) * n), jump(grad(grad(vS) * n) * n)),
-                        //     ThGamma, In);
+                        //     + innerProduct(tau_F_surf * jump(grad(uS) * n), jump(grad(vS) * n))
+                        //     + innerProduct(tau_F_surf * h * h * jump(grad(grad(uS) * n) * n), jump(grad(grad(vS) * n)
+                        //     * n)), ThGamma, In);
 
                     }
 
                     else if (stabilization == "macro") {
-                    
+
                         AlgoimMacro<mesh_t, Levelset<2>> TimeMacro(Thi, delta_bulk, phi, In, qTime);
                         TimeMacro.findSmallElement();
                         TimeMacro.createMacroElement();
@@ -481,57 +3151,47 @@ int main(int argc, char **argv) {
                         TimeMacroSurf.createMacroElement();
                         TimeMacroSurf.setInnerEdges();
 
-                    convdiff.addPatchStabilization(
-                            + innerProduct(tau_F_bulk / h / h * jump(uB), jump(vB))
-                            , Thi
-                            , In
-                            , TimeMacro
-                        );
+                        convdiff.addPatchStabilization(+innerProduct(tau_F_bulk / h / h * jump(uB), jump(vB)), Thi, In,
+                                                       TimeMacro);
 
-                        convdiff.addPatchStabilization(
-                            + innerProduct(tau_F_surf / h / h / h * jump(uS), jump(vS))
-                            , ThGamma
-                            , In
-                            , TimeMacroSurf
-                        );
-
+                        convdiff.addPatchStabilization(+innerProduct(tau_F_surf / h / h / h * jump(uS), jump(vS)),
+                                                       ThGamma, In, TimeMacroSurf);
 
                         // convdiff.addFaceStabilization(
-                        //     + innerProduct(tau_F_bulk * h * jump(grad(uB) * n), jump(grad(vB) * n)) 
-                        //     + innerProduct(tau_F_bulk * h * h * h * jump(grad(grad(uB) * n) * n), jump(grad(grad(vB) * n) * n))
-                        //     , Thi
-                        //     , In
-                        //     , TimeMacro);
+                        //     + innerProduct(tau_F_bulk * h * jump(grad(uB) * n), jump(grad(vB) * n))
+                        //     + innerProduct(tau_F_bulk * h * h * h * jump(grad(grad(uB) * n) * n), jump(grad(grad(vB)
+                        //     * n) * n)) , Thi , In , TimeMacro);
 
                         // convdiff.addFaceStabilization(
-                        //     + innerProduct(tau_F_surf * jump(grad(uS) * n), jump(grad(vS) * n)) 
-                        //     + innerProduct(tau_F_surf * h * h * jump(grad(grad(uS) * n) * n), jump(grad(grad(vS) * n) * n))
-                        //     , ThGamma
-                        //     , In
-                        //     , TimeMacroSurf);
-
-                    
+                        //     + innerProduct(tau_F_surf * jump(grad(uS) * n), jump(grad(vS) * n))
+                        //     + innerProduct(tau_F_surf * h * h * jump(grad(grad(uS) * n) * n), jump(grad(grad(vS) * n)
+                        //     * n)) , ThGamma , In , TimeMacroSurf);
 
                         // if (iterations == 1 && h >= 0.01) {
-                        //     Paraview<mesh_t> writerMacro(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.add(ls[0], "levelSet0.vtk", 0, 1);
-                        //     writerMacro.add(ls[1], "levelSet1.vtk", 0, 1);
-                        //     writerMacro.add(ls[2], "levelSet2.vtk", 0, 1);
+                        //     Paraview<mesh_t> writerMacro(Th, path_output_figures + "Th" + std::to_string(iter + 1) +
+                        //     ".vtk"); writerMacro.add(ls[0], "levelSet0.vtk", 0, 1); writerMacro.add(ls[1],
+                        //     "levelSet1.vtk", 0, 1); writerMacro.add(ls[2], "levelSet2.vtk", 0, 1);
 
                         //     // domain = 0,
 
                         //     writerMacro.writeFaceStab(
-                        //         Thi, 0, path_output_figures + "FullStabilization" + std::to_string(iter + 1) + ".vtk");
+                        //         Thi, 0, path_output_figures + "FullStabilization" + std::to_string(iter + 1) +
+                        //         ".vtk");
                         //     writerMacro.writeActiveMesh(Thi,
-                        //                                 path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
+                        //                                 path_output_figures + "ActiveMesh" + std::to_string(iter + 1)
+                        //                                 + ".vtk");
                         //     writerMacro.writeMacroElement(TimeMacro, 0,
-                        //                                 path_output_figures + "macro" + std::to_string(iter + 1) + ".vtk");
+                        //                                 path_output_figures + "macro" + std::to_string(iter + 1) +
+                        //                                 ".vtk");
                         //     writerMacro.writeMacroInnerEdge(
-                        //         TimeMacro, 0, path_output_figures + "macro_inner_edge" + std::to_string(iter + 1) + ".vtk");
+                        //         TimeMacro, 0, path_output_figures + "macro_inner_edge" + std::to_string(iter + 1) +
+                        //         ".vtk");
                         //     writerMacro.writeMacroOutterEdge(
-                        //         TimeMacro, 0, path_output_figures + "macro_outer_edge" + std::to_string(iter + 1) + ".vtk");
+                        //         TimeMacro, 0, path_output_figures + "macro_outer_edge" + std::to_string(iter + 1) +
+                        //         ".vtk");
                         //     writerMacro.writeSmallElements(
-                        //         TimeMacro, 0, path_output_figures + "small_element" + std::to_string(iter + 1) + ".vtk");
+                        //         TimeMacro, 0, path_output_figures + "small_element" + std::to_string(iter + 1) +
+                        //         ".vtk");
                         // }
 
                     }
@@ -542,29 +3202,26 @@ int main(int argc, char **argv) {
                     }
 
                     convdiff.addBilinear(
-                        + innerProduct(tau_G * grad(uS) * n, grad(vS) * n)
-                        + innerProduct(tau_G * h * h * grad(grad(uS) * n) * n, grad(grad(vS) * n) * n)
-                        , interface
-                        , In);
-
+                        +innerProduct(tau_G * grad(uS) * n, grad(vS) * n) +
+                            innerProduct(tau_G * h * h * grad(grad(uS) * n) * n, grad(grad(vS) * n) * n),
+                        interface, In);
                 }
 
-                //convdiff.gather_map();  //? should this be here??
+                // convdiff.gather_map();  //? should this be here??
 
                 // Multiply the linear part of the Jacobian by the initial guess to evaluate in the initial guess (which
                 // is updated in each Newton iteration)
-                convdiff.addMatMul(data_all);   // -> goes into the rhs (this does not change the matrix convdiff.mat_)
+                convdiff.addMatMul(data_all); // -> goes into the rhs (this does not change the matrix convdiff.mat_)
 
                 // Add the remaining terms of F (the residual)
-                convdiff.addLinear(- innerProduct(uhB.expr() * uhS.expr(), vB - vS), interface, In);
+                convdiff.addLinear(-innerProduct(uhB.expr() * uhS.expr(), vB - vS), interface, In);
 
                 // Time penalty RHS
-                if (iter == 0) {    
+                if (iter == 0) {
                     convdiff.addLinearExact(fun_uBulk, -innerProduct(1., vB), Thi, 0, In);
                     convdiff.addLinearExact(fun_uSurf, -innerProduct(1., vS), *interface(0), In, 0);
 
-                }
-                else {
+                } else {
                     convdiff.addLinear(-innerProduct(uhB0.expr(), vB), Thi, 0, In);
                     convdiff.addLinear(-innerProduct(uhS0.expr(), vS), *interface(0), In, 0);
                 }
@@ -577,18 +3234,14 @@ int main(int argc, char **argv) {
                 convdiff.set_map(jacobian);
 
                 // Initialize the Jacobian as the convdiff matrix since these terms are also in the Jacobian
-                jacobian[0] = convdiff.mat_[0];
+                jacobian = convdiff.mat_;
 
                 // Assemble remaining non-linear part of Jacobian (evaluated in the initial guess so it becomes linear)
-                convdiff.addBilinear(
-                    - innerProduct(uB * uhS.expr(), vB - vS)
-                    - innerProduct(uS * uhB.expr(), vB - vS)
-                    , interface
-                    , In);
-                           
+                convdiff.addBilinear(-innerProduct(uB * uhS.expr(), vB - vS) - innerProduct(uS * uhB.expr(), vB - vS),
+                                     interface, In);
 
                 // Solve DF(u0)(w) = F(u0)
-                convdiff.solve(jacobian[0], convdiff.rhs_);
+                convdiff.solve(jacobian, convdiff.rhs_);
 
                 // Retrieve the bulk solution
                 std::span<double> dwB = std::span<double>(convdiff.rhs_.data(), Wh.NbDoF() * In.NbDoF());
@@ -599,9 +3252,11 @@ int main(int argc, char **argv) {
                 // const auto max_res_S = std::max_element(dwS.begin(), dwS.end());
 
                 // Compute the residual as the maximum of the absolute values of the residual data
-                const auto max_res_B = std::max_element(dwB.begin(), dwB.end(), [](int a, int b) { return std::abs(a) < std::abs(b); });
-                const auto max_res_S = std::max_element(dwS.begin(), dwS.end(), [](int a, int b) { return std::abs(a) < std::abs(b); });
-                
+                const auto max_res_B =
+                    std::max_element(dwB.begin(), dwB.end(), [](int a, int b) { return std::abs(a) < std::abs(b); });
+                const auto max_res_S =
+                    std::max_element(dwS.begin(), dwS.end(), [](int a, int b) { return std::abs(a) < std::abs(b); });
+
                 residual = std::max(*max_res_B, *max_res_S);
 
                 std::cout << " Residual \t : \t" << residual << '\n';
@@ -615,7 +3270,6 @@ int main(int argc, char **argv) {
                 convdiff.rhs_.resize(convdiff.get_nb_dof());
                 std::fill(convdiff.rhs_.begin(), convdiff.rhs_.end(), 0.);
 
-
                 newton_iterations++;
 
                 if (std::abs(residual) < tol) {
@@ -628,35 +3282,35 @@ int main(int argc, char **argv) {
                 }
 
                 if (newton_iterations >= 4) {
-                    std::cout << "Newton's method didn't converge in " + std::to_string(newton_iterations) + " iterations, breaking loop. \n";
+                    std::cout << "Newton's method didn't converge in " + std::to_string(newton_iterations) +
+                                     " iterations, breaking loop. \n";
                     break;
                 }
-
             }
 
-            // Compute L2(Omega(t), 0, T) and L2(Gamma(t), 0, T)     
+            // Compute L2(Omega(t), 0, T) and L2(Gamma(t), 0, T)
             fct_t fun_uhB_t(Wh, In, data_uhB);
             fct_t fun_uhS_t(WhGamma, In, data_uhS);
-            error_I      += L2L2_norm(fun_uhB_t, fun_uBulkD, Thi, In, qTime, phi, quadrature_order_space);
-            error_I_surf += L2L2_norm_surf(fun_uhS_t, fun_uSurf, interface, In, qTime, phi, quadrature_order_space); 
+            error_I += L2L2_norm(fun_uhB_t, fun_uBulkD, Thi, In, qTime, phi, quadrature_order_space);
+            error_I_surf += L2L2_norm_surf(fun_uhS_t, fun_uSurf, interface, In, qTime, phi, quadrature_order_space);
 
             // Compute L2(Omega(T)) and L2(Gamma(T))
             std::vector<double> sol_uhB(Wh.get_nb_dof());
-            std::vector<double> sol_uhS(WhGamma.get_nb_dof()); 
+            std::vector<double> sol_uhS(WhGamma.get_nb_dof());
 
             for (int n = 0; n < ndf_time_slab; ++n) {
                 // get the DOFs of u corresponding to DOF n in time and sum with the
                 // previous n
                 std::vector<double> uB_dof_n(data_uhB.begin() + n * Wh.get_nb_dof(),
-                                            data_uhB.begin() + (n + 1) * Wh.get_nb_dof());
+                                             data_uhB.begin() + (n + 1) * Wh.get_nb_dof());
                 std::transform(sol_uhB.begin(), sol_uhB.end(), uB_dof_n.begin(), sol_uhB.begin(), std::plus<double>());
 
                 // get the DOFs of p corresponding to DOF n in time and sum with the
                 // previous n
                 std::vector<double> uS_dof_n(data_uhS.begin() + n * WhGamma.get_nb_dof(),
-                                            data_uhS.begin() + (n + 1) * WhGamma.get_nb_dof());
+                                             data_uhS.begin() + (n + 1) * WhGamma.get_nb_dof());
                 std::transform(sol_uhS.begin(), sol_uhS.end(), uS_dof_n.begin(), sol_uhS.begin(), std::plus<double>());
-            }            
+            }
 
             fct_t fun_uhB(Wh, sol_uhB);
             fct_t fun_uhS(WhGamma, sol_uhS);
@@ -672,33 +3326,35 @@ int main(int argc, char **argv) {
 
             // Compute conservation error
             intF      = integral_algoim(fun_rhsBulk, 0, Thi, phi, In, qTime,
-                                   quadrature_order_space); // integrate source over In
+                                        quadrature_order_space); // integrate source over In
             intF_surf = integral_algoim(fun_rhsSurf, In, interface, phi, 0,
-                                   quadrature_order_space); // integrate flux boundary over In
+                                        quadrature_order_space); // integrate flux boundary over In
 
-            intF_total      += intF;
+            intF_total += intF;
             intF_surf_total += intF_surf;
 
             double mass_last      = integral_algoim(fun_uhB, Thi, phi, In, qTime, lastQuadTime,
-                                               quadrature_order_space); // mass in last quad point
-            double mass_last_surf = integral_algoim(fun_uhS, *interface(lastQuadTime), 0, phi, In, qTime,
-                                                    lastQuadTime, quadrature_order_space);
+                                                    quadrature_order_space); // mass in last quad point
+            double mass_last_surf = integral_algoim(fun_uhS, *interface(lastQuadTime), 0, phi, In, qTime, lastQuadTime,
+                                                    quadrature_order_space);
 
             if (iter == 0) {
-                mass_initial       = integral_algoim(fun_uBulk, Thi, phi, In, qTime, 0, quadrature_order_space);
-                mass_initial_surf  = integral_algoim(fun_uSurf, *interface(0), 0, phi, In, qTime,
-                                                    0, quadrature_order_space);
+                mass_initial = integral_algoim(fun_uBulk, Thi, phi, In, qTime, 0, quadrature_order_space);
+                mass_initial_surf =
+                    integral_algoim(fun_uSurf, *interface(0), 0, phi, In, qTime, 0, quadrature_order_space);
                 mass_last_previous      = mass_initial;
                 mass_last_previous_surf = mass_initial_surf;
             }
 
-            local_conservation_error  = mass_last + mass_last_surf - mass_last_previous - mass_last_previous_surf - intF - intF_surf;
-            global_conservation_error = mass_last + mass_last_surf - mass_initial - mass_initial_surf - intF_total - intF_surf_total;
+            local_conservation_error =
+                mass_last + mass_last_surf - mass_last_previous - mass_last_previous_surf - intF - intF_surf;
+            global_conservation_error =
+                mass_last + mass_last_surf - mass_initial - mass_initial_surf - intF_total - intF_surf_total;
 
             std::cout << "global_conservation_error: " << global_conservation_error << "\n";
-            std::cout << "local_conservation_error: "  << local_conservation_error << "\n";
+            std::cout << "local_conservation_error: " << local_conservation_error << "\n";
 
-            mass_last_previous      = mass_last; 
+            mass_last_previous      = mass_last;
             mass_last_previous_surf = mass_last_surf;
 
             global_conservation_errors[j] = std::fabs(global_conservation_error);
@@ -707,14 +3363,15 @@ int main(int argc, char **argv) {
 
             // // Write numerical solutions to paraview if iterations == 1
             // if ((iterations == 1) && (h >= 0.01)) {
-                
+
             //     Paraview<mesh_t> writerTh(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
             //     writerTh.add(ls[0], "levelSet0", 0, 1);
             //     writerTh.add(ls[1], "levelSet1", 0, 1);
             //     writerTh.add(ls[2], "levelSet2", 0, 1);
-                
+
             //     Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_" + std::to_string(iter + 1) + ".vtk");
-            //     Paraview<mesh_t> writer_surf(ThGamma, path_output_figures + "surf_" + std::to_string(iter + 1) + ".vtk");
+            //     Paraview<mesh_t> writer_surf(ThGamma, path_output_figures + "surf_" + std::to_string(iter + 1) +
+            //     ".vtk");
             //     // writer.add(b0h, "bulk", 0, 1);
             //     // writer.add(sol_h, "bulk_end", 0, 1);
 
@@ -726,7 +3383,7 @@ int main(int argc, char **argv) {
 
             //     fct_t uBex(Wh, fun_uBulk, current_time);
             //     fct_t fB(Wh, fun_rhsBulk, current_time);
-                
+
             //     fct_t uSex(WhGamma, fun_uSurf, current_time);
             //     fct_t fS(WhGamma, fun_rhsSurf, current_time);
 
@@ -739,8 +3396,7 @@ int main(int argc, char **argv) {
             //     //writer.add(fabs(b0h.expr() - uBex.expr()), "bulk_error");
             //     writer.add(fabs(fun_uhB.expr() - uBex.expr()), "bulk_error");
             //     writer_surf.add(fabs(fun_uhS.expr() - uSex.expr()), "surf_error");
-                
-                
+
             //     writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
             //     writer.writeFaceStab(Thi, 0, path_output_figures + "Edges" + std::to_string(iter + 1) + ".vtk");
 
@@ -758,11 +3414,12 @@ int main(int argc, char **argv) {
             iter++;
         }
 
-        errors_T[j] = std::sqrt(error_I);
+        errors_T[j]      = std::sqrt(error_I);
         errors_T_surf[j] = std::sqrt(error_I_surf);
 
         // Write data to output file
-        output_data << h << "," << dT << "," << error_bulk << "," << error_surf << "," << errors_T[j] << "," << errors_T_surf[j] << "," << global_conservation_errors[j] << "\n";
+        output_data << h << "," << dT << "," << error_bulk << "," << error_surf << "," << errors_T[j] << ","
+                    << errors_T_surf[j] << "," << global_conservation_errors[j] << "\n";
         output_data.flush();
 
         std::cout << "error_T = " << errors_T[j] << "\n";
@@ -782,7 +3439,6 @@ int main(int argc, char **argv) {
 
         // Refine mesh
         h *= 0.5;
-
     }
 
     std::cout << std::setprecision(16);

@@ -14,11 +14,13 @@ You should have received a copy of the GNU General Public License along with
 CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 */
 template <typename M>
-FunFEM<M>::FunFEM(const FESpace &vh, const ExpressionVirtual &fh)
-    : FunFEMVirtual(vh.NbDoF()), alloc(true), Vh(&vh),
-      // data(new double[vh.NbDoF()]),
-      // v(data, vh.NbDoF()) ,
-      databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
+FunFEM<M>::FunFEM(const FESpace &vh, const ExpressionVirtual &fh) : FunFEMVirtual(vh.NbDoF()), Vh(&vh) {
+
+    // allocate memory for basis functions
+    std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+    std::size_t n_chunk     = cutfem_get_max_threads();
+    pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+
     assert(Vh->N == 1);
     double dataSend[Vh->nbDoF];
     Rn_ fhSend(dataSend, Vh->nbDoF);
@@ -64,10 +66,13 @@ FunFEM<M>::FunFEM(const FESpace &vh, const ExpressionVirtual &fh)
 
 template <typename M>
 FunFEM<M>::FunFEM(const FESpace &vh, const ExpressionVirtual &fh1, const ExpressionVirtual &fh2)
-    : FunFEMVirtual(vh.NbDoF()), alloc(true), Vh(&vh),
-      // data(new double[vh.NbDoF()]),
-      // v(data, vh.NbDoF()) ,
-      databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
+    : FunFEMVirtual(vh.NbDoF()), Vh(&vh) {
+
+    // allocate memory for basis functions
+    std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+    std::size_t n_chunk     = cutfem_get_max_threads();
+    pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+
     assert(Vh->N == 2);
     double dataSend[Vh->nbDoF];
     Rn_ fhSend(dataSend, Vh->nbDoF);
@@ -115,7 +120,10 @@ template <typename M> void FunFEM<M>::print() const { std::cout << v << std::end
 template <typename M> double FunFEM<M>::eval(const int k, const R *x, int cu, int op) const {
     const FElement &FK((*Vh)[k]);
     int ndf = FK.NbDoF();
-    RNMK_ w(databf, ndf, Vh->N, op_dz + 1);
+
+    std::size_t i_thread         = omp_get_thread_num();
+    std::span<double> mem_buffer = pool_databf->get_data(i_thread);
+    RNMK_ w(mem_buffer.data(), ndf, Vh->N, op_dz + 1);
     FK.BF(FK.T.toKref(x), w);
 
     double val = 0.;
@@ -134,7 +142,11 @@ template <typename M> double FunFEM<M>::eval(const int k, const R *x, const R t,
 
     const FElement &FK((*Vh)[k]);
     int ndf = FK.NbDoF();
-    RNMK_ w(databf, ndf, Vh->N, op_dz + 1);
+
+    std::size_t i_thread         = omp_get_thread_num();
+    std::span<double> mem_buffer = pool_databf->get_data(i_thread);
+
+    RNMK_ w(mem_buffer.data(), ndf, Vh->N, op_dz + 1);
     KNMK<R> wt(In->NbDoF(), 1, op_dz);
 
     FK.BF(FK.T.toKref(x), w);

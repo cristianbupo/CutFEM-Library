@@ -29,7 +29,7 @@ template <typename M, typename L> class AlgoimBaseCutFEM : public BaseCutFEM<M> 
     void addBilinearAlgoim(const itemVFlist_t &VF, const ActiveMesh<mesh_t> &Th, const int itq,
                            const TimeSlab &In); // without scaling in time
     void addBilinearAlgoim(const itemVFlist_t &VF, const ActiveMesh<mesh_t> &Th, const TimeSlab &In,
-                           const int itq); // with scaling in time
+                           const int itq);                                                    // with scaling in time
     void addBilinearAlgoim(const itemVFlist_t &, const ActiveMesh<mesh_t> &, const CFacet &); // with scaling in time
     template <typename Fct>
     void addLinearAlgoim(const Fct &f, const itemVFlist_t &VF, const ActiveMesh<mesh_t> &Th, const TimeSlab &In);
@@ -104,8 +104,8 @@ template <typename M, typename L> class AlgoimBaseCutFEM : public BaseCutFEM<M> 
     void addLinearExact(const Fct &f, const itemVFlist_t &VF, const TimeInterface<M> &gamma, const TimeSlab &In,
                         const int itq);
 
-    void addFaceContribution(const itemVFlist_t &VF, const std::pair<int, int> &e1,
-                             const std::pair<int, int> &e2, const TimeSlab *In, int itq, double cst_time) override;
+    void addFaceContribution(const itemVFlist_t &VF, const std::pair<int, int> &e1, const std::pair<int, int> &e2,
+                             const TimeSlab *In, int itq, double cst_time) override;
 
     // Constructors
 
@@ -136,14 +136,10 @@ template <meshQuadrilateral M, typename L> class AlgoimCutFEM : public AlgoimBas
     // AlgoimCutFEM(const fespace_t &vh, int np, const ProblemOption &option = defaultProblemOption)
     //     : BaseCutFEM<mesh_t>(vh, option, np), Solver(option) {}
 
-    void solve() {
-        gather(this->mat_);
-        Solver::solve(this->mat_[0], this->rhs_);
-    }
+    void solve() { Solver::solve(this->mat_, this->rhs_); }
     void solve(std::string solverName) {
         this->solver_name_ = solverName;
-        gather(this->mat_);
-        Solver::solve(this->mat_[0], this->rhs_);
+        Solver::solve(this->mat_, this->rhs_);
     }
     void solve(std::map<std::pair<int, int>, R> &A, std::span<double> b) { Solver::solve(A, b); }
     // void solve(std::vector<Matrix> &A, Rn &b, std::string solverName) {

@@ -35,6 +35,9 @@ namespace solver {
 void umfpack(std::map<std::pair<int, int>, R> &, std::span<double>, bool);
 
 void LAPACK(Rnm &a, Rn &b);
+
+void mumps(std::map<std::pair<int, int>, R> &A, std::span<double> b, std::size_t nrhs);
+
 } // namespace solver
 class Solver {
 

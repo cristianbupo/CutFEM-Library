@@ -624,14 +624,30 @@ template <typeMesh mesh_t> TestFunction<mesh_t> operator*(const TestFunction<mes
 
 template <typeMesh mesh_t>
 TestFunction<mesh_t> operator*(const std::shared_ptr<ExpressionVirtual> &fh, const TestFunction<mesh_t> &T) {
-    std::vector<std::shared_ptr<ExpressionVirtual>> ff = {fh};
-    return ff * T;
+    // std::vector<std::shared_ptr<ExpressionVirtual>> ff = {fh};
+    // return ff * T;
+    auto [N, M] = T.size();
+    int D       = mesh_t::D;
+    TestFunction<mesh_t> Un;
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++) {
+            auto new_list = T.getList(i, j);
+            for (auto &item : new_list.U) {
+                if (item.expru.get() == nullptr) {
+                    item.expru = fh;
+                } else {
+                    item.expru = item.expru * fh;
+                }
+            }
+            Un.push({i, j}, new_list);
+        }
+    }
+    return Un;
 }
 
 template <typeMesh mesh_t>
 TestFunction<mesh_t> operator*(const TestFunction<mesh_t> &T, const std::shared_ptr<ExpressionVirtual> &fh) {
-    std::vector<std::shared_ptr<ExpressionVirtual>> ff = {fh};
-    return ff * T;
+    return fh * T;
 }
 
 template <typeMesh mesh_t> TestFunction<mesh_t> operator*(const VirtualParameter &cc, const TestFunction<mesh_t> &T) {
@@ -727,9 +743,9 @@ template <typeMesh mesh_t> TestFunction<mesh_t> grad(const TestFunction<mesh_t> 
         for (int d = 0; d < D; ++d) {
 
             // Get the ItemList corresponding to component i
-            auto new_list = T.getList(
-                i,
-                0); // e.g. if T is a sum of two test functions, T = T1 + T2, new_list will have two components {T1, T2}
+            auto new_list = T.getList(i,
+                                      0); // e.g. if T is a sum of two test functions, T = T1 + T2, new_list will
+                                          // have two components {T1, T2}
 
             // Iterate over the test functions in the item list
             for (auto &item : new_list.U) {
@@ -738,12 +754,10 @@ template <typeMesh mesh_t> TestFunction<mesh_t> grad(const TestFunction<mesh_t> 
                                                 // otherwise take second derivative (or mixed derivative etc.)
             }
 
-            int irow =
-                T.isScalar()
-                    ? d
-                    : i; // if T is a scalar, then grad(T) is a vector and the derivatives of T are placed in the rows,
-            int jrow = T.isScalar() ? 0 : d; // otherwise grad(T) is a matrix and the components of T are placed in the
-                                             // rows, and the derivatives in the columns
+            int irow = T.isScalar() ? d : i;    // if T is a scalar, then grad(T) is a vector and the derivatives of T
+                                                // are placed in the rows,
+            int jrow = T.isScalar() ? 0 : d;    // otherwise grad(T) is a matrix and the components of T are placed in
+                                                // the rows, and the derivatives in the columns
             gradU.push({irow, jrow}, new_list); // push the differentiated item list into the gradU matrix
         }
     }
@@ -778,8 +792,8 @@ template <typeMesh mesh_t> TestFunction<mesh_t> div(const TestFunction<mesh_t> &
             item.du = D1(i);
         }
 
-        divU.push({0, 0}, new_list); // Result is a scalar function, so we push the differentiated item list into the
-                                     // same spot in the matrix
+        divU.push({0, 0}, new_list); // Result is a scalar function, so we push the differentiated item list into
+                                     // the same spot in the matrix
     }
 
     return divU;

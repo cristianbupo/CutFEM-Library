@@ -719,7 +719,7 @@ std::vector<double> boundPreservingLimiter_P1(const FunFEM<Mesh> &fun_uM, double
     const GFESpace<Mesh> &Wh(*fun_uM.Vh);
     const ActiveMesh<Mesh> &Kh(macro.Th_);
 
-    const auto &uM = fun_uM.array();
+    std::span<double> uM = fun_uM.array();
     std::vector<double> u_new(uM.begin(), uM.end());
 
     // Apply limiter in all element
@@ -767,7 +767,7 @@ std::vector<double> boundPreservingLimiter_P1(const FunFEM<Mesh> &fun_uM, double
         // 4) replace the dof
         for (int df = 0; df < FK.NbDoF(); ++df) {
             int df_glb    = FK.loc2glb(df);
-            u_new[df_glb] = theta * (uM(df_glb) - u_bar_K) + u_bar_K;
+            u_new[df_glb] = theta * (uM[df_glb] - u_bar_K) + u_bar_K;
         }
     }
 

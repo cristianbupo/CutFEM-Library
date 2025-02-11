@@ -188,8 +188,8 @@ void BaseFEM<M>::addToMatrix_Opt(const itemVF_t &VFi, const FElement &FK, const 
 
 template <typename M>
 void BaseFEM<M>::addToRHS(const itemVF_t &VFi, const FElement &FKv, const RNMK_ &fv, double Cint) {
+#pragma omp critical
     for (int i = FKv.dfcbegin(VFi.cv); i < FKv.dfcend(VFi.cv); ++i) {
-
         (*this)(FKv.loc2glb(i)) += Cint * fv(i, VFi.cv, VFi.dv);
     }
 }
@@ -197,7 +197,7 @@ void BaseFEM<M>::addToRHS(const itemVF_t &VFi, const FElement &FKv, const RNMK_ 
 template <typename M>
 void BaseFEM<M>::addToRHS(const itemVF_t &VFi, const TimeSlab &In, const FElement &FKv, const RNMK_ &fv, double Cint) {
     RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
-
+#pragma omp critical
     for (int it = In.dfcbegin(0); it < In.dfcend(0); ++it) {
         for (int i = FKv.dfcbegin(VFi.cv); i < FKv.dfcend(VFi.cv); ++i) {
             (*this)(FKv.loc2glb(i, it)) += Cint * fv(i, VFi.cv, VFi.dv) * bf_time(it, 0, VFi.dtv);
@@ -238,7 +238,7 @@ template <typename Mesh> void BaseFEM<Mesh>::addBilinear(const itemVFlist_t &VF,
 template <typename Mesh> void BaseFEM<Mesh>::addBilinear(const itemVFlist_t &VF, const CutMesh &Th) {
     assert(!VF.isRHS());
     progress bar("Add Bilinear Mesh", Th.last_element(), globalVariable::verbose);
-
+#pragma omp parallel for num_threads(this->get_num_threads())
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
         bar += Th.next_element();
         BaseFEM<Mesh>::addElementContribution(VF, k, nullptr, 0, 1.);
@@ -251,9 +251,11 @@ template <typename Mesh> void BaseFEM<Mesh>::addBilinear(const itemVFlist_t &VF,
 template <typename Mesh> void BaseFEM<Mesh>::addLinear(const itemVFlist_t &VF, const Mesh &Th) {
     assert(VF.isRHS());
     progress bar("Add Linear Mesh", Th.last_element(), globalVariable::verbose);
-
+#pragma omp parallel for num_threads(this->get_num_threads())
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
         bar += Th.next_element();
+
+        // assert(omp_get_thread_num() == 0);
 
         BaseFEM<Mesh>::addElementContribution(VF, k, nullptr, 0, 1.);
     }
@@ -293,7 +295,6 @@ void BaseFEM<M>::addElementContribution(const itemVFlist_t &VF, const int k, con
         const FElement &FKv(Vhv[k]);
         const FElement &FKu(Vhu[k]);
         this->initIndex(FKu, FKv); //, iam);
-
         // BF MEMORY MANAGEMENT -
         bool same   = (&Vhu == &Vhv);
         int lastop  = getLastop(VF[l].du, VF[l].dv);
@@ -563,13 +564,10 @@ void BaseFEM<M>::addFaceContribution(const itemVFlist_t &VF, const std::pair<int
     }
 }
 
-
-
 template <typename M>
 void BaseFEM<M>::addFaceContributionMixed(const itemVFlist_t &VF, const std::pair<int, int> &e1,
                                           const std::pair<int, int> &e2, const TimeSlab *In, int itq, double cst_time) {
 
-    
     typedef typename FElement::RdHatBord RdHatBord;
 
     // CHECK IF IT IS FOR RHS OR MATRIX
@@ -767,8 +765,8 @@ void BaseFEM<M>::addPatchContribution(const itemVFlist_t &VF, const int k, const
 }
 
 template <typename M>
-void BaseFEM<M>::addPatchContributionMixed(const itemVFlist_t &VF, const int kb, const int kbn, const TimeSlab *In, int itq,
-                                      double cst_time) {
+void BaseFEM<M>::addPatchContributionMixed(const itemVFlist_t &VF, const int kb, const int kbn, const TimeSlab *In,
+                                           int itq, double cst_time) {
 
     // typedef typename FElement::RdHat RdHat;
 
@@ -789,7 +787,7 @@ void BaseFEM<M>::addPatchContributionMixed(const itemVFlist_t &VF, const int kb,
     // int domain    = FK.get_domain();
 
     // kb, kbn are the indices of the elements in the back mesh
-    const int k = Vh.idxElementFromBackMesh(kb, 0);
+    const int k  = Vh.idxElementFromBackMesh(kb, 0);
     const int kn = Vh.idxElementFromBackMesh(kbn, 0);
 
     // GET THE QUADRATURE RULE
@@ -805,7 +803,7 @@ void BaseFEM<M>::addPatchContributionMixed(const itemVFlist_t &VF, const int kb,
         // FINTE ELEMENT SPACES && ELEMENTS
         const FESpace &Vhv(VF.get_spaceV(l));
         const FESpace &Vhu(VF.get_spaceU(l));
-        
+
         assert(Vhv.get_mesh().get_nb_domain() == 1);
         assert(Vhu.get_mesh().get_nb_domain() == 1);
 
@@ -1129,8 +1127,7 @@ void BaseFEM<Mesh>::setDirichlet(const FunFEM<Mesh> &gh, const Mesh &Th, std::li
                             dof2set.insert({df_glob, gh(df_glob)});
                         }
 
-                    } 
-                    else if (id_item < K.nv + K.ne) {
+                    } else if (id_item < K.nv + K.ne) {
                         // std::cout << " on edge  " <<FK.DFOnWhat(df) << std::endl;
                         int id_face = id_item - K.nv;
                         if (id_face == ifac) {
@@ -1167,8 +1164,8 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, 
         //! Outcommented the below because it makes high-order DG fail
         // if (util::contain(label, face.lab) || all_label) {
 
-            addInterfaceContribution(VF, gamma, iface, 0., nullptr, 1., 0);
-            this->addLocalContribution();
+        addInterfaceContribution(VF, gamma, iface, 0., nullptr, 1., 0);
+        this->addLocalContribution();
         // }
     }
     bar.end();
@@ -1490,10 +1487,11 @@ void BaseFEM<M>::addInterfaceContribution(const itemVFlist_t &VF, const Interfac
     }
 }
 
-// ! FIXME: This doesn't work for the following case (see lagr_nit_fictitious.cpp), I think the issue lies when variables are defined on surface meshes:
+// ! FIXME: This doesn't work for the following case (see lagr_nit_fictitious.cpp), I think the issue lies when
+// variables are defined on surface meshes:
 /*
 stokes.addLinear(
-    fun_u, 
+    fun_u,
     - innerProduct(1., omega*n)
     , surface
 );

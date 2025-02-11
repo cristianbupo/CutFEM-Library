@@ -48,25 +48,27 @@ void Solver::solve(std::map<std::pair<int, int>, R> &A, std::span<double> b) {
         exit(EXIT_FAILURE);
     }
 #endif
-// #ifdef USE_MUMPS
-//     if (solver_name_ == "mumps") {
-//         if (!MPIcf::isInitialized()) {
-//             std::cout << " cannot use mumps, mpi is not initialized" << std::endl;
-//             exit(EXIT_FAILURE);
-//         }
-// #ifndef USE_MPI
-//         std::cout << " You need to compile using MPI to be able to use MUMPS" << std::endl;
-//         exit(EXIT_FAILURE);
-// #endif
-//     }
-// #endif
+    // #ifdef USE_MUMPS
+    //     if (solver_name_ == "mumps") {
+    //         if (!MPIcf::isInitialized()) {
+    //             std::cout << " cannot use mumps, mpi is not initialized" << std::endl;
+    //             exit(EXIT_FAILURE);
+    //         }
+    // #ifndef USE_MPI
+    //         std::cout << " You need to compile using MPI to be able to use MUMPS" << std::endl;
+    //         exit(EXIT_FAILURE);
+    // #endif
+    //     }
+    // #endif
 
     if (solver_name_ == "default") {
 #ifdef USE_MUMPS
         solver_name_ = "mumps";
+        std::cout << "Default solver is MUMPS\n";
 #else
 #ifdef USE_UMFPACK
         solver_name_ = "umfpack";
+        std::cout << "Default solver is UMFPACK\n";
 #else
         std::cout << " Solver unknown " << std::endl;
         exit(EXIT_FAILURE);
@@ -76,12 +78,12 @@ void Solver::solve(std::map<std::pair<int, int>, R> &A, std::span<double> b) {
 
     if (solver_name_ == "mumps") {
 #ifdef USE_MUMPS
-        std::cout << "Using MUMPS\n";
+        // std::cout << "Using MUMPS\n";
         MUMPS(*this, A, b);
 #endif
     } else if (solver_name_ == "umfpack") {
 #ifdef USE_UMFPACK
-        std::cout << "Using UMFPACK\n";
+        // std::cout << "Using UMFPACK\n";
         solver::umfpack(A, b, clearMatrix_);
 #endif
     }
@@ -128,6 +130,11 @@ void LAPACK(Rnm &a, Rn &b) {
     lapack_int nrhs = 1;
     lapack_int info = LAPACKE_dgels(LAPACK_ROW_MAJOR, 'N', m, n, 1, a, lda, b, ldb);
 }
+#endif
+
+#ifdef USE_MUMPS
+void mumps(std::map<std::pair<int, int>, R> &A, std::span<double> b, std::size_t nrhs) { MUMPS mumps(A, b, nrhs); }
+
 #endif
 
 } // namespace solver

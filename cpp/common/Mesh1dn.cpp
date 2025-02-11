@@ -38,8 +38,6 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #include "libmesh5.h"
 #include "Mesh1dn.hpp"
 
-long verbosity = 2;
-
 Mesh1::Mesh1(const char *filename) { // read the mesh
 
     int nt, nv, nbe;
@@ -50,13 +48,12 @@ Mesh1::Mesh1(const char *filename) { // read the mesh
             std::cerr << "Mesh1::Mesh1 Erreur openning " << filename << std::endl;
             exit(1);
         }
-        if (verbosity)
-            std::cout << " Read On file \"" << filename << "\"" << std::endl;
+
+        LOG_INFO << " Read On file \"" << filename << "\"" << logger::endl;
         f >> nv >> nt >> nbe;
         this->set(nv, nt, nbe);
-        if (verbosity)
-            std::cout << "  -- Nb of Vertex " << nv << " "
-                      << " Nb of Seg " << nt << " , Nb of border Vertex " << nbe << std::endl;
+        LOG_INFO << "  -- Nb of Vertex " << nv << " " << " Nb of Seg " << nt << " , Nb of border Vertex " << nbe
+                 << logger::endl;
         assert(f.good() && nt && nv);
         for (int i = 0; i < nv; i++) {
             f >> this->vertices[i];
@@ -76,8 +73,7 @@ Mesh1::Mesh1(const char *filename) { // read the mesh
     BuildBound();
     BuildAdj();
 
-    if (verbosity)
-        std::cout << "   - mesh mesure = " << mes << " border mesure: " << mesb << std::endl;
+    LOG_INFO << "   - mesh mesure = " << mes << " border mesure: " << mesb << logger::endl;
 }
 
 Mesh1::Mesh1(int nx, R orx, R lx) {

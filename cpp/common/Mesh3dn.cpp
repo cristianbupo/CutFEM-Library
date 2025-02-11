@@ -42,28 +42,6 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #include "Mesh3dn.hpp"
 #include "base_interface.hpp"
 
-// Mesh3::Mesh3(const std::string filename) {
-//     std::ifstream f(filename.c_str());
-//     if (filename.rfind(".msh") == filename.length() - 4)
-//         readmsh(f);
-//     else {
-//         std::cout << " not a good format" << std::endl;
-//     }
-
-//     BuildBound();
-//     if (nt > 0) {
-//         BuildAdj();
-//     }
-
-//     verbosity = 3;
-//     if (verbosity > 2)
-//         std::cout << "  -- End of read: mesure = " << mes << " border mesure " << mesb << std::endl;
-//     if (verbosity)
-//         std::cout << "  -- Mesh3 : " << filename << ", d " << 3 << ", n Tet " << nt << ", n Vtx " << nv << " n Bord "
-//                   << nbe << std::endl;
-//     ffassert(mes >= 0); // add F. Hecht sep 2009.
-// }
-
 Mesh3::Mesh3(const std::string filename, MeshFormat type_mesh) { // read the mesh
 
     std::ifstream f(filename);
@@ -71,27 +49,15 @@ Mesh3::Mesh3(const std::string filename, MeshFormat type_mesh) { // read the mes
         std::cerr << "Mesh3::Mesh3 Erreur openning " << filename << std::endl;
         exit(1);
     }
-    if (verbosity)
-        std::cout << " Read On file \"" << filename << "\"" << std::endl;
 
-    // if (filename.rfind(".msh") == filename.length() - 4) {
-    //     if (verbosity)
-    //         std::cout << "  -- Read msh file " << std::endl;
-    //     readMsh(f);
-    //     // return;
-    // } else if (filename.rfind(".mesh") == filename.length() - 5) {
-    //     if (verbosity)
-    //         std::cout << "  -- Read mesh file " << std::endl;
-    //     readMesh(f);
-    // }
+    LOG_INFO << " Read On file \"" << filename << "\"" << logger::endl;
     if (type_mesh == MeshFormat::mesh_gmsh)
         readMeshGmsh(f);
     else if (type_mesh == MeshFormat::mesh_freefem) {
-        //readMeshFreefem(f);
+        // readMeshFreefem(f);
         std::cerr << "No freefem implementation " << filename << std::endl;
         exit(1);
-    }
-    else {
+    } else {
         std::cerr << "No mesh format specified " << filename << std::endl;
         exit(1);
     }
@@ -99,14 +65,13 @@ Mesh3::Mesh3(const std::string filename, MeshFormat type_mesh) { // read the mes
     BuildBound();
     BuildAdj();
 
-    // if (verbosity)
-    std::cout << "   - mesh mesure = " << mes << " border mesure: " << mesb << std::endl;
+    LOG_INFO << "   - mesh mesure = " << mes << " border mesure: " << mesb << logger::endl;
 }
 
 void Mesh3::readmsh(std::ifstream &f) {
     f >> nv >> nt >> nbe;
-    if (verbosity > 2)
-        std::cout << " GRead : nv " << nv << " " << nt << " " << nbe << std::endl;
+
+    LOG_INFO << " GRead : nv " << nv << " " << nt << " " << nbe << logger::endl;
     this->vertices       = new Vertex[nv];
     this->elements       = new Element[nt];
     this->borderelements = new BorderElement[nbe];
@@ -178,7 +143,6 @@ void Mesh3::readMeshGmsh(std::ifstream &f) {
     }
 }
 
-
 Mesh3::Mesh3(int nnv, int nnt, int nnbe, Vertex3 *vv, Tet *tt, Triangle3 *bb) {
 
     nv  = nnv;
@@ -203,14 +167,7 @@ Mesh3::Mesh3(int nnv, int nnt, int nnbe, Vertex3 *vv, Tet *tt, Triangle3 *bb) {
     if (nt > 0) {
         BuildAdj();
     }
-    //  end add
-    // if(verbosity>1)
-    // 	  std::cout << "  -- End of read: mesure = " << mes << " border mesure "
-    // << mesb << std::endl;
 
-    //    if(verbosity>1)
-    //      std::cout << "  -- End of read: mesure = " << mes << " border mesure
-    //      " << mesb << std::endl;
     assert(mes >= 0.);
 }
 
@@ -235,8 +192,7 @@ Mesh3::Mesh3(int nnv, int nnbe, Vertex3 *vv, Triangle3 *bb) {
     }
     //  end add
 
-    if (verbosity > 1)
-        std::cout << "  -- End of Construct  mesh3: mesure = " << mes << " border mesure " << mesb << std::endl;
+    LOG_INFO << "  -- End of Construct  mesh3: mesure = " << mes << " border mesure " << mesb << logger::endl;
     ffassert(mes >= 0); // add F. Hecht sep 2009.
 }
 

@@ -35,8 +35,6 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #ifndef COMMON_GENERICMESH_HPP
 #define COMMON_GENERICMESH_HPP
 
-extern long verbosity;
-
 #include "cassert"
 #include "logger.hpp"
 #include "../num/util.hpp"

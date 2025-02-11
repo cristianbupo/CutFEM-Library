@@ -31,10 +31,7 @@ Myrbäck and
 
 using namespace globalVariable; // to access some globally defined constants
 
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
-
-namespace Example1 {
+namespace Circle {
 
 const double D      = 0.01; // diffusion bulk
 const double DGamma = 1.;   // diffusion surface
@@ -2828,7 +2825,2969 @@ double fun_rhsSurf(double *P, const int i, const double t) {
 
 R fun_one(double *P, const int i) { return 1.; }
 
-} // namespace Example1
+} // namespace Circle
+
+namespace Droplet {
+
+const double D      = 0.01; // diffusion bulk
+const double DGamma = 1.;   // diffusion surface
+const double R0     = 1.;
+
+// Level-set function
+double fun_levelSet(double *P, const int i, const double t) {
+    double xc = 0, yc = (1 - P[0] * P[0]) * t;
+    return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - R0 * R0);
+}
+
+// Level-set function initial
+double fun_levelSet(double *P, const int i) { return (P[0] * P[0] + P[1] * P[1] - R0 * R0); }
+
+template <int N> struct Levelset {
+
+    double t;
+
+    // level set function
+    template <typename V> typename V::value_type operator()(const V &P) const {
+        return P[0] * P[0] + (P[1] - (1 - P[0] * P[0]) * t) * (P[1] - (1 - P[0] * P[0]) * t) - R0 * R0;
+    }
+
+    // gradient of level set function
+    template <typename T> algoim::uvector<T, N> grad(const algoim::uvector<T, N> &X) const {
+        const T &x = X[0];
+        const T &y = X[1];
+        return algoim::uvector<T, N>(x * 2.0 + t * x * (y + t * (x * x - 1.0)) * 4.0,
+                                     y * 2.0 + t * (x * x - 1.0) * 2.0);
+    }
+
+    // normal = grad(phi)/norm(grad(phi))
+    R2 normal(std::span<double> P) const {
+        double x = P[0], y = P[1];
+
+        return R2(((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                   sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                      2.0,
+                  ((y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                   sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                      2.0);
+    }
+};
+
+// Velocity field
+double fun_velocity(double *P, const int i) {
+    if (i == 0)
+        return 0;
+    else
+        return (1 - P[0] * P[0]);
+}
+
+// Exact solution bulk
+double fun_uBulk(double *P, const int i, const double t) {
+    double x = P[0], y = P[1];
+
+    return 0.5 + 0.4 * cos(pi * x) * cos(pi * y) * cos(2 * pi * t);
+}
+
+double fun_uBulkD(double *P, const int i, const int d, const double t) { return fun_uBulk(P, i, t); }
+
+// Initial solution bulk
+double fun_uBulkInit(double *P, const int i) { return fun_uBulk(P, i, 0.); }
+
+// Exact solution surface
+double fun_uSurf(double *P, const int i, const double t) {
+    double x = P[0], y = P[1];
+
+    return (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+             1.0 /
+             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                5.0 -
+            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                5.0 +
+            1.0 / 2.0) /
+           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0);
+}
+
+// Initial solution surface
+double fun_uSurfInit(double *P, const int i) { return fun_uSurf(P, i, 0.); }
+
+// RHS fB bulk
+double fun_rhsBulk(double *P, const int i, const double t) {
+    R x = P[0], y = P[1];
+
+    return M_PI * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * (-4.0 / 5.0) +
+           M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (x * x - 1.0) * (2.0 / 5.0) +
+           D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (4.0 / 5.0);
+}
+
+// RHS fS surface
+double fun_rhsSurf(double *P, const int i, const double t) {
+    double x = P[0], y = P[1];
+
+    return DGamma *
+               ((pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) /
+                     (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                      pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                 1.0) *
+                    (((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                       D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                           (2.0 / 5.0) -
+                       (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                        (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                        sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                           5.0 +
+                       (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                        sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                           5.0 -
+                       (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                        pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                            3.0 / 2.0) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                         t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                           1.0E+1 +
+                       D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                           (4.0 / 5.0) -
+                       (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                        (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                        pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                            3.0 / 2.0) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                         t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                           1.0E+1) /
+                          (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                      M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                          pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                          (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 -
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 +
+                           1.0 / 2.0) *
+                          (2.0 / 5.0)) *
+                         ((y * 8.0 + t * (x * x - 1.0) * 8.0) /
+                              (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                          (pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) * 1.0 /
+                           pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                   pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                               2.0) *
+                           (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                            t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                              4.0) -
+                     (pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) /
+                          (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                      1.0) *
+                         (((M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (-2.0 / 5.0) -
+                           D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                               sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                               (4.0 / 5.0) +
+                           (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 +
+                           D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   3.0 / 2.0) *
+                               (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                               (2.0 / 5.0) +
+                           (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 +
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            ((t * t) * (x * x) * 8.0 + 2.0) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0)) /
+                               1.0E+1 +
+                           D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                               sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                               (8.0 / 5.0) -
+                           D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                               (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   5.0 / 2.0) *
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0,
+                                   2.0) *
+                               (3.0 / 2.0E+1) -
+                           (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                             t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                               5.0 +
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * ((t * t) * (x * x) * 8.0 + 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0)) /
+                               1.0E+1 +
+                           (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                             t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                               5.0 -
+                           D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                               (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   5.0 / 2.0) *
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0,
+                                   2.0) *
+                               (3.0 / 2.0E+1) +
+                           D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   3.0 / 2.0) *
+                               (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                               (4.0 / 5.0)) /
+                              (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                          M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                              pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                              (M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                               D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                   sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                   (2.0 / 5.0) -
+                               (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 +
+                               (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                    3.0 / 2.0) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                 t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                   1.0E+1 +
+                               D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                                   sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                   (4.0 / 5.0) -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                    3.0 / 2.0) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                 t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                   1.0E+1) *
+                              (4.0 / 5.0) +
+                          (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                              pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                              (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 +
+                               1.0 / 2.0) *
+                              (2.0 / 5.0) +
+                          (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) *
+                              pow(sin(y * M_PI), 2.0) * 1.0 /
+                              pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                              (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 +
+                               1.0 / 2.0) *
+                              (8.0 / 2.5E+1)) +
+                     (((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                            5.0 -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0)) /
+                            1.0E+1 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0)) /
+                         (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 2.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 2.0) +
+                     ((y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (-((M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                         D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (2.0 / 5.0) +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         D * t * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (4.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 -
+                         D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (8.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (2.0 / 5.0) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (2.0 / 5.0) -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                5.0 -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0)) *
+                           (2.0 / 5.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                            D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (2.0 / 5.0) -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1) *
+                           (2.0 / 5.0) +
+                       (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0) -
+                       (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                           sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (8.0 / 2.5E+1))) /
+                         (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) +
+                     (t * x *
+                      ((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                            5.0 -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0)) /
+                            1.0E+1 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0)) /
+                         (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) -
+                     (((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                            5.0 -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0)) /
+                            1.0E+1 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         4.0) -
+                (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) /
+                     (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                      pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                 1.0) *
+                    (((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                       (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                        sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           5.0 -
+                       (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                        sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                           5.0 +
+                       (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                        (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                        sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                           5.0 -
+                       (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                        (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             2.0 +
+                         t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                        pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                            3.0 / 2.0)) /
+                           1.0E+1 -
+                       (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                        (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             2.0 +
+                         t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        1.0 /
+                        pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                            3.0 / 2.0)) /
+                           1.0E+1 +
+                       D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                           (4.0 / 5.0)) /
+                          (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                      M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                          pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                          (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 -
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 +
+                           1.0 / 2.0) *
+                          (2.0 / 5.0)) *
+                         (((((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                2.0 +
+                            t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) * 1.0 /
+                           pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                   pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                               2.0)) /
+                              4.0 -
+                          ((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 2.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 2.0)) +
+                     (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) /
+                          (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                      1.0) *
+                         (((M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (-2.0 / 5.0) +
+                           (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 -
+                           D * t * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                               sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                               (4.0 / 5.0) +
+                           (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                               5.0 -
+                           D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                               sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               (2.0 / 5.0) -
+                           D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                               (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                               pow(((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                    ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                           2.0 +
+                                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0,
+                                   2.0) *
+                               1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   5.0 / 2.0) *
+                               (3.0 / 2.0E+1) -
+                           (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                            (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                              ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                 2.0 +
+                             t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0)) /
+                               5.0 -
+                           D * (t * t) * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                               sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                               (2.4E+1 / 5.0) +
+                           D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                               sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                               (8.0 / 5.0) +
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                            (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 +
+                             pow((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0, 2.0) /
+                                 2.0 +
+                             (t * t) * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.2E+1)) /
+                               1.0E+1 +
+                           (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                            (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                              ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                 2.0 +
+                             t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0)) /
+                               5.0 -
+                           D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                               pow(((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                    ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                           2.0 +
+                                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0,
+                                   2.0) *
+                               (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   5.0 / 2.0) *
+                               (3.0 / 2.0E+1) +
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 +
+                             pow((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0, 2.0) /
+                                 2.0 +
+                             (t * t) * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.2E+1)) /
+                               1.0E+1 +
+                           (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                            (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                              ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                 2.0 +
+                             t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            1.0 /
+                            pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                    pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                3.0 / 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               5.0 +
+                           D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                               (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                 ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                    2.0 +
+                                t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               1.0 /
+                               pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                   3.0 / 2.0) *
+                               (4.0 / 5.0)) /
+                              (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                          M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                              pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                              (M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                   5.0 -
+                               (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 +
+                               (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                                (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                  ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                     2.0 +
+                                 t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                    3.0 / 2.0)) /
+                                   1.0E+1 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                                (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                  ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                     2.0 +
+                                 t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                                1.0 /
+                                pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                    3.0 / 2.0)) /
+                                   1.0E+1 +
+                               D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                   sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                   (4.0 / 5.0)) *
+                              (4.0 / 5.0) +
+                          (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                              pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                              (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 +
+                               1.0 / 2.0) *
+                              (2.0 / 5.0) +
+                          (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) *
+                              pow(sin(x * M_PI), 2.0) * 1.0 /
+                              pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                              (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 -
+                               (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                   5.0 +
+                               1.0 / 2.0) *
+                              (8.0 / 2.5E+1)) -
+                     ((y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                        D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (2.0 / 5.0) -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0) -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                         (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                     ((y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (-((M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                         D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (2.0 / 5.0) +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         D * t * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (4.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 -
+                         D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (8.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (2.0 / 5.0) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (2.0 / 5.0) -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                5.0 -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0)) *
+                           (2.0 / 5.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                            D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (2.0 / 5.0) -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1) *
+                           (2.0 / 5.0) +
+                       (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0) -
+                       (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                           sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (8.0 / 2.5E+1))) /
+                         (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) +
+                     ((y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                        D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (2.0 / 5.0) -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0) -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          2.0)) /
+                         4.0 -
+                     (t * x *
+                      ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                        D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (2.0 / 5.0) -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0) -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0)) /
+                         (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) +
+                ((y * 2.0 + t * (x * x - 1.0) * 2.0) * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                 ((pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) /
+                       (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                   1.0) *
+                      (-((M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                         D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (2.0 / 5.0) +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         D * t * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (4.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 -
+                         D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (8.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (2.0 / 5.0) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (2.0 / 5.0) -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                5.0 -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0)) *
+                           (2.0 / 5.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                            D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (2.0 / 5.0) -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1) *
+                           (2.0 / 5.0) +
+                       (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0) -
+                       (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                           sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (8.0 / 2.5E+1)) -
+                  ((pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) *
+                    (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                         2.0 +
+                     t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                    1.0 /
+                    pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                            pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                        2.0)) /
+                       4.0 -
+                   (t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) /
+                       (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) *
+                      ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                        D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (2.0 / 5.0) -
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1 +
+                        D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                            (4.0 / 5.0) -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                            1.0E+1) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0)) -
+                  ((y * 2.0 + t * (x * x - 1.0) * 2.0) * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                   (((M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (-2.0 / 5.0) +
+                     (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     D * t * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0) +
+                     (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) * (2.0 / 5.0) -
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                         pow(((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                              ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                     2.0 +
+                                 t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0,
+                             2.0) *
+                         1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             5.0 / 2.0) *
+                         (3.0 / 2.0E+1) -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         5.0 -
+                     D * (t * t) * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (2.4E+1 / 5.0) +
+                     D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (8.0 / 5.0) +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 +
+                       pow((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0, 2.0) / 2.0 +
+                       (t * t) * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.2E+1)) /
+                         1.0E+1 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         5.0 -
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         pow(((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                              ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                     2.0 +
+                                 t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0,
+                             2.0) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             5.0 / 2.0) *
+                         (3.0 / 2.0E+1) +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 +
+                       pow((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0, 2.0) / 2.0 +
+                       (t * t) * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.2E+1)) /
+                         1.0E+1 +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                         5.0 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                           ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                              2.0 +
+                          t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                         1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (4.0 / 5.0)) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             5.0 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (4.0 / 5.0)) *
+                        (4.0 / 5.0) +
+                    (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0) +
+                    (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(y * M_PI), 2.0) * pow(sin(x * M_PI), 2.0) *
+                        1.0 / pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (8.0 / 2.5E+1))) /
+                      (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) +
+                  (((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                         5.0 -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0)) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0)) *
+                   (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                   ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                      (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                  (((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                         5.0 -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0)) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0)) *
+                   (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                   (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                     ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                        2.0 +
+                    t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                   (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                   pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                       2.0)) /
+                      4.0 +
+                  (t * x *
+                   ((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                      ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                         5.0 -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                      (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                        ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                           2.0 +
+                       t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                      1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0)) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0)) *
+                   (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0)) /
+                      (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0))) /
+                    (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                ((y * 2.0 + t * (x * x - 1.0) * 2.0) * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                 (((M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                    (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                     sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                     ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                        5.0 -
+                    (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                     (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                     sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                        5.0 +
+                    (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                     (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                     sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                        5.0 -
+                    (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                     (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                       ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                          2.0 +
+                      t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                     (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                     pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                         3.0 / 2.0)) /
+                        1.0E+1 -
+                    (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                     (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                     (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                       ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                          2.0 +
+                      t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                     1.0 /
+                     pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                         3.0 / 2.0)) /
+                        1.0E+1 +
+                    D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                        sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                             pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                        (4.0 / 5.0)) /
+                       (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                   M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                       pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                       (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 -
+                        (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                            5.0 +
+                        1.0 / 2.0) *
+                       (2.0 / 5.0)) *
+                      ((pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) * 1.0 /
+                        pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                            2.0) *
+                        (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                         t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                           4.0 -
+                       (t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) /
+                           (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                            pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) -
+                  (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) /
+                       (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                        pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                   1.0) *
+                      (-((M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                         D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (2.0 / 5.0) +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         D * t * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (4.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 -
+                         D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (8.0 / 5.0) +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                            ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                               2.0 +
+                           t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                          ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                             1.0E+1 +
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (t * x * 4.0 + t * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0 +
+                           t * x * ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0) *
+                               2.0)) /
+                             1.0E+1 -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (2.0 / 5.0) +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (2.0 / 5.0) -
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 5.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                             (3.0 / 2.0E+1)) /
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * (2.0 / 5.0) +
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                5.0 -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                             (((x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                               ((t * t) * (x * x) * 8.0 + t * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + 2.0)) /
+                                  2.0 +
+                              t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                             1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0)) *
+                           (2.0 / 5.0) +
+                       M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                            D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (2.0 / 5.0) -
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1 +
+                            D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                                (4.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                                 3.0 / 2.0) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                              t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                                1.0E+1) *
+                           (2.0 / 5.0) +
+                       (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (2.0 / 5.0) -
+                       (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * cos(x * M_PI) * cos(y * M_PI) * sin(x * M_PI) *
+                           sin(y * M_PI) * 1.0 /
+                           pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                           (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 -
+                            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                                5.0 +
+                            1.0 / 2.0) *
+                           (8.0 / 2.5E+1)) -
+                  (((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (2.0 / 5.0) -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         1.0E+1 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0) -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         1.0E+1) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0)) *
+                   (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0)) /
+                      (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 2.0 +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 2.0) +
+                  ((y * 2.0 + t * (x * x - 1.0) * 2.0) * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+                   (((M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (-2.0 / 5.0) -
+                     D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0) +
+                     (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                         (2.0 / 5.0) +
+                     (D * (M_PI * M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * ((t * t) * (x * x) * 8.0 + 2.0) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 +
+                     D * t * x * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (8.0 / 5.0) -
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                         (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             5.0 / 2.0) *
+                         pow(y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                 t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0,
+                             2.0) *
+                         (3.0 / 2.0E+1) -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         5.0 +
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * ((t * t) * (x * x) * 8.0 + 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0)) /
+                         1.0E+1 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         5.0 -
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             5.0 / 2.0) *
+                         pow(y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                                 t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0,
+                             2.0) *
+                         (3.0 / 2.0E+1) +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                             3.0 / 2.0) *
+                         (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                          t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0) *
+                         (4.0 / 5.0)) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                         D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (2.0 / 5.0) -
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1 +
+                         D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                             (4.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                              3.0 / 2.0) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                           t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                             1.0E+1) *
+                        (4.0 / 5.0) +
+                    (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0) +
+                    (M_PI * M_PI) * pow(cos(t * M_PI * 2.0), 2.0) * pow(cos(x * M_PI), 2.0) * pow(sin(y * M_PI), 2.0) *
+                        1.0 / pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 3.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (8.0 / 2.5E+1))) /
+                      (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0)) -
+                  (t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                   ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (2.0 / 5.0) -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         1.0E+1 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0) -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         1.0E+1) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0))) /
+                      (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) +
+                  ((y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                   ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                     D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (2.0 / 5.0) -
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         1.0E+1 +
+                     D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                         sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                         (4.0 / 5.0) -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                              pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                          3.0 / 2.0) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                       t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                         1.0E+1) /
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                    M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                        pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                        (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                          (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 -
+                         (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                          (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                          sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                               pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                             5.0 +
+                         1.0 / 2.0) *
+                        (2.0 / 5.0)) *
+                   (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                   pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                       2.0) *
+                   (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                    t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                      4.0)) /
+                    (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) +
+                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0))) +
+           (M_PI * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * (-4.0 / 5.0) +
+            D * (M_PI * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * sin(x * M_PI) *
+                (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                (2.0 / 5.0) -
+            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+             (x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + t * x * ((x * x) * 2.0 - 2.0) * 2.0) * 1.0 /
+             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                5.0 -
+            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * ((x * x) * 2.0 - 2.0) * 1.0 /
+             sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                  pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                5.0 +
+            D * (M_PI * M_PI) * cos(x * M_PI) * sin(t * M_PI * 2.0) * sin(y * M_PI) *
+                (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                (2.0 / 5.0) +
+            (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+             (((y * 2.0 + t * (x * x - 1.0) * 2.0) * ((x * x) * 2.0 - 2.0)) / 2.0 +
+              ((x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + t * x * ((x * x) * 2.0 - 2.0) * 2.0) *
+               (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0)) /
+                  2.0) *
+             (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                 3.0 / 2.0)) /
+                1.0E+1 +
+            (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+             (((y * 2.0 + t * (x * x - 1.0) * 2.0) * ((x * x) * 2.0 - 2.0)) / 2.0 +
+              ((x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0 + t * x * ((x * x) * 2.0 - 2.0) * 2.0) *
+               (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0)) /
+                  2.0) *
+             (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+             pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                     pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                 3.0 / 2.0)) /
+                1.0E+1) /
+               (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) +
+           (x * x - 1.0) *
+               ((M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (2.0 / 5.0) +
+                 D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                     sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                     (2.0 / 5.0) -
+                 (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * sin(x * M_PI) * sin(y * M_PI) *
+                  (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                  sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                     5.0 +
+                 (D * (M_PI * M_PI) * cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) *
+                  (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                  sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                       pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                     5.0 -
+                 (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                  1.0 /
+                  pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                      3.0 / 2.0) *
+                  (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                   t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                     1.0E+1 +
+                 D * t * x * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) * 1.0 /
+                     sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                     (4.0 / 5.0) -
+                 (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                  (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                  pow(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                          pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0,
+                      3.0 / 2.0) *
+                  (y * 2.0 + t * (x * x - 1.0) * 2.0 +
+                   t * x * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 2.0)) /
+                     1.0E+1) /
+                    (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) -
+                M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * 1.0 /
+                    pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+                    (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) *
+                      (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 -
+                     (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                      (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                      sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                           pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                         5.0 +
+                     1.0 / 2.0) *
+                    (2.0 / 5.0)) +
+           (x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) *
+            (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+             (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+              1.0 /
+              sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                   pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                 5.0 -
+             (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+              (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+              sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                   pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                 5.0 +
+             1.0 / 2.0)) /
+               ((cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0) *
+                (pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0) *
+                2.0) +
+           M_PI * cos(x * M_PI) * cos(y * M_PI) * sin(t * M_PI * 2.0) * 1.0 /
+               pow(cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) + 3.0 / 2.0, 2.0) *
+               (cos(t * M_PI * 2.0) * cos(x * M_PI) * cos(y * M_PI) * (2.0 / 5.0) -
+                (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (y * 2.0 + t * (x * x - 1.0) * 2.0) *
+                 1.0 /
+                 sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                      pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                    5.0 -
+                (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+                 (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+                 sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                      pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+                    5.0 +
+                1.0 / 2.0) *
+               (4.0 / 5.0) -
+           (D * M_PI * cos(t * M_PI * 2.0) * cos(x * M_PI) * sin(y * M_PI) * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 1.0 /
+            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+               5.0 -
+           (D * M_PI * cos(t * M_PI * 2.0) * cos(y * M_PI) * sin(x * M_PI) *
+            (x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0) * 1.0 /
+            sqrt(pow(x * 2.0 + t * x * (y * 2.0 + t * (x * x - 1.0) * 2.0) * 2.0, 2.0) / 4.0 +
+                 pow(y * 2.0 + t * (x * x - 1.0) * 2.0, 2.0) / 4.0)) /
+               5.0;
+}
+
+double fun_one(double *P, const int i) { return 1.; }
+
+} // namespace Droplet
 
 // Setup two-dimensional class types
 const int d = 2;
@@ -2844,13 +5803,12 @@ std::vector<const GTypeOfFE<mesh_t> *> FE_space = {&DataFE<mesh_t>::P1, &DataFE<
 std::vector<const GTypeOfFE<Mesh1> *> FE_time = {&DataFE<Mesh1>::P0Poly, &DataFE<Mesh1>::P1Poly, &DataFE<Mesh1>::P2Poly,
                                                  &DataFE<Mesh1>::P3Poly};
 
-using namespace Example1;
-
 // Define method, stabilization, and polynomial order
-#define METHOD conservative // method (conservative/non_conservative)
-#define STABILIZATION macro // stabilization (fullstab/macro)
-#define K 1                 // polynomial order in time (0/1/2)
-#define M 1                 // polynomial order in space (1/2)
+#define droplet          // example (circle/droplet)
+#define non_conservative // method (conservative/non_conservative)
+#define fullstab         // stabilization (fullstab/macro)
+#define K 2              // polynomial order in time (0/1/2)
+#define M 2              // polynomial order in space (1/2)
 
 int main(int argc, char **argv) {
 
@@ -2893,15 +5851,14 @@ int main(int argc, char **argv) {
     assert(m >= 1 && m <= 2);
 
     // Mesh
-    const size_t iterations = 3;                     // number of mesh refinements
-    const double x0 = 0., y0 = 0., lx = 1., ly = 1.; // background domain
-    double h = 0.1;                                  // starting mesh size
+    const size_t iterations = 1;   // number of mesh refinements
+    double h                = 0.1; // starting mesh size
     int nx, ny;
 
-    const double cfl_number = 1. / 4;
+    const double cfl_number = 1. / 3;
     double dT;
     int total_number_iteration;
-    const double t0 = 0., tfinal = .1;
+    const double t0 = 0., tfinal = 1.;
 
     // Time integration quadrature
     const size_t quadrature_order_time = 3;
@@ -2916,13 +5873,8 @@ int main(int argc, char **argv) {
     Levelset<2> phi;
     const std::string solver_name = "mumps";
     ProblemOption option;
-#ifdef USE_MPI
-    option.solver_name_ = "mumps";
-#else
-    option.solver_name_ = "umfpack";
-#endif
     const int quadrature_order_space =
-        3; // in each space dimension -> quadrature_order_space^2 quadrature points per element
+        5; // in each space dimension -> quadrature_order_space^2 quadrature points per element
     option.order_space_element_quadrature_ = quadrature_order_space;
     AlgoimCutFEM<mesh_t, Levelset<2>> convdiff(qTime, phi, option);
 
@@ -2934,11 +5886,8 @@ int main(int argc, char **argv) {
     const double delta_bulk = 0.7; // macro parameter
     const double delta_surf = 0.5; // macro parameter
 
-    std::string method(TOSTRING(METHOD));
-    std::string stabilization(TOSTRING(STABILIZATION));
-
     // Data file to hold problem data
-
+    std::string path_output_figures = "./";
     std::ofstream output_data("../cpp/example/convection_diffusion/output_coupled.dat", std::ofstream::out);
     output_data << "Method: " << method << "\n";
     output_data << "Polynomial order time: " << k << "\n";
@@ -2966,6 +5915,9 @@ int main(int argc, char **argv) {
 
         // Define background mesh
 
+#if defined(circle)
+        const double x0 = 0. - Epsilon, y0 = 0. - Epsilon;
+        const double lx = 1., ly = 1.;
         nx = (int)(lx / h) + 1, ny = (int)(ly / h) + 1;
 #elif defined(droplet)
         const double x0 = -1.5 - Epsilon, y0 = -1.5 - Epsilon;
@@ -3278,7 +6230,7 @@ int main(int argc, char **argv) {
                                      interface, In);
 
                 // Solve DF(u0)(w) = F(u0)
-                convdiff.solve(jacobian[0], convdiff.rhs_);
+                convdiff.solve(jacobian, convdiff.rhs_, solver_name);
 
                 // Retrieve the bulk solution
                 std::span<double> dwB = std::span<double>(convdiff.rhs_.data(), Wh.NbDoF() * In.NbDoF());
@@ -3403,55 +6355,56 @@ int main(int argc, char **argv) {
                 global_conservation_errors_t.push_back(std::fabs(global_conservation_error));
             }
 
-            // // Write numerical solutions to paraview if iterations == 1
-            // if ((iterations == 1) && (h >= 0.01)) {
+            // Write numerical solutions to paraview if iterations == 1
+            if ((iterations == 1) && (h >= 0.01)) {
 
-            //     Paraview<mesh_t> writerTh(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
-            //     writerTh.add(ls[0], "levelSet0", 0, 1);
-            //     writerTh.add(ls[1], "levelSet1", 0, 1);
-            //     writerTh.add(ls[2], "levelSet2", 0, 1);
+                Paraview<mesh_t> writerTh(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
+                writerTh.add(ls[0], "levelSet0", 0, 1);
+                writerTh.add(ls[1], "levelSet1", 0, 1);
+                writerTh.add(ls[2], "levelSet2", 0, 1);
 
-            //     Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_" + std::to_string(iter + 1) + ".vtk");
-            //     Paraview<mesh_t> writer_surf(ThGamma, path_output_figures + "surf_" + std::to_string(iter + 1) +
-            //     ".vtk");
-            //     // writer.add(b0h, "bulk", 0, 1);
-            //     // writer.add(sol_h, "bulk_end", 0, 1);
+                Paraview<mesh_t> writer_surf(ThGamma,
+                                             path_output_figures + "surf_" + std::to_string(iter + 1) + ".vtk");
+                writer_surf.add(fun_uhS, "surf", 0, 1);
+                writer_surf.add(ls[0], "levelSet0", 0, 1);
+                writer_surf.add(ls[1], "levelSet1", 0, 1);
+                writer_surf.add(ls[2], "levelSet2", 0, 1);
+                // writer_surf.add(uSex, "surf_exact", 0, 1);
+                // writer_surf.add(fS, "surf_rhs", 0, 1);
+                // writer_surf.add(fabs(fun_uhS.expr() - uSex.expr()), "surf_error");
 
-            //     writer.add(fun_uhB, "bulk", 0, 1);
-            //     writer_surf.add(fun_uhS, "surf", 0, 1);
-            //     writer_surf.add(ls[0], "levelSet0", 0, 1);
-            //     writer_surf.add(ls[1], "levelSet1", 0, 1);
-            //     writer_surf.add(ls[2], "levelSet2", 0, 1);
+                // Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_" + std::to_string(iter + 1) + ".vtk");
+                // // writer.add(b0h, "bulk", 0, 1);
+                // // writer.add(sol_h, "bulk_end", 0, 1);
 
-            //     fct_t uBex(Wh, fun_uBulk, current_time);
-            //     fct_t fB(Wh, fun_rhsBulk, current_time);
+                // writer.add(fun_uhB, "bulk", 0, 1);
+                // writer.add(fun_uhS, "surf", 0, 1)
 
-            //     fct_t uSex(WhGamma, fun_uSurf, current_time);
-            //     fct_t fS(WhGamma, fun_rhsSurf, current_time);
+                // fct_t uBex(Wh, fun_uBulk, current_time);
+                // fct_t fB(Wh, fun_rhsBulk, current_time);
 
-            // writer.add(uBex, "bulk_exact", 0, 1);
-            // writer.add(fB, "bulk_rhs", 0, 1);
+                // fct_t uSex(WhGamma, fun_uSurf, current_time);
+                // fct_t fS(WhGamma, fun_rhsSurf, current_time);
 
-            //     writer_surf.add(uSex, "surf_exact", 0, 1);
-            //     writer_surf.add(fS, "surf_rhs", 0, 1);
+                // writer.add(uBex, "bulk_exact", 0, 1);
+                // writer.add(fB, "bulk_rhs", 0, 1);
 
-            //     //writer.add(fabs(b0h.expr() - uBex.expr()), "bulk_error");
-            //     writer.add(fabs(fun_uhB.expr() - uBex.expr()), "bulk_error");
-            //     writer_surf.add(fabs(fun_uhS.expr() - uSex.expr()), "surf_error");
+                // //writer.add(fabs(b0h.expr() - uBex.expr()), "bulk_error");
+                // writer.add(fabs(fun_uhB.expr() - uBex.expr()), "bulk_error");
 
-            //     writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
-            //     writer.writeFaceStab(Thi, 0, path_output_figures + "Edges" + std::to_string(iter + 1) + ".vtk");
+                // writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
+                // writer.writeActiveMesh(ThGamma, path_output_figures + "ActiveMeshGamma" + std::to_string(iter + 1) +
+                // ".vtk"); writer.writeFaceStab(Thi, 0, path_output_figures + "Edges" + std::to_string(iter + 1) +
+                // ".vtk");
 
-            //     writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 0, 2,
-            //                                  path_output_figures + "AlgoimQuadrature_0_" + std::to_string(iter + 1) +
-            //                                      ".vtk");
-            //     writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 1, 2,
-            //                                  path_output_figures + "AlgoimQuadrature_1_" + std::to_string(iter + 1) +
-            //                                      ".vtk");
-            //     writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 2, 2,
-            //                                  path_output_figures + "AlgoimQuadrature_2_" + std::to_string(iter + 1) +
-            //                                      ".vtk");
-            // }
+                // const int algoim_domain = -1;   // get neg part of levelset
+                // const int side = 0;             // not used for algoim_domain = -1
+                // writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 0, algoim_domain, side, path_output_figures +
+                // "AlgoimQuadrature_0_" + std::to_string(iter + 1) + ".vtk"); writer.writeAlgoimQuadrature(Thi, phi,
+                // In, qTime, 1, algoim_domain, side, path_output_figures + "AlgoimQuadrature_1_" + std::to_string(iter
+                // + 1) + ".vtk"); writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 2, algoim_domain, side,
+                // path_output_figures + "AlgoimQuadrature_2_" + std::to_string(iter + 1) + ".vtk");
+            }
 
             iter++;
         }

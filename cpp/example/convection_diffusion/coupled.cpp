@@ -40,8 +40,8 @@ const double D      = 0.01; // diffusion bulk
 const double DGamma = 1.;   // diffusion surface
 
 // Level-set function
-double fun_levelSet(double *P, const int i, const R t) {
-    R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
+double fun_levelSet(double *P, const int i, const double t) {
+    double xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
     return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17);
 }
 
@@ -69,8 +69,8 @@ template <int N> struct Levelset {
 
     // normal = grad(phi)/norm(grad(phi))
     R2 normal(std::span<double> P) const {
-        R norm = sqrt(pow(2.0 * (P[0] - (0.5 + 0.28 * sin(M_PI * t))), 2) +
-                      pow(2.0 * (P[1] - (0.5 - 0.28 * cos(M_PI * t))), 2));
+        double norm = sqrt(pow(2.0 * (P[0] - (0.5 + 0.28 * sin(M_PI * t))), 2) +
+                           pow(2.0 * (P[1] - (0.5 - 0.28 * cos(M_PI * t))), 2));
         // R normalize = 1. / sqrt(4. * P[0] * P[0] + 4. * P[1] * P[1]);
         return R2(2.0 * (P[0] - (0.5 + 0.28 * sin(M_PI * t))) / norm,
                   2.0 * (P[1] - (0.5 - 0.28 * cos(M_PI * t))) / norm);
@@ -78,7 +78,7 @@ template <int N> struct Levelset {
 };
 
 // Velocity field
-R fun_velocity(double *P, const int i) {
+double fun_velocity(double *P, const int i) {
     if (i == 0)
         return M_PI * (0.5 - P[1]);
     else
@@ -86,19 +86,19 @@ R fun_velocity(double *P, const int i) {
 }
 
 // Initial solution bulk
-R fun_uBulkInit(double *P, const int i) { return 0.5 + 0.4 * cos(M_PI * P[0]) * cos(M_PI * P[1]); }
+double fun_uBulkInit(double *P, const int i) { return 0.5 + 0.4 * cos(M_PI * P[0]) * cos(M_PI * P[1]); }
 
 // Exact solution bulk
-R fun_uBulk(double *P, const int i, const R t) {
+double fun_uBulk(double *P, const int i, const double t) {
     return 0.5 + 0.4 * cos(M_PI * P[0]) * cos(M_PI * P[1]) * cos(2 * M_PI * t);
 }
 
-R fun_uBulkD(double *P, const int i, const int d, const R t) {
+double fun_uBulkD(double *P, const int i, const int d, const double t) {
     return 0.5 + 0.4 * cos(M_PI * P[0]) * cos(M_PI * P[1]) * cos(2 * M_PI * t);
 }
 
 // Initial solution surface
-R fun_uSurfInit(double *P, const int i) {
+double fun_uSurfInit(double *P, const int i) {
     double x = P[0], y = P[1];
 
     return (0.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) -
@@ -110,10 +110,10 @@ R fun_uSurfInit(double *P, const int i) {
 }
 
 // Exact solution surface
-R fun_uSurf(double *P, const int i, const R t) {
+double fun_uSurf(double *P, const int i, const double t) {
     double x = P[0], y = P[1];
 
-    R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
+    double xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
 
     return (0.5 + 0.4 * cos(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t) -
             M_PI / 250 * sin(M_PI * x) * cos(M_PI * y) * cos(2 * M_PI * t) * (x - xc) /
@@ -124,8 +124,8 @@ R fun_uSurf(double *P, const int i, const R t) {
 }
 
 // RHS fB bulk
-R fun_rhsBulk(double *P, const int i, const R t) {
-    R x = P[0], y = P[1];
+double fun_rhsBulk(double *P, const int i, const double t) {
+    double x = P[0], y = P[1];
 
     // return
     // M_PI*cos(x*M_PI)*cos(y*M_PI)*sin(t*M_PI*2.0)*(-4.0/5.0)+((M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*cos(y*M_PI))/1.25E+2-(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(x*M_PI)*sin(y*M_PI)*(x-1.0/2.0)*(2.0/5.0)+(M_PI*M_PI)*cos(t*M_PI*2.0)*cos(y*M_PI)*sin(x*M_PI)*(y-1.0/2.0)*(2.0/5.0);
@@ -137,8 +137,8 @@ R fun_rhsBulk(double *P, const int i, const R t) {
 }
 
 // RHS fS surface
-R fun_rhsSurf(double *P, const int i, const R t) {
-    R x = P[0], y = P[1];
+double fun_rhsSurf(double *P, const int i, const double t) {
+    double x = P[0], y = P[1];
 
     return (M_PI * 1.0 /
             sqrt(pow(y + cos(t * M_PI) * (7.0 / 2.5E+1) - 1.0 / 2.0, 2.0) +
@@ -2854,7 +2854,37 @@ using namespace Example1;
 
 int main(int argc, char **argv) {
 
+#if defined(USE_MPI)
     MPIcf cfMPI(argc, argv);
+#endif
+
+    std::string example, method, stabilization;
+
+#if defined(circle)
+    example = "circle";
+    using namespace Circle;
+#elif defined(droplet)
+    example = "droplet";
+    using namespace Droplet;
+#else
+#error "No example defined"
+#endif
+
+#if defined(non_conservative)
+    method = "non_conservative";
+#elif defined(conservative)
+    method = "conservative";
+#else
+#error "No method defined"
+#endif
+
+#if defined(fullstab)
+    stabilization = "fullstab";
+#elif defined(macro)
+    stabilization = "macro";
+#else
+#error "No stabilization defined"
+#endif
 
     const int k = K;
     const int m = M;
@@ -2884,6 +2914,7 @@ int main(int argc, char **argv) {
 
     // Space integration quadrature
     Levelset<2> phi;
+    const std::string solver_name = "mumps";
     ProblemOption option;
 #ifdef USE_MPI
     option.solver_name_ = "mumps";
@@ -2936,7 +2967,13 @@ int main(int argc, char **argv) {
         // Define background mesh
 
         nx = (int)(lx / h) + 1, ny = (int)(ly / h) + 1;
-        const mesh_t Th(nx, ny, x0 - Epsilon, y0 - Epsilon, lx, ly);
+#elif defined(droplet)
+        const double x0 = -1.5 - Epsilon, y0 = -1.5 - Epsilon;
+        const double lx = 3., ly = 4.;
+        nx = (int)(lx / h) + 1, ny = (int)(ly / h) + 1;
+#endif
+
+        mesh_t Th(nx, ny, x0, y0, lx, ly);
 
         // set time step size
         dT                     = cfl_number * h;
@@ -2969,7 +3006,7 @@ int main(int argc, char **argv) {
         const Uint ndf_time_slab = Ih[0].NbDoF();
 
         // Velocity field
-        LagrangeQuad2 FEvelocity(1);
+        LagrangeQuad2 FEvelocity(2);
         fespace_t VelVh(Th, FEvelocity);
         fct_t vel(VelVh, fun_velocity);
 
@@ -2988,7 +3025,7 @@ int main(int argc, char **argv) {
         double intF = 0, intF_surf = 0, intF_total = 0, intF_surf_total = 0;
         double global_conservation_error = 0, local_conservation_error = 0, error_bulk = 0., error_surf = 0.,
                error_I = 0., error_I_surf = 0.;
-        std::vector<double> local_conservation_errors, global_conservation_errors_t;
+        std::vector<double> local_conservation_errors, global_conservation_errors_t, error_bulk_t, error_surf_t;
 
         // Iterate over time-slabs
         while (iter < total_number_iteration) {
@@ -3241,7 +3278,7 @@ int main(int argc, char **argv) {
                                      interface, In);
 
                 // Solve DF(u0)(w) = F(u0)
-                convdiff.solve(jacobian, convdiff.rhs_);
+                convdiff.solve(jacobian[0], convdiff.rhs_);
 
                 // Retrieve the bulk solution
                 std::span<double> dwB = std::span<double>(convdiff.rhs_.data(), Wh.NbDoF() * In.NbDoF());
@@ -3358,8 +3395,13 @@ int main(int argc, char **argv) {
             mass_last_previous_surf = mass_last_surf;
 
             global_conservation_errors[j] = std::fabs(global_conservation_error);
-            local_conservation_errors.push_back(std::fabs(local_conservation_error));
-            global_conservation_errors_t.push_back(std::fabs(global_conservation_error));
+
+            if (iterations == 1) {
+                error_bulk_t.push_back(error_bulk);
+                error_surf_t.push_back(error_surf);
+                local_conservation_errors.push_back(std::fabs(local_conservation_error));
+                global_conservation_errors_t.push_back(std::fabs(global_conservation_error));
+            }
 
             // // Write numerical solutions to paraview if iterations == 1
             // if ((iterations == 1) && (h >= 0.01)) {
@@ -3387,8 +3429,8 @@ int main(int argc, char **argv) {
             //     fct_t uSex(WhGamma, fun_uSurf, current_time);
             //     fct_t fS(WhGamma, fun_rhsSurf, current_time);
 
-            //     writer.add(uBex, "bulk_exact", 0, 1);
-            //     writer.add(fB, "bulk_rhs", 0, 1);
+            // writer.add(uBex, "bulk_exact", 0, 1);
+            // writer.add(fB, "bulk_rhs", 0, 1);
 
             //     writer_surf.add(uSex, "surf_exact", 0, 1);
             //     writer_surf.add(fS, "surf_rhs", 0, 1);
@@ -3426,6 +3468,27 @@ int main(int argc, char **argv) {
         std::cout << "error_T_surf = " << errors_T_surf[j] << "\n";
 
         if (iterations == 1) {
+
+            std::cout << "\n";
+            std::cout << "error_bulk_t = [";
+            for (auto &err : error_bulk_t) {
+
+                std::cout << err;
+
+                std::cout << ", ";
+            }
+            std::cout << "]\n";
+
+            std::cout << "\n";
+            std::cout << "error_surf_t = [";
+            for (auto &err : error_surf_t) {
+
+                std::cout << err;
+
+                std::cout << ", ";
+            }
+            std::cout << "]\n";
+
             std::cout << "\n";
             std::cout << "Global conservation errors = [";
             for (auto &err : global_conservation_errors_t) {

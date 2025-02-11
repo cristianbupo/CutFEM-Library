@@ -261,6 +261,22 @@ template <typename Mesh> void BaseFEM<Mesh>::addLinear(const itemVFlist_t &VF, c
     }
     bar.end();
 }
+
+
+template <typename Mesh> 
+template <typename Fct>
+void BaseFEM<Mesh>::addLinear(const Fct &f, const itemVFlist_t &VF, const Mesh &Th) {
+    assert(VF.isRHS());
+    progress bar("Add Linear Mesh", Th.last_element(), globalVariable::verbose);
+
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        bar += Th.next_element();
+
+        BaseFEM<Mesh>::addElementContribution(f, VF, k, nullptr, 0, 1.);
+    }
+    bar.end();
+}
+
 template <typename M>
 void BaseFEM<M>::addElementContribution(const itemVFlist_t &VF, const int k, const TimeSlab *In, int itq,
                                         double cst_time) {
@@ -397,7 +413,7 @@ void BaseFEM<M>::addElementContribution(const Fct &f, const itemVFlist_t &VF, co
         // LOOP OVER QUADRATURE IN SPACE
         for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
             typename QF::QuadraturePoint ip(qf[ipq]);
-            const Rd mip = K.mapToPhysicalElement(ip);
+            Rd mip = K.mapToPhysicalElement(ip);
             double Cint  = meas * ip.getWeight() * cst_time;
 
             // EVALUATE THE BASIS FUNCTIONS
@@ -1149,6 +1165,60 @@ void BaseFEM<Mesh>::setDirichlet(const FunFEM<Mesh> &gh, const Mesh &Th, std::li
     int N = this->get_nb_dof();
     eraseAndSetRow(this->get_nb_dof(), *this->pmat_[0], this->rhs_, dof2set);
 }
+
+// set Dirichlet BC strongly for H¹, ie nodes (3D)
+template <typename Mesh>
+void BaseFEM<Mesh>::setDirichletHone(const FunFEM<Mesh> &gh, const Mesh &Th, std::list<int> label) {
+    std::cout << "WARNING (setDirichletH1): This sets H1 DOFs only (in 3D!)" << std::endl;
+
+    bool all_label = (label.size() == 0);    // Check if we need to apply to all labels
+    std::map<int, double> dof2set;    // Map to store degrees of freedom (DOFs) and their corresponding values to be set
+    const FESpace &Vh(gh.getSpace());    // Get the finite element space from the provided FunFEM object
+
+    int dof_init = this->mapIdx0_[&Vh]; // Get the FIRST index of the finite element space in the list of finite element spaces
+
+    // Iterate over each boundary element in the cut mesh
+    for (int idx_be = Th.first_boundary_element(); idx_be < Th.last_boundary_element(); idx_be += Th.next_boundary_element()) {
+        
+        int idx_bdry_face;                                        // Index of the boundary face in the boundary element
+        const int k = Th.BoundaryElement(idx_be, idx_bdry_face);
+
+        // assert(idxK.size() == 1);
+        const Element &K(Th[k]);
+        const BorderElement &BE(Th.be(idx_be));
+        const FElement &FK(Vh[k]);
+
+        // Check if the current boundary element label is in the list of labels to process, or if all labels are being processed
+        if (util::contain(label, BE.lab) || all_label) {
+            
+            for (int df = FK.dfcbegin(0); df < FK.dfcend(0); ++df) { // Iterate over each degree of freedom (DOF)
+                int id_item = FK.DFOnWhat(df); // Get the item (vertex/edge/face) that the DOF is associated with
+
+                // Ensure the DOF is NOT associated with an edge or a face
+                assert(!(id_item >= K.nv));
+                // std::cout << K.edgeOfFace[idx_face] << id_edge << std::endl;
+                auto nodes = K.nvface[idx_bdry_face]; // Check that edge is on boundary
+                if (id_item == nodes[0] || id_item == nodes[1] || id_item == nodes[2]) {
+                    // Get the global index of the DOF
+                    // std::cout << (dof_init-1) + FK.loc2glb(df) << " : " << this->get_nb_dof() << std::endl;
+                    int dof = FK.loc2glb(df);
+                    int df_glob = dof_init + dof; // correct place in Matrix
+                    // Insert the DOF and its corresponding value into the map
+                    dof2set.insert({df_glob, gh(dof)});
+                }
+            }
+        }
+    }
+
+    // Ensure there's exactly one matrix in the problem
+    assert(this->pmat_.size() == 1);
+
+    // Modify the matrix and the right-hand side to enforce the Dirichlet boundary conditions
+    // eraseAndSetRow(this->get_nb_dof(), *(this->pmat_[0]), this->rhs_, dof2set);
+    eraseAndSetRowCol(this->get_nb_dof(), *(this->pmat_[0]), this->rhs_, dof2set);
+}
+
+
 
 // INTEGRATION ON INTERFACE
 // On Faces

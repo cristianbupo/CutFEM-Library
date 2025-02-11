@@ -184,10 +184,13 @@ template <class Mesh> class GTypeOfFE : public dataTypeOfFE {
     void operator=(const GTypeOfFE &);
 };
 
+class TypeOfFE_NumberSpace2d;
+
 /*
  *   Structure that will contain the different FE
  */
 template <class mesh> struct DataFE {
+    static TypeOfFE_NumberSpace2d &NumberSpace;
     static GTypeOfFE<mesh> &P0;
     static GTypeOfFE<mesh> &P1;
     static GTypeOfFE<mesh> &P2;
@@ -200,6 +203,7 @@ template <class mesh> struct DataFE {
     static GTypeOfFE<mesh> &P3Poly;
 
     static GTypeOfFE<mesh> &RT0;
+    static GTypeOfFE<mesh> &RT0_scaled_face;
     static GTypeOfFE<mesh> &RT0_scaled_edge;
     static GTypeOfFE<mesh> &RT0_scaled_volume;
     static GTypeOfFE<mesh> &RT0m;

@@ -11,13 +11,18 @@ template <int D> class DofData {
   public:
     DofData() = default;
 
-    DofData(int k, int ci, v_t P) : k(k), ci(ci), P(P) {}
+    DofData(int k, int dom, int ci, v_t P) : k(k), domain(dom), ci(ci), P(P) {}
 
     DofData(DofData &&)            = default;
     DofData &operator=(DofData &&) = default;
 
+    /// @brief Index of the element ON THE BACKGROUND MESH
     int k;
+    /// @brief Index of the domain
+    int domain{0};
+    /// @brief Index of the component
     int ci;
+    /// @brief Point in which we evaluate the function
     v_t P;
 };
 
@@ -136,6 +141,8 @@ template <typename M> BoundaryDirichlet<M>::BoundaryDirichlet(const space_t &Vh,
         const auto &T(Th[elt_idx]);
         const auto &FK(Vh[elt_idx]);
 
+        const int domain = FK.get_domain();
+
         std::vector<Rd> dof_point;
         for (int p = 0; p < FK.tfe->NbPtforInterpolation; p++) {
             Rd P(FK.Pt(p));
@@ -172,7 +179,7 @@ template <typename M> BoundaryDirichlet<M>::BoundaryDirichlet(const space_t &Vh,
                 if (is_on_border) {
                     Rd P                   = dof_point.at(df_loc);
                     size_t df_glob         = FK.loc2glb(df);
-                    boundary_dofs[df_glob] = DofData<D>(elt_idx, ic, P);
+                    boundary_dofs[df_glob] = DofData<D>(elt_idx, domain, ic, P);
                 }
             }
         }
@@ -209,7 +216,7 @@ template <typename M> void BoundaryDirichlet<M>::apply_inhomogeneous(std::map<st
 template <typename M> void BoundaryDirichlet<M>::apply(std::span<double> b, const fct_t &f) {
 
     for (auto &[df, dof_data] : boundary_dofs) {
-        b[df] = f.eval(dof_data.k, dof_data.P, dof_data.ci, op_id);
+        b[df] = f.evalOnBackMesh(dof_data.k, dof_data.domain, dof_data.P, dof_data.ci, op_id);
     }
 }
 

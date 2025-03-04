@@ -340,7 +340,10 @@ template <typeMesh M> struct TestFunction {
     }
     void push(const std::vector<itemList_t> &l_u) { A.push_back(l_u); } // push a row of itemList_t
     int nbRow() const { return A.size(); }
-    int nbCol(int r = 0) const { return A[r].size(); }
+    int nbCol(int r = 0) const {
+        if ( nbRow() > r ) { return A[r].size(); }
+        return 0;
+    }
     std::pair<int, int> size() const { return {nbRow(), nbCol()}; } // return the size of the matrix A
     bool isScalar() const { return (nbRow() == 1 && nbCol() == 1); }
 

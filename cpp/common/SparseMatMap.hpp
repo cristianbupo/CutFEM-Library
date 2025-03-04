@@ -202,7 +202,7 @@ SparseMatrixRC<R>::SparseMatrixRC(int nn, int mm, const std::map<std::pair<int, 
 
 template <class R>
 SparseMatrixRC<R>::SparseMatrixRC(const SparseMatrixRC<R> &A)
-    : VirtualMatrice<R>(A.n, A.m), n(A.n), m(A.m), nbcoef(A.nbcoef), p(new long long[n + 1]), j(new long long[nbcoef]),
+    : VirtualMatrice<R>(A.n, A.m), n(A.n), m(A.m), nbcoef(A.nbcoef), p(new int64_t[n + 1]), j(new int64_t[nbcoef]),
       a(new R[nbcoef]) {
     R cmm = 0;
 

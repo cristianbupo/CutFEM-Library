@@ -368,7 +368,7 @@ class ExpressionVirtual {
     }
 
     virtual void whoAmI() const { std::cout << " I am virtual class Expression" << std::endl; }
-    ~ExpressionVirtual() {}
+    virtual ~ExpressionVirtual() {}
 };
 
 class DefaultExpression : public ExpressionVirtual {

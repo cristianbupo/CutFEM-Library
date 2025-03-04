@@ -219,7 +219,8 @@ template <typename M> double integral(const ActiveMesh<M> &Th, const FunFEM<M> &
     return val;
 }
 
-template <typename M, typename Fct> double integral(const ActiveMesh<M> &Th, const Fct &fh, int c0, int itq) {
+template <typename M>
+double integral(const ActiveMesh<M> &Th, const std::function<double(typename M::Rd, int, int)> &fh, int c0, int itq) {
 
     typedef M Mesh;
     typedef typename Mesh::Element Element;

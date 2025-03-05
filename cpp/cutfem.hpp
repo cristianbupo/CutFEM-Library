@@ -29,6 +29,7 @@
 #include "num/print_container.hpp"
 #include "num/util.hpp"
 #include "num/matlab.hpp"
+#include "num/gnuplot.hpp"
 
 #include "FESpace/expression.hpp"
 #include "FESpace/integrationFunFEM.hpp"

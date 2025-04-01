@@ -54,7 +54,7 @@ message(" Search for SEQ MUMPS")
 find_path(MUMPS_LIBRARY_DIR
   NAMES 
   libmumps_common_seq.a libdmumps_seq.a libpord_seq.a
-# libmumps_common.a libdmumps.a libpord.a
+  libmumps_common.a libdmumps.a libpord.a
   PATHS
   /usr/local/Cellar/brewsci-mumps/5.2.1/lib
   /opt/homebrew/Cellar/brewsci-mumps/5.3.5/lib
@@ -93,18 +93,26 @@ if(MUMPS_INCLUDE_DIR AND MUMPS_LIBRARY_DIR)
     NO_DEFAULT_PATH)    
   else()
   find_library(MUMPS_COMMON_LIBRARY
-    NAMES mumps_common_seq
+    NAMES mumps_common mumps_common_seq
     PATHS ${MUMPS_LIBRARY_DIR}
     /usr/lib/x86_64-linux-gnu
     NO_DEFAULT_PATH)
 
   find_library(MUMPS_D_LIBRARY
-    NAMES dmumps_seq
+    NAMES dmumps dmumps_seq
     PATHS ${MUMPS_LIBRARY_DIR}
     /usr/lib/x86_64-linux-gnu
     NO_DEFAULT_PATH)
+
+  find_library(MPISEQ_LIBRARY
+    NAMES mpiseq
+    PATHS ${MUMPS_LIBRARY_DIR}
+    /usr/lib/x86_64-linux-gnu
+    NO_DEFAULT_PATH)
+
+
   find_library(MUMPS_PORD_LIBRARY
-    NAMES pord_seq
+    NAMES pord pord_seq
     PATHS ${MUMPS_LIBRARY_DIR}
     /usr/lib/x86_64-linux-gnu
     NO_DEFAULT_PATH)
@@ -151,7 +159,7 @@ if(MUMPS_INCLUDE_DIR AND MUMPS_LIBRARY_DIR)
   set(SCOTCH_LIBRARIES ${SCOTCH_scotcherr_LIBRARY} ${SCOTCH_scotch_LIBRARY})
   # ${SCOTCH_esmumps_LIBRARY})
 
-  set(MUMPS_LIBRARIES ${MUMPS_COMMON_LIBRARY} ${MUMPS_D_LIBRARY}   ${SCOTCH_LIBRARIES} ${MUMPS_PARMETIS_LIBRARY} ${MUMPS_PORD_LIBRARY})
+  set(MUMPS_LIBRARIES ${MUMPS_COMMON_LIBRARY} ${MUMPS_D_LIBRARY} ${MPISEQ_LIBRARY}  ${SCOTCH_LIBRARIES} ${MUMPS_PARMETIS_LIBRARY} ${MUMPS_PORD_LIBRARY})
 
   set(MUMPS_INCLUDES ${MUMPS_INCLUDE_DIR})
 

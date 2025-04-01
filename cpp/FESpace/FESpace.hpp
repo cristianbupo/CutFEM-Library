@@ -57,7 +57,6 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 
 #include "../parallel/cfmpi.hpp"
 
-
 template <class Mesh> class GFESpace;
 template <class Mesh> class GFElement;
 template <class Mesh> class GbaseFElement;
@@ -89,8 +88,8 @@ class DataFENodeDF {
         : nbref(m.nbref), nbElement(m.nbElement), nbNode(m.nbNode), nbDoF(m.nbDoF), NodesOfElement(m.NodesOfElement),
           FirstDfOfNodeData(m.FirstDfOfNodeData), FirstNodeOfElement(m.FirstNodeOfElement),
           MaxNbNodePerElement(m.MaxNbNodePerElement), MaxNbDFPerElement(m.MaxNbDFPerElement),
-               MaxNbDFPerNode(m.MaxNbDFPerNode), 
-        //   MaxNbDFPerNode(maxdfon(m.ndfon)), 
+          MaxNbDFPerNode(m.MaxNbDFPerNode),
+          //   MaxNbDFPerNode(maxdfon(m.ndfon)),
           constDfPerNode(m.constDfPerNode) {
         for (int i = 0; i < NbTypeItemElement; ++i)
             ndfon[i] = m.ndfon[i];
@@ -115,7 +114,6 @@ class DataFENodeDF {
           nbElement(anbElement), nbNode(anbNode), nbDoF(anbDoF), NodesOfElement(aNodesOfElement),
           FirstDfOfNodeData(aFirstDfOfNodeData), FirstNodeOfElement(0), MaxNbNodePerElement(aMaxNbNodePerElement),
           MaxNbDFPerElement(aMaxNbDFPerElement), MaxNbDFPerNode(aMaxNbDFPerNode), constDfPerNode(cstPerNode) {
-
 
         for (int i = 0; i < NbTypeItemElement; ++i)
             ndfon[i] = andfon[i];
@@ -235,6 +233,7 @@ template <class Mesh> class GFElement : public GbaseFElement<Mesh> {
     void set(InterpolationMatrix<RdHat> &M) const { this->tfe->set(this->Vh.Th, this->T, M, 0, 0, 0); }
 
     KN_<R> &Pi_h(KNM_<R> vpt, RN_ &vdf) const;
+    void Pi_h(const std::vector<std::vector<R>> &vpt, std::span<R> vdf) const;
 
     int DFOnWhat(int i) const { return this->tfe->DFOnWhat[i]; }
 
@@ -257,8 +256,7 @@ GFElement<Mesh>::GFElement(const GFESpace<Mesh> *VVh, int k)
     : GbaseFElement<Mesh>(*VVh, k), p(this->Vh.PtrFirstNodeOfElement(k)), nb(this->Vh.NbOfNodesInElement(k)) {}
 template <class Mesh>
 GFElement<Mesh>::GFElement(const GFESpace<Mesh> *VVh, int k, int kth)
-    : GbaseFElement<Mesh>(*VVh, k, kth), p(this->Vh.PtrFirstNodeOfElement(k)), nb(this->Vh.NbOfNodesInElement(k)) {
-    }
+    : GbaseFElement<Mesh>(*VVh, k, kth), p(this->Vh.PtrFirstNodeOfElement(k)), nb(this->Vh.NbOfNodesInElement(k)) {}
 
 template <class Mesh> inline int GFElement<Mesh>::operator[](int i) const {
     return p ? p[i] : ((&this->T[i]) - this->Vh.Th.vertices);
@@ -290,8 +288,8 @@ template <class Mesh> KN_<R> &GFElement<Mesh>::Pi_h(KNM_<R> vpt, KN_<R> &vdf) co
     // compute  the interpolation
     // in : vpt  value of componant j at point p : vpt(p,j)
     // out: vdf  value du the degre of freedom
-    const KN<IPJ> ipj(this->tfe->ipj_Pi_h);
-    const KN<Rd> PtHat(this->tfe->Pt_Pi_h);
+    const KN<IPJ> &ipj(this->tfe->ipj_Pi_h);
+    // const KN<Rd> PtHat(this->tfe->Pt_Pi_h);
     KN<R> Aipj(ipj.N());
     this->tfe->get_Coef_Pi_h(*this, Aipj);
 
@@ -301,6 +299,23 @@ template <class Mesh> KN_<R> &GFElement<Mesh>::Pi_h(KNM_<R> vpt, KN_<R> &vdf) co
         vdf[ipj_i.i] += Aipj[i] * vpt(ipj_i.p, ipj_i.j);
     }
     return vdf;
+}
+
+template <class Mesh> void GFElement<Mesh>::Pi_h(const std::vector<std::vector<R>> &vpt, std::span<R> vdf) const {
+    // compute  the interpolation
+    // in : vpt  value of componant j at point p : vpt(p,j)
+    // out: vdf  value du the degre of freedom
+    std::span<IPJ> ipj(this->tfe->ipj_Pi_h);
+
+    // const std::vector<Rd> PtHat(this->tfe->Pt_Pi_h);
+    KN<R> Aipj(ipj.size());
+    this->tfe->get_Coef_Pi_h(*this, Aipj);
+
+    std::fill(vdf.begin(), vdf.end(), 0.);
+    for (int i = 0; i < Aipj.N(); i++) {
+        const IPJ &ipj_i(ipj[i]);
+        vdf[ipj_i.i] += Aipj[i] * vpt[ipj_i.j][ipj_i.p];
+    }
 }
 
 /*
@@ -328,10 +343,8 @@ template <class MMesh> class GFESpace : public DataFENodeDF {
     const int polynomialOrder;
 
     GFESpace(const Mesh &TTh, const TypeOfFE_NumberSpace2d &tfe)
-        : DataFENodeDF(this->BuildDFNumberingNumberSpace(TTh)),
-          Th(TTh), TFE(1, 0, &tfe), N(1), Nproduit(0),
+        : DataFENodeDF(this->BuildDFNumberingNumberSpace(TTh)), Th(TTh), TFE(1, 0, &tfe), N(1), Nproduit(0),
           basisFctType(tfe.basisFctType), polynomialOrder(tfe.polynomialOrder) {}
-
 
     GFESpace(const Mesh &TTh, const GTypeOfFE<Mesh> &tfe)
         : DataFENodeDF(this->BuildDFNumbering(TTh, tfe.ndfonVertex, tfe.ndfonEdge, tfe.ndfonFace, tfe.ndfonVolume,
@@ -341,18 +354,14 @@ template <class MMesh> class GFESpace : public DataFENodeDF {
           basisFctType(tfe.basisFctType), polynomialOrder(tfe.polynomialOrder) {}
 
   protected:
-
     GFESpace(const ActiveMesh<Mesh> &TTh, const TypeOfFE_NumberSpace2d &tfe)
-        : DataFENodeDF(this->BuildDFNumberingNumberSpace(TTh)),
-          Th(TTh.Th), TFE(1, 0, &tfe), N(1), Nproduit(0),
+        : DataFENodeDF(this->BuildDFNumberingNumberSpace(TTh)), Th(TTh.Th), TFE(1, 0, &tfe), N(1), Nproduit(0),
           basisFctType(tfe.basisFctType), polynomialOrder(tfe.polynomialOrder) {}
 
     GFESpace(const ActiveMesh<Mesh> &TTh, const GFESpace &vh)
         : DataFENodeDF(vh.BuildDFNumbering(TTh)), Th(TTh.Th), TFE(1, 0, vh.TFE(0)), N(TFE[0]->N),
           Nproduit(FirstDfOfNodeData ? 1 : MaxNbDFPerNode), basisFctType(vh.basisFctType),
-          polynomialOrder(vh.polynomialOrder) {
-
-          }
+          polynomialOrder(vh.polynomialOrder) {}
 
     DataFENodeDF BuildDFNumbering(const ActiveMesh<Mesh> &TTh) const;
 
@@ -380,8 +389,7 @@ template <class MMesh> class GFESpace : public DataFENodeDF {
                    : MaxNbNodePerElement;
     }
 
-    int FirstDFOfNode(int i) const { 
-        return (FirstDfOfNodeData ? FirstDfOfNodeData[i] : i * Nproduit); }
+    int FirstDFOfNode(int i) const { return (FirstDfOfNodeData ? FirstDfOfNodeData[i] : i * Nproduit); }
 
     ~GFESpace() {}
 
@@ -423,7 +431,7 @@ template <class MMesh> class GFESpace : public DataFENodeDF {
     int get_nb_element() const { return this->nbElement; }
     int get_nb_dof() const { return this->nbDoF; }
 
-// int NbInnerFaces() const { return Th.nbInnerFaces();}
+    // int NbInnerFaces() const { return Th.nbInnerFaces();}
 
     virtual int first_element() const { return MPIcf::first_element(this->nbElement); }
     virtual int next_element() const { return MPIcf::next_element(this->nbElement); }
@@ -432,7 +440,6 @@ template <class MMesh> class GFESpace : public DataFENodeDF {
     virtual int first_boundary_element() const { return MPIcf::my_rank(); }
     virtual int next_boundary_element() const { return MPIcf::size(); }
     virtual int last_boundary_element() const { return this->Th.nbBrdElmts(); }
-
 
     virtual void info() const {
         // std::cout << "FESpace \t" << this << std::endl;
@@ -467,95 +474,89 @@ template <typename Mesh> DataFENodeDF GFESpace<Mesh>::BuildDFNumbering(const Act
     }
 
     nt = TTh.get_nb_element();
-if (maxNodePerElement > 0) {
-    // p => idx nodes of elements : Vh.nbElement*NodesPerElement
-    // node are not the vertex of the mesh but node for the finite element
-    // they are build in the Space so we can just use this for
-    // the cut space
-    int *nodeOfElement = new int[maxNodePerElement * TTh.get_nb_element()];
-    int *firstDfOfNode = nullptr;
-    // nodeOfElement = new int(maxNodePerElement*TTh.get_nb_element());
-    // get number of nodes and dof
-    {
-        // for(int i=0;i<nSub;++i) nts(i) = TTh.get_nb_element(i);
+    if (maxNodePerElement > 0) {
+        // p => idx nodes of elements : Vh.nbElement*NodesPerElement
+        // node are not the vertex of the mesh but node for the finite element
+        // they are build in the Space so we can just use this for
+        // the cut space
+        int *nodeOfElement = new int[maxNodePerElement * TTh.get_nb_element()];
+        int *firstDfOfNode = nullptr;
+        // nodeOfElement = new int(maxNodePerElement*TTh.get_nb_element());
+        // get number of nodes and dof
+        {
+            // for(int i=0;i<nSub;++i) nts(i) = TTh.get_nb_element(i);
 
-        std::vector<std::vector<int>> idxP_globToLoc(nSub);
-        for (int i = 0; i < nSub; ++i)
-            idxP_globToLoc[i].assign(this->nbNode, -1);
-        int c = 0;
-        for (int k = 0; k < TTh.get_nb_element(); ++k) {
+            std::vector<std::vector<int>> idxP_globToLoc(nSub);
+            for (int i = 0; i < nSub; ++i)
+                idxP_globToLoc[i].assign(this->nbNode, -1);
+            int c = 0;
+            for (int k = 0; k < TTh.get_nb_element(); ++k) {
 
-            int kb     = TTh.idxElementInBackMesh(k);
-            int dom    = TTh.get_domain_element(k);
-            int nbNode = (*this)[0].NbNode();
+                int kb     = TTh.idxElementInBackMesh(k);
+                int dom    = TTh.get_domain_element(k);
+                int nbNode = (*this)[0].NbNode();
 
-            for (int j = 0; j < nbNode; ++j) {
-                int iglb = (*this)(kb, j);
+                for (int j = 0; j < nbNode; ++j) {
+                    int iglb = (*this)(kb, j);
 
-                int val            = idxP_globToLoc[dom][iglb];
-                nodeOfElement[c++] = (val == -1) ? nv : val;
-                if (val == -1) {
-                    idxP_globToLoc[dom][iglb] = nv++;
-                    ndof += this->TFE(0)->ndfOn()[NodeOnWhat(j)];
+                    int val            = idxP_globToLoc[dom][iglb];
+                    nodeOfElement[c++] = (val == -1) ? nv : val;
+                    if (val == -1) {
+                        idxP_globToLoc[dom][iglb] = nv++;
+                        ndof += this->TFE(0)->ndfOn()[NodeOnWhat(j)];
+                    }
                 }
             }
         }
-    }
 
-    if (!this->constDfPerNode) {
-        int kk = 0, nn = 0;
-        int *p        = nodeOfElement;
-        firstDfOfNode = new int[nv + 1];
-        int *pp       = firstDfOfNode;
+        if (!this->constDfPerNode) {
+            int kk = 0, nn = 0;
+            int *p        = nodeOfElement;
+            firstDfOfNode = new int[nv + 1];
+            int *pp       = firstDfOfNode;
 
-        const FElement &FK((*this)[0]);
-        const int *ndfon = FK.tfe->ndfOn();
+            const FElement &FK((*this)[0]);
+            const int *ndfon = FK.tfe->ndfOn();
 
-        for (int k = 0; k < nt; ++k) {
-            for (int i = 0; i < FK.NbNode(); i++) {
-                int onWhat = NodeOnWhat[i];
-                int nb     = ndfon[onWhat];
+            for (int k = 0; k < nt; ++k) {
+                for (int i = 0; i < FK.NbNode(); i++) {
+                    int onWhat = NodeOnWhat[i];
+                    int nb     = ndfon[onWhat];
 
-                pp[p[nn++]] = nb;
+                    pp[p[nn++]] = nb;
+                }
             }
+
+            for (int n = 0; n < nv; ++n) {
+                int ndfn = pp[n];
+                pp[n]    = kk;
+                kk += ndfn;
+            }
+
+            pp[nv] = ndof;
+            assert(ndof == kk);
         }
 
-        for (int n = 0; n < nv; ++n) {
-            int ndfn = pp[n];
-            pp[n]    = kk;
-            kk += ndfn;
+        return DataFENodeDF(ndfon, nt, nv, ndof, nodeOfElement, firstDfOfNode, maxNodePerElement, maxDFPerElement,
+                            this->MaxNbDFPerNode, this->constDfPerNode);
+
+    } else {
+
+        int *nodeOfElement = new int[TTh.get_nb_element()];
+        int *firstDfOfNode = nullptr;
+
+        for (int k = 0; k < TTh.get_nb_element(); ++k) {
+            int kb           = TTh.idxElementInBackMesh(k);
+            int dom          = TTh.get_domain_element(k);
+            nodeOfElement[k] = dom;
         }
 
-        pp[nv] = ndof;
-        assert(ndof == kk);
-    }
-
-
-
-    return DataFENodeDF(ndfon, nt, nv, ndof, nodeOfElement, firstDfOfNode, maxNodePerElement, maxDFPerElement,
-                        this->MaxNbDFPerNode, this->constDfPerNode);
-
-} else {
-
-    int *nodeOfElement = new int[TTh.get_nb_element()];
-    int *firstDfOfNode = nullptr;
-
-    for (int k = 0; k < TTh.get_nb_element(); ++k) {
-        int kb     = TTh.idxElementInBackMesh(k);
-        int dom    = TTh.get_domain_element(k);
-        nodeOfElement[k] = dom;
-    }
-
-
-    // for Number SPace otherwise it would be zero
-    ndof = TTh.get_nb_domain();
-    return DataFENodeDF(ndfon, nt, nv, ndof, nodeOfElement, firstDfOfNode, 1, maxDFPerElement,
-                        1, this->constDfPerNode);
-
-
+        // for Number SPace otherwise it would be zero
+        ndof = TTh.get_nb_domain();
+        return DataFENodeDF(ndfon, nt, nv, ndof, nodeOfElement, firstDfOfNode, 1, maxDFPerElement, 1,
+                            this->constDfPerNode);
     }
 }
-
 
 template <typename Mesh> class CutFESpace : public GFESpace<Mesh> {
   public:
@@ -757,24 +758,21 @@ DataFENodeDF GFESpace<Mesh>::BuildDFNumbering(const Mesh &TTh, int dfon[4], int 
     return DataFENodeDF(dfon, TTh.nt, nbNodes, nbOfDF, p, pp, maxNodePerElement, maxDFPerElement, constndfPerNode);
 }
 
-template <typename Mesh>
-DataFENodeDF GFESpace<Mesh>::BuildDFNumberingNumberSpace(const Mesh &TTh) {
+template <typename Mesh> DataFENodeDF GFESpace<Mesh>::BuildDFNumberingNumberSpace(const Mesh &TTh) {
 
-    int dfon[4] = {0,0,0,0};
-    int nndon[4] = {0,0,0,0};
-    int N = 1;
-    int *p = 0, *pp = 0;    
-    int nbNodes = 0;
-    int nbOfDF = 1;
+    int dfon[4]  = {0, 0, 0, 0};
+    int nndon[4] = {0, 0, 0, 0};
+    int N        = 1;
+    int *p = 0, *pp = 0;
+    int nbNodes           = 0;
+    int nbOfDF            = 1;
     int maxNodePerElement = 0;
-    int maxDFPerElement = 0;
-    bool constndfPerNode = true;
+    int maxDFPerElement   = 0;
+    bool constndfPerNode  = true;
     std::cout << "Buiulding numberspace\n";
 
     return DataFENodeDF(dfon, TTh.nt, nbNodes, nbOfDF, p, pp, maxNodePerElement, maxDFPerElement, constndfPerNode);
 }
-
-
 
 typedef GFESpace<Mesh1> FESpace1;
 typedef GFESpace<Mesh2> FESpace2;

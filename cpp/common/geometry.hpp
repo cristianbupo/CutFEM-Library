@@ -29,10 +29,10 @@ template <typename Rd> struct Segment {
 };
 
 // equation cartesienne d'une droite
-typedef struct coefDroite {
+struct Droite {
     double pente;
     double ord_or;
-} Droite;
+};
 
 struct Interval {
     double v_min, v_max;

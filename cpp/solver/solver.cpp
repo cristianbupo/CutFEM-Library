@@ -16,15 +16,15 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #include <fstream>
 #include <iostream>
 #include "../num/util.hpp"
-#include "solver.hpp"
 #include "../common/SparseMatMap.hpp"
+
+#include "solver.hpp"
 #ifdef USE_UMFPACK
 #include "umfpack.h"
 #endif
 #ifdef USE_LAPACK
 #include "lapacke.h"
 #endif
-
 // #include "petsc.h"
 #ifdef USE_MUMPS
 #include "solverMumps.hpp"

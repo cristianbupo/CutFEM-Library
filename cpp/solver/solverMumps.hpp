@@ -38,7 +38,7 @@ class MUMPS {
     //  std::string reordering = "none";
     MatrixFormat matrixFormat = centralized;
 
-    R timeAnalysis_, timeFactorization_, timeSolving_;
+    R timeSettingSolver_, timeAnalysis_, timeFactorization_, timeSolving_;
 
   private:
     matmap &mat;

@@ -16,7 +16,7 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #ifndef SOLVER_HPP_
 #define SOLVER_HPP_
 #include <cassert>
-#include "../cutFEMConfig.h"
+// #include "../cutFEMConfig.h"
 #include "../num/util.hpp"
 #include "../parallel/cfmpi.hpp"
 

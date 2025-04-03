@@ -555,10 +555,10 @@ template <typeMesh mesh_t> TestFunction<mesh_t> operator*(const TestFunction<mes
 template <typeMesh mesh_t, typename Expr>
 TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, const TestFunction<mesh_t> &T) {
     auto [N, M] = T.size();
-    assert(M == 1);
+    // assert(M == 1);
     int D = mesh_t::D;
     TestFunction<mesh_t> Un;
-    if (N == fh.size()) {
+    if ((N == fh.size()) && (M == 1)) {
         for (int i = 0; i < N; i++) {
             auto new_list = T.getList(i, 0);
             for (auto &item : new_list.U) {
@@ -572,7 +572,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             }
             Un.push({0, 0}, new_list);
         }
-    } else if (N == D && fh.size() == 1) {
+    } else if ((N == D) && (fh.size() == 1) && (M == 1)) {
         for (int i = 0; i < N; i++) {
             auto new_list = T.getList(i, 0);
             for (auto &item : new_list.U) {
@@ -586,7 +586,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             }
             Un.push({i, 0}, new_list);
         }
-    } else if (N == 1 && fh.size() == D) {
+    } else if ((N == 1) && (fh.size() == D) && (M == 1)) {
         for (const auto &ff : fh) {
             auto new_list = T.getList(0, 0);
             for (auto &item : new_list.U) {
@@ -600,6 +600,30 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             }
             Un.push(new_list);
         }
+    } else if ((N == fh.size()) && (M == N) && (fh.size() == D)) {  //! Sebastian's unverified implementation (this seems to not work)
+                
+        // Loop over the independent variables
+        for (int i = 0; i < N; i++) {
+
+            // Loop over the components of the test variable
+            for (int j = 0; j < M; j++) {
+
+                auto new_list = T.getList(i, j);
+
+                for (auto &item : new_list.U) {
+                    if (item.expru.get() == nullptr) {
+                        item.expru = fh[i];
+                    } else {
+                        // assert(0);
+                        //    auto temp_p = item.expru;
+                        item.expru = item.expru * fh[i];
+                    }
+
+                }
+                Un.push({0, j}, new_list);
+            }
+        }
+
     } else {
         assert(0);
     }

@@ -133,7 +133,7 @@ template <class M> class Paraview {
             nv_       = 0;
             // std::vector<Rd> list_node;
             int kk    = 0;
-            int size0 = 1.5 * cutTh.NbElement();
+            int size0 = 5 * cutTh.NbElement();
             clearAndResize(size0);
             double area = 0.;
             for (int k = 0; k < cutTh.NbElement(); ++k) {

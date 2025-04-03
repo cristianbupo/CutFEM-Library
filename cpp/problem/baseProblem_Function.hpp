@@ -1180,7 +1180,7 @@ void BaseFEM<Mesh>::setDirichletHone(const FunFEM<Mesh> &gh, const Mesh &Th, std
 
     int dof_init = this->mapIdx0_[&Vh]; // Get the FIRST index of the finite element space in the list of finite element spaces
 
-    // Iterate over each boundary element in the cut mesh
+    // Iterate over each boundary element in the mesh
     for (int idx_be = Th.first_boundary_element(); idx_be < Th.last_boundary_element(); idx_be += Th.next_boundary_element()) {
         
         int idx_bdry_face;                                        // Index of the boundary face in the boundary element
@@ -1235,11 +1235,11 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, 
         const typename Interface<M>::Face &face = gamma[iface]; // the face
         bar += gamma.next_element();
         //! Outcommented the below because it makes high-order DG fail
-        // if (util::contain(label, face.lab) || all_label) {
+        if (util::contain(label, face.lab) || all_label) {
 
             addInterfaceContribution(VF, gamma, iface, 0., nullptr, 1., 0);
             this->addLocalContribution();
-        // }
+        }
     }
     bar.end();
 }
@@ -1262,11 +1262,11 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, 
     for (int iface = gamma.first_element(); iface < gamma.last_element(); iface += gamma.next_element()) {
         bar += gamma.next_element();
         const typename Interface<M>::Face &face = gamma[iface]; // the face
-        if (util::contain(label, face.lab) || all_label) {
+        // if (util::contain(label, face.lab) || all_label) {
 
             addInterfaceContribution(VF, gamma, iface, tid, &In, 1., itq);
             this->addLocalContribution();
-        }
+        // }
     }
 
     bar.end();
@@ -1365,10 +1365,10 @@ void BaseFEM<M>::addLinear(const itemVFlist_t &VF, const Interface<M> &gamma, co
 
     for (int iface = gamma.first_element(); iface < gamma.last_element(); iface += gamma.next_element()) {
         const typename Interface<M>::Face &face = gamma[iface]; // the face
-        if (util::contain(label, face.lab) || all_label) {
+        // if (util::contain(label, face.lab) || all_label) {
 
             addInterfaceContribution(VF, gamma, iface, tid, &In, 1., itq);
-        }
+        // }
         this->addLocalContribution();
     }
 }

@@ -769,7 +769,6 @@ DataFENodeDF GFESpace<Mesh>::BuildDFNumberingNumberSpace(const Mesh &TTh) {
     int maxNodePerElement = 0;
     int maxDFPerElement = 0;
     bool constndfPerNode = true;
-    std::cout << "Buiulding numberspace\n";
 
     return DataFENodeDF(dfon, TTh.nt, nbNodes, nbOfDF, p, pp, maxNodePerElement, maxDFPerElement, constndfPerNode);
 }

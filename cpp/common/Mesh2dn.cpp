@@ -45,19 +45,7 @@ Mesh2::Mesh2(const std::string filename, MeshFormat type_mesh) { // read the mes
         std::cerr << "Mesh2::Mesh2 Erreur openning " << filename << std::endl;
         exit(1);
     }
-    if (verbosity)
-        std::cout << " Read On file \"" << filename << "\"" << std::endl;
-
-    // if (filename.rfind(".msh") == filename.length() - 4) {
-    //     if (verbosity)
-    //         std::cout << "  -- Read msh file " << std::endl;
-    //     readMsh(f);
-    //     // return;
-    // } else if (filename.rfind(".mesh") == filename.length() - 5) {
-    //     if (verbosity)
-    //         std::cout << "  -- Read mesh file " << std::endl;
-    //     readMesh(f);
-    // }
+    LOG_INFO << " Read On file \"" << filename << "\"" << logger::endl;
     if (type_mesh == MeshFormat::mesh_gmsh)
         readMeshGmsh(f);
     else if (type_mesh == MeshFormat::mesh_freefem)
@@ -70,8 +58,7 @@ Mesh2::Mesh2(const std::string filename, MeshFormat type_mesh) { // read the mes
     BuildBound();
     BuildAdj();
 
-    // if (verbosity)
-    std::cout << "   - mesh mesure = " << mes << " border mesure: " << mesb << std::endl;
+    LOG_INFO << "   - mesh mesure = " << mes << " border mesure: " << mesb << logger::endl;
 }
 
 void Mesh2::readMeshGmsh(std::ifstream &f) {
@@ -80,7 +67,6 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
     while (std::getline(f, field)) {
         if (field.find("Vertices") != std::string::npos) {
             f >> nv;
-            std::cout << "  -- Nb of Vertex " << nv << std::endl;
             assert(nv);
             vertices = new Vertex2[nv];
             double Pz;
@@ -93,7 +79,6 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
 
         if (field.find("Edges") != std::string::npos) {
             f >> nbe;
-            std::cout << "  -- Nb of border edges " << nbe << std::endl;
             assert(nbe);
             borderelements = new BoundaryEdge2[nbe];
             mesb           = 0.;
@@ -105,7 +90,6 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
 
         if (field.find("Triangles") != std::string::npos) {
             f >> nt;
-            std::cout << "  -- Nb of Triangles " << nt << std::endl;
             assert(nt);
             elements = new Triangle2[nt];
             mes      = 0;
@@ -120,9 +104,9 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
 void Mesh2::readMeshFreefem(std::ifstream &f) {
     int mv, mt, mbe;
     f >> mv >> mt >> mbe;
-    if (verbosity)
-        std::cout << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
-                  << std::endl;
+
+    LOG_INFO << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
+             << logger::endl;
     this->set(mv, mt, mbe);
 
     assert(f.good() && nt && nv);
@@ -321,8 +305,8 @@ Mesh2 refine(const Mesh2 &Th) {
     int mbe = Th.nbe * 2;
     Th2.set(mv, mt, mbe);
 
-    std::cout << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
-              << std::endl;
+    LOG_INFO << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
+             << logger::endl;
 
     size_t tinfty = -1;
     std::map<Key, size_t> new_nodes;
@@ -432,8 +416,8 @@ Mesh2 refine_barycentric(const Mesh2 &Th) {
     int mbe  = Th.nbe;
     Th2.set(mv, mt, mbe);
 
-    std::cout << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
-              << std::endl;
+    LOG_INFO << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
+             << logger::endl;
 
     size_t tinfty = -1;
     std::map<Key, size_t> new_nodes;

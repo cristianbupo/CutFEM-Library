@@ -89,6 +89,11 @@ inline void copy_levelset_sign(const KN<double> &src, KN<byte> &dst) {
     std::transform(&src[0], &src[0] + src.size(), &dst[0], sign);
 }
 
+inline void copy_levelset_sign(const std::vector<double> &src, std::vector<byte> &dst) {
+    dst.resize(src.size());
+    std::transform(src.begin(), src.end(), dst.begin(), sign);
+}
+
 static bool contain(const KN<int> &v, int x) {
     for (int i = 0; i < v.size(); ++i)
         if (v(i) == x)

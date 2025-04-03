@@ -19,7 +19,10 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 template <typeMesh M>
 template <typeFunFEM Fct>
 InterfaceLevelSet<M>::InterfaceLevelSet(const M &MM, const Fct &lss, int label)
-    : Interface<M>(MM), ls_(lss.getArray()) {
+    : Interface<M>(MM), ls_(lss.array().begin(), lss.array().end()) {
+
+    // std::copy(lss.array().begin(), lss.array().end(), ls_.begin());
+
     make_patch(label);
 }
 

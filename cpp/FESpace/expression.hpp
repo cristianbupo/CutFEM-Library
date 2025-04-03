@@ -15,6 +15,8 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 */
 #ifndef _EXPRESSION_HPP
 #define _EXPRESSION_HPP
+#include "../parallel/cfomp.hpp"
+#include "../common/memoryPool.hpp"
 #include "FESpace.hpp"
 #include <cmath>
 #include <memory>
@@ -68,9 +70,6 @@ struct Projection {
 class ExpressionVirtual;
 template <typename M> class ExpressionFunFEM;
 class ParameterCutFEM;
-// template <typename M> class ExpressionFunFEM;
-// class ExpressionProduct;
-// class ExpressionDif;
 
 /**
  * @brief Base class for all expressions
@@ -78,16 +77,18 @@ class ParameterCutFEM;
  */
 class FunFEMVirtual {
   public:
-    double *data_ = nullptr; ///< data //?
-    KN_<double> v;           ///< coefficients in the degrees of freedom
+    // data used if function allocate memory
+    std::vector<double> data_;
 
-    // std::vector<double> allocated_data;
-    // std::span<double> accesor_data;
+    // view on data_, either passed from outside or allocated by the function
+    std::span<double> v;
 
-    FunFEMVirtual() : v(data_, 0) {}
-    FunFEMVirtual(int df) : data_(new double[df]), v(data_, df) { v = 0.; }
-    FunFEMVirtual(KN_<double> &u) : v(u) {}
-    FunFEMVirtual(double *u, int n) : v(u, n) {}
+    // memory pool for basis functions
+    std::unique_ptr<MemoryPool> pool_databf;
+
+    FunFEMVirtual() : v(data_) {}
+    FunFEMVirtual(int df) : data_(df, 0.), v(data_) {}
+    FunFEMVirtual(std::span<double> u) : v(u) {}
 
     virtual double eval(const int k, const R *x, int cu = 0, int op = 0) const {
         assert(0);
@@ -110,10 +111,7 @@ class FunFEMVirtual {
         return 0.;
     };
 
-    const KN_<double> &getArray() const { return v; }
-    const KN_<double> &array() const { return v; }
-    const double *data() const { return v.data(); }
-    // const double *data() const { return v.data(); }
+    std::span<double> array() const { return v; }
 };
 
 /**
@@ -128,181 +126,168 @@ template <typename M> class FunFEM : public FunFEMVirtual {
     typedef typename FESpace::FElement FElement;
     typedef typename Mesh::Rd Rd;
 
-    bool alloc     = false;
-    double *databf = nullptr; ///< data for basis functions //?
-
   public:
     FESpace const *Vh  = nullptr;
     TimeSlab const *In = nullptr;
 
   public:
     FunFEM() : FunFEMVirtual() {}
-    explicit FunFEM(const FESpace &vh)
-        : FunFEMVirtual(vh.NbDoF()), Vh(&vh), alloc(true), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {}
-    FunFEM(const FESpace &vh, const TimeSlab &in)
-        : FunFEMVirtual(vh.NbDoF() * in.NbDoF()), Vh(&vh), In(&in), alloc(true),
-          databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {}
+    explicit FunFEM(const FESpace &vh) : FunFEMVirtual(vh.NbDoF()), Vh(&vh) {
+
+        // ndof_per_componenent * nb_component * number_of_possible_operator (op_id, op_dx etc)
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+    }
+
+    FunFEM(const FESpace &vh, const TimeSlab &in) : FunFEMVirtual(vh.NbDoF() * in.NbDoF()), Vh(&vh), In(&in) {
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+    }
 
     template <Vector vector_t>
-    FunFEM(const FESpace &vh, const TimeSlab &in, vector_t &u)
-        : FunFEMVirtual(u.data(), u.size()), alloc(false), Vh(&vh), In(&in),
-          databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {}
+    FunFEM(const FESpace &vh, const TimeSlab &in, vector_t &u) : FunFEMVirtual(u), Vh(&vh), In(&in) {
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+    }
 
-    template <Vector vector_t>
-    FunFEM(const FESpace &vh, vector_t &u)
-        : FunFEMVirtual(u.data(), u.size()), alloc(false), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {}
-
-    // FunFEM(const FESpace &vh, Rn_ &u)
-    //     : FunFEMVirtual(u), alloc(false), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {}
-    // FunFEM(const FESpace &vh, Rn &u)
-    //     : FunFEMVirtual(u), alloc(false), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {}
-    // FunFEM(const FESpace &vh, std::vector<double> &u)
-    //     : FunFEMVirtual(u.data(), u.size()), alloc(false), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4])
-    //     {}
+    template <Vector vector_t> FunFEM(const FESpace &vh, vector_t &u) : FunFEMVirtual(u), Vh(&vh) {
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+    }
 
     template <typename fct_t>
         requires FunctionLevelSet<fct_t> || FunctionDomain<fct_t> || FunctionScalar<fct_t>
-    FunFEM(const FESpace &vh, fct_t f)
-        : FunFEMVirtual(vh.NbDoF()), alloc(true), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
+    FunFEM(const FESpace &vh, fct_t f) : FunFEMVirtual(vh.NbDoF()), Vh(&vh) {
+
+        // allocate memory for basis functions
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+
         interpolate(*Vh, this->v, f);
     }
-    FunFEM(const FESpace &vh, double f)
-        : FunFEMVirtual(vh.NbDoF()), alloc(true), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
-        this->v = f;
+    FunFEM(const FESpace &vh, double f) : FunFEMVirtual(vh.NbDoF()), Vh(&vh) {
+        // allocate memory for basis functions
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+
+        std::ranges::fill(this->v, f);
     }
 
-    template <typename fun_t>
-    FunFEM(const FESpace &vh, fun_t f, R tid)
-        : FunFEMVirtual(vh.NbDoF()), alloc(true), Vh(&vh), databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
+    template <typename fun_t> FunFEM(const FESpace &vh, fun_t f, R tid) : FunFEMVirtual(vh.NbDoF()), Vh(&vh) {
+
+        // allocate memory for basis functions
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+
         interpolate(*Vh, this->v, f, tid);
     }
 
-    // template <typename fun_t>
-    // FunFEM(const FESpace &vh, const TimeSlab &in, fun_t f)
-    // // FunFEM(const FESpace &vh, const TimeSlab &in, R (*f)(double *, int i, R tt))
-    //     : FunFEMVirtual(vh.NbDoF() * in.NbDoF()), alloc(true), Vh(&vh), In(&in),
-    //       databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
-    //     interpolate(*Vh, *In, this->v, f);
-    // }
     template <typename fct_t>
         requires FunctionLevelSetTime<fct_t> || FunctionDomainTime<fct_t> || FunctionScalar<fct_t>
-    FunFEM(const FESpace &vh, const TimeSlab &in, fct_t f)
-        // FunFEM(const FESpace &vh, const TimeSlab &in, R (*f)(double *, int i, R tt))
-        : FunFEMVirtual(vh.NbDoF() * in.NbDoF()), alloc(true), Vh(&vh), In(&in),
-          databf(new double[10 * vh[0].NbDoF() * vh.N * 4]) {
+    FunFEM(const FESpace &vh, const TimeSlab &in, fct_t f) : FunFEMVirtual(vh.NbDoF() * in.NbDoF()), Vh(&vh), In(&in) {
+
+        // allocate memory for basis functions
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
+
         interpolate(*Vh, *In, this->v, f);
     }
     FunFEM(const FESpace &vh, const ExpressionVirtual &fh);
     FunFEM(const FESpace &vh, const ExpressionVirtual &fh1, const ExpressionVirtual &fh2);
 
     void init(const FESpace &vh) {
-        assert(!data_);
-        Vh    = &vh;
-        data_ = new double[Vh->NbDoF()];
-        v.set(data_, Vh->NbDoF());
-        alloc = true;
-        v     = 0.;
-        if (!databf)
-            databf = new double[10 * vh[0].NbDoF() * vh.N * 4];
+        Vh = &vh;
+        data_.resize(Vh->NbDoF(), 0.);
+        v = data_;
+
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
     }
     void init(const KN_<R> &a) {
         assert(v.size() == a.size());
         for (int i = 0; i < v.size(); ++i)
             data_[i] = a(i);
+
+        assert(pool_databf);
     }
 
     template <typename fct_t>
         requires FunctionLevelSet<fct_t> || FunctionLevelSetTime<fct_t> || FunctionDomain<fct_t> ||
                  FunctionScalar<fct_t>
     void init(const FESpace &vh, fct_t f) {
-        assert(!data_);
-        Vh    = &vh;
-        data_ = new double[Vh->NbDoF()];
-        v.set(data_, Vh->NbDoF());
-        alloc = true;
+        Vh = &vh;
+        data_.resize(Vh->NbDoF(), 0.);
+        v = data_;
         interpolate(*Vh, v, f);
 
-        if (!databf)
-            databf = new double[10 * vh[0].NbDoF() * vh.N * 4];
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
     }
 
-    // void init(const FESpace &vh, R (*f)(double *, int i, int doma)) {
-    //     assert(!data_);
-    //     Vh    = &vh;
-    //     data_ = new double[Vh->NbDoF()];
-    //     v.set(data_, Vh->NbDoF());
-    //     alloc = true;
-    //     interpolate(*Vh, v, f);
-    //     if (!databf)
-    //         databf = new double[10 * vh[0].NbDoF() * vh.N * 4];
-    // }
-
     void init(const FESpace &vh, R (*f)(double *, int, R), R tid) {
-        // template <typename fct_t>
-        //     requires FunctionLevelSet<fct_t> || FunctionLevelSetTime<fct_t> || FunctionDomain<fct_t> ||
-        //     FunctionScalar<fct_t>
-        // void init(const FESpace &vh, fct_t f, R tid) {
-        // assert(!data_);
-        if (data_)
-            delete[] data_;
-        Vh    = &vh;
-        data_ = new double[Vh->NbDoF()];
-        v.set(data_, Vh->NbDoF());
-        alloc = true;
+        Vh = &vh;
+        data_.resize(Vh->NbDoF(), 0.);
+        v = data_;
         interpolate(*Vh, v, f, tid);
-        if (!databf)
-            databf = new double[10 * vh[0].NbDoF() * vh.N * 4];
+
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
     }
 
     void init(const FESpace &vh, R (*f)(R2, int, R), R tid) {
-        // template <typename fct_t>
-        //     requires FunctionLevelSet<fct_t> || FunctionLevelSetTime<fct_t> || FunctionDomain<fct_t> ||
-        //     FunctionScalar<fct_t>
-        // void init(const FESpace &vh, fct_t f, R tid) {
-        // assert(!data_);
-        if (data_)
-            delete[] data_;
-        Vh    = &vh;
-        data_ = new double[Vh->NbDoF()];
-        v.set(data_, Vh->NbDoF());
-        alloc = true;
+
+        Vh = &vh;
+        data_.resize(Vh->NbDoF(), 0.);
+        v = data_;
         interpolate(*Vh, v, f, tid);
-        if (!databf)
-            databf = new double[10 * vh[0].NbDoF() * vh.N * 4];
+
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
     }
 
-    // void init(const FESpace &vh, const TimeSlab &in, R (*f)(double *, int, R)) {
     template <typename fct_t>
         requires FunctionLevelSet<fct_t> || FunctionDomain<fct_t> || FunctionScalar<fct_t>
     void init(const FESpace &vh, const TimeSlab &in, fct_t f) {
-        // assert(!data_);
-        if (data_)
-            delete[] data_;
-        Vh    = &vh;
-        In    = &in;
-        data_ = new double[Vh->NbDoF() * In->NbDoF()];
-        v.set(data_, Vh->NbDoF() * In->NbDoF());
-        alloc = true;
+
+        Vh = &vh;
+        In = &in;
+        data_.resize(Vh->NbDoF() * In->NbDoF(), 0.);
+        v = data_;
         interpolate(*Vh, *In, v, f);
-        if (!databf)
-            databf = new double[10 * vh[0].NbDoF() * vh.N * 4];
+
+        std::size_t databf_size = vh[0].NbDoF() * vh.N * 10;
+        std::size_t n_chunk     = cutfem_get_max_threads();
+        pool_databf             = std::make_unique<MemoryPool>(n_chunk, databf_size);
     }
 
-    friend void swap(FunFEM &f, FunFEM &g) {
-        assert(g.v.size() == f.v.size());
-        double *temp = g.data_;
-        g.data_      = f.data_;
-        f.data_      = temp;
-        g.v.set(g.data_, g.Vh->NbDoF());
-        f.v.set(f.data_, f.Vh->NbDoF());
-    }
+    // friend void swap(FunFEM &f, FunFEM &g) {
+    //     assert(g.v.size() == f.v.size());
+    //     double *temp = g.data_;
+    //     g.data_      = f.data_;
+    //     f.data_      = temp;
+    //     g.v.set(g.data_, g.Vh->NbDoF());
+    //     f.v.set(f.data_, f.Vh->NbDoF());
+    // }
 
-    double &operator()(int i) { return v(i); }
-    double operator()(int i) const { return v(i); }
+    double &operator()(int i) { return v[i]; }
+    double operator()(int i) const { return v[i]; }
     operator Rn() const { return Rn(v); }
 
     double eval(const int k, const R *x, int cu = 0, int op = 0) const;
     double eval(const int k, const R *x, const R t, int cu = 0, int op = 0, int opt = 0) const;
+    // double operator()(const int k, const R *x) { return eval(k, x, 0, op_id); }
     void eval(R *u, const int k) const;
 
     double evalOnBackMesh(const int kb, int dom, const R *x, int cu, int op) const;
@@ -321,12 +306,7 @@ template <typename M> class FunFEM : public FunFEMVirtual {
     std::vector<std::shared_ptr<ExpressionFunFEM<M>>> exprList(int n = -1) const;
     std::vector<std::shared_ptr<ExpressionFunFEM<M>>> exprList(int n, int i0) const;
 
-    ~FunFEM() {
-        if (databf)
-            delete[] databf;
-        if (alloc)
-            delete[] data_;
-    }
+    ~FunFEM() {}
 
   private:
     FunFEM(const FunFEM &f);
@@ -730,8 +710,6 @@ std::shared_ptr<ExpressionSum> operator+(const std::shared_ptr<ExpressionVirtual
 std::shared_ptr<ExpressionSum> operator-(const std::shared_ptr<ExpressionVirtual> &f1,
                                          const std::shared_ptr<ExpressionVirtual> &f2);
 
-
-
 class ExpressionNormal2 : public ExpressionVirtual {
     typedef Mesh2 M;
     const FunFEM<M> &fun;
@@ -1077,34 +1055,25 @@ class ExpressionNormalCrossZ3 : public ExpressionVirtual {
 // std::vector<std::shared_ptr<ExpressionVirtual>> cross(const FunFEM<Mesh3> &f1, const Normal &n);
 std::vector<std::shared_ptr<ExpressionVirtual>> cross(const Normal &n, const FunFEM<Mesh3> &f1);
 
-
-
 /* 3D Curl of a FunFEM */
 class ExpressionCurl3D {
-public:
+  public:
     typedef Mesh3 M;
     const FunFEM<M> &fun;
 
-    ExpressionCurl3D(const FunFEM<M> &fh1)
-        : fun(fh1)
-    {}
+    ExpressionCurl3D(const FunFEM<M> &fh1) : fun(fh1) {}
 
     std::vector<std::shared_ptr<ExpressionVirtual>> operator()() const {
         return {
-            dy(fun.expr(2)) - dz(fun.expr(1)),  // d/dy(u_z) - d/dz(u_y)
-            dz(fun.expr(0)) - dx(fun.expr(2)),  // d/dz(u_x) - d/dx(u_z)
-            dx(fun.expr(1)) - dy(fun.expr(0))   // d/dx(u_y) - d/dy(u_x)
+            dy(fun.expr(2)) - dz(fun.expr(1)), // d/dy(u_z) - d/dz(u_y)
+            dz(fun.expr(0)) - dx(fun.expr(2)), // d/dz(u_x) - d/dx(u_z)
+            dx(fun.expr(1)) - dy(fun.expr(0))  // d/dx(u_y) - d/dy(u_x)
         };
     }
 };
 
 // Function to create and return the curl components directly
-std::vector<std::shared_ptr<ExpressionVirtual>> curl(const FunFEM<Mesh3>& uh);
-
-
-
-
-
+std::vector<std::shared_ptr<ExpressionVirtual>> curl(const FunFEM<Mesh3> &uh);
 
 // divS for 2d
 template <typeMesh M> class ExpressionDSx2 : public ExpressionVirtual {

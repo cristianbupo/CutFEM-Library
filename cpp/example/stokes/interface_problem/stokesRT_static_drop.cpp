@@ -74,8 +74,11 @@ int main(int argc, char **argv) {
         cutmesh_t Khi(Kh, interface);
 
         // Build spaces and cut spaces
-        space_t Wh(Kh, DataFE<Mesh2>::BDM1);
-        space_t Qh(Kh, DataFE<Mesh2>::P0);
+        // space_t Wh(Kh, DataFE<Mesh2>::BDM1);
+        // space_t Qh(Kh, DataFE<Mesh2>::P0);
+        Lagrange2 Feu(2);
+        space_t Wh(Kh, Feu);
+        space_t Qh(Kh, DataFE<Mesh2>::P1);
         cutspace_t Vh(Khi, Wh);
         cutspace_t Ph(Khi, Qh);
 
@@ -83,7 +86,8 @@ int main(int argc, char **argv) {
         fct_t gh(Vh), fh(Vh);
 
         // Solve Stokes interface problem
-        auto data_stokes = solver::cutfem::stokes::solve(Vh, Ph, interface, gh, fh, mu, sigma / rad, delta);
+        auto data_stokes =
+            solver::cutfem::stokes::solve(Vh, Ph, interface, gh, fh, mu, sigma / rad, delta, {1, 2, 3, 4}, {});
 
         // Extract solution
         std::span<double> data_uh{std::span(data_stokes.data(), Vh.get_nb_dof())};

@@ -108,7 +108,6 @@ concept FunctionDomainTime =
     std::is_same_v<fct_t, fct_ptr_int_int_double> || std::is_same_v<fct_t, fct_R2_int_int_double> ||
     std::is_same_v<fct_t, fct_R3_int_int_double>;
 
-
 // using fct_ptr_int_double = std::add_pointer_t<double(double *, int, double)>;
 // using fct_R2_int_double  = std::add_pointer_t<double(R2, int, double)>;
 // using fct_R3_int_double  = std::add_pointer_t<double(R3, int, double)>;
@@ -117,6 +116,18 @@ concept FunctionDomainTime =
 // concept FunctionTime =
 //     std::is_same_v<fct_t, fct_ptr_int_double> || std::is_same_v<fct_t, fct_R2_int_double> ||
 //     std::is_same_v<fct_t, fct_R3_int_double>;
+
+using fct_int_ptr = std::add_pointer_t<double(int, double *)>;
+using fct_int_R2  = std::add_pointer_t<double(int, R2)>;
+using fct_int_R3  = std::add_pointer_t<double(int, R3)>;
+
+template <typename fct_t>
+concept FunctionScalarFem =
+    std::is_same_v<fct_t, fct_int_ptr> || std::is_same_v<fct_t, fct_int_R2> || std::is_same_v<fct_t, fct_int_R3> ||
+    std::is_convertible_v<fct_t, std::function<double(int, std::span<double>)>>;
+
+template <typename fct_t>
+concept FunctionVectorialFem = std::is_convertible_v<fct_t, std::function<double(int, std::span<double>, int)>>;
 
 template <typename R> class KN_;
 template <typename R> class KN;

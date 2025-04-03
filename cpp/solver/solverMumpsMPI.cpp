@@ -32,7 +32,8 @@ MUMPS::MUMPS(const Solver &s, matmap &AA, std::span<double> bb)
     //    if(MPIcf::size() > 1) assert(0);
     // LOG_INFO << "MUMPS solver is used" << logger::endl;
     initializeSetting();
-    setDoF();
+    std::size_t N = rhs.size();
+    setDoF(N, 1);
     saveMatrixToCSR();
     analyzeMatrix();
     factorizationMatrix();
@@ -40,6 +41,18 @@ MUMPS::MUMPS(const Solver &s, matmap &AA, std::span<double> bb)
 
     // if(verbose > 1)
     // info();
+}
+
+MUMPS::MUMPS(matmap &A, std::span<double> b, std::size_t nrhs, bool clean) : mat(A), rhs(b), cleanMatrix(clean) {
+
+    LOG_INFO << "MUMPS solver " << nrhs << " rhs" << logger::endl;
+    initializeSetting();
+    std::size_t N = rhs.size() / nrhs;
+    setDoF(N, nrhs);
+    saveMatrixToCSR();
+    analyzeMatrix();
+    factorizationMatrix();
+    solvingLinearSystem();
 }
 
 void MUMPS::setFormatMatrix() {
@@ -91,14 +104,16 @@ void MUMPS::initializeSetting() {
     mumps_par.ICNTL(20) = 0;
 }
 
-void MUMPS::setDoF() {
+void MUMPS::setDoF(std::size_t n_matrix, std::size_t nrhs) {
 
     Uint nz_glob = 0, nz_loc = mat.size();
     MPIcf::AllReduce(nz_loc, nz_glob, MPI_SUM);
 
     if (MPIcf::IamMaster()) {
-        mumps_par.n  = rhs.size();
-        mumps_par.nz = nz_glob;
+        mumps_par.n    = n_matrix;
+        mumps_par.nz   = nz_glob;
+        mumps_par.nrhs = nrhs;
+        mumps_par.lrhs = n_matrix;
     }
     mumps_par.nz_loc = nz_loc;
 }

@@ -20,7 +20,7 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 
 #include "../cutFEMConfig.h"
 
-inline int cutfem_get_max_threads() { return std::thread::hardware_concurrency(); }
+inline std::size_t cutfem_get_max_threads() { return std::thread::hardware_concurrency(); }
 
 #ifdef USE_OMP
 #include <omp.h>

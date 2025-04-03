@@ -28,6 +28,7 @@ template <typename mesh_t> std::vector<double> solve(const CutFESpace<mesh_t> &V
     const int D = mesh_t::Rd::d;
     CutFEM<mesh_t> problem(Vh);
     const auto &Kh = Vh.get_mesh();
+    const double h = Kh[0].hElement();
 
     TestFunction<mesh_t> H(Vh, D), v(Vh, D);
     Normal n;
@@ -38,16 +39,16 @@ template <typename mesh_t> std::vector<double> solve(const CutFESpace<mesh_t> &V
         Id(i, i) = 1.;
 
     problem.addBilinear((H, v)
-                        //+ (grad(H) * n, grad(v) * n) * 1e-2
+                        // + (grad(H) * n, grad(v) * n) * 1e-2
                         ,
                         interface);
     problem.addLinear(-contractProduct(Id, gradS(v)), interface);
-    problem.addBilinear((jump(grad(H) * n), jump(grad(v) * n)) * 1e-1, Kh, INTEGRAL_INNER_FACET);
+    problem.addBilinear((jump(grad(H) * n), jump(grad(v) * n)) * 1, Kh, INTEGRAL_INNER_FACET);
 
-    // if(deg == 2) {
-    //   TestFunction<Rd::d> grad2un = grad(gradun)*n;
-    //   this->addEdgeIntegral(innerProduct(1e-2*h*h*jump(grad2un),
-    //   jump(grad2un)));
+    // if (deg == 2) {
+    TestFunction<mesh_t> grad2un = grad(grad(H) * n) * n;
+    // problem.addEdgeIntegral(innerProduct(1e-2 * h * h * jump(grad2un), jump(grad2un)));
+    problem.addBilinear(innerProduct(1e-2 * h * h * jump(grad2un), jump(grad2un)), Kh, INTEGRAL_INNER_FACET);
     // }
     problem.solve();
     return problem.rhs_;

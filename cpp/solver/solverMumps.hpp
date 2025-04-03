@@ -38,7 +38,7 @@ class MUMPS {
     //  std::string reordering = "none";
     MatrixFormat matrixFormat = centralized;
 
-    R timeAnalysis_, timeFactorization_, timeSolving_;
+    R timeSettingSolver_, timeAnalysis_, timeFactorization_, timeSolving_;
 
   private:
     matmap &mat;
@@ -53,10 +53,12 @@ class MUMPS {
     // MUMPS(const Solver &, matmap &, Rn &);
     MUMPS(const Solver &, matmap &, std::span<double>);
 
+    MUMPS(matmap &A, std::span<double> b, std::size_t nrhs, bool clean = true);
+
   private:
     void initializeSetting();
     void setFormatMatrix();
-    void setDoF();
+    void setDoF(std::size_t, std::size_t);
     void saveMatrixToCSR();
     void analyzeMatrix();
     void factorizationMatrix();

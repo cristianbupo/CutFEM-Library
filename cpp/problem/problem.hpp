@@ -46,11 +46,8 @@ template <typename Mesh> class ShapeOfProblem {
     typedef typename GFESpace<Mesh>::FElement FElement;
 
   public:
-    std::span<double> rhsSpan() { return std::span<double>(rhs_.data(), rhs_.size()); }
-
     // The right hand side vector
     // Can be reassign user should not use it!
-    // KN<double> rhs_;
     std::vector<double> rhs_;
 
     // // matrix is on a std::map form
@@ -58,7 +55,7 @@ template <typename Mesh> class ShapeOfProblem {
 
     // For openmp;
     int thread_count_max_;
-    std::vector<Matrix> mat_;
+    Matrix mat_;
     std::vector<int> index_i0_{0};
     std::vector<int> index_j0_{0};
     std::vector<Matrix> local_contribution_matrix_;
@@ -66,7 +63,7 @@ template <typename Mesh> class ShapeOfProblem {
     // pointer on a std::map
     // the user can give is own std::map
     // can be use for newton, matrix that wanna be saved by the user etc
-    std::vector<Matrix *> pmat_;
+    Matrix *pmat_;
 
     // std::map used to save CutFEM solution on the background mesh
     // for time dependent problem
@@ -103,7 +100,7 @@ template <typename Mesh> class ShapeOfProblem {
 
   private:
     void set_multithreading_tool() {
-        mat_.resize(thread_count_max_);
+        // mat_.resize(thread_count_max_);
         local_contribution_matrix_.resize(thread_count_max_);
         index_i0_.resize(thread_count_max_);
         index_j0_.resize(thread_count_max_);
@@ -123,30 +120,14 @@ template <typename Mesh> class ShapeOfProblem {
 
     void set_map(Matrix &A) {
         assert(thread_count_max_ == 1 && " There are multiple threads. You cannot set only one matrix");
-        pmat_.resize(0);
-        pmat_.push_back(&A);
+        pmat_ = &A;
     }
-    void set_map(std::vector<Matrix> &M) {
-        assert(thread_count_max_ <= M.size() && " There are multiple threads. Not good size of vector");
-        pmat_.resize(0);
-        for (auto &A : M) {
-            pmat_.push_back(&A);
-        }
-    }
-    void set_map() {
-        pmat_.resize(0);
-        for (auto &A : mat_) {
-            pmat_.push_back(&A);
-        }
-    }
-    void cleanBuildInMatrix() {
-        for (auto &A : mat_)
-            A.clear();
-    }
+
+    void set_map() { pmat_ = &mat_; }
+    void cleanBuildInMatrix() { mat_.clear(); }
 
     void init(int n) {
         nb_dof_ = n;
-        // rhs_.init(nb_dof_);
         std::fill(rhs_.begin(), rhs_.end(), 0.);
         rhs_.resize(nb_dof_, 0.);
     }
@@ -156,10 +137,6 @@ template <typename Mesh> class ShapeOfProblem {
         std::fill(rhs_.begin(), rhs_.end(), 0.);
         rhs_.resize(nb_dof_);
     }
-    // void init_nb_thread(int nn) {
-    //   thread_count_max_ = nn;
-    //   set_multithreading_tool();
-    // }
 
     void initIndex(const FElement &FKu, const FElement &FKv) {
         int thread_id              = omp_get_thread_num();
@@ -167,20 +144,11 @@ template <typename Mesh> class ShapeOfProblem {
         this->index_j0_[thread_id] = mapIdx0_[&FKu.Vh];
     }
 
-    // Matrix& get_matrix() {return *(pmat_[0]);}
-    // Rn_ get_solution() {
-    //   return Rn_(rhs_(SubArray(nb_dof_,0)));
-    // }
-
     /* This function returns the reference to the element at the specified location in the matrix.
      * Parameters: i, j
      * Return value: reference to the element at the specified location
      */
-    R &operator()(int i, int j) { return (*pmat_[0])[std::make_pair(i + index_i0_[0], j + index_j0_[0])]; }
-
-    // R & operator()(int i, int j, int thread_id) { return
-    // (*pmat_[thread_id])[std::make_pair(i+index_i0_[thread_id],j+index_j0_[thread_id])];
-    // }
+    R &operator()(int i, int j) { return (*pmat_)[std::make_pair(i + index_i0_[0], j + index_j0_[0])]; }
 
     // This function returns the i-th element of the right-hand side vector.
     R &operator()(int i) { return rhs_[i + index_i0_[0]]; }
@@ -225,36 +193,19 @@ template <typename Mesh> class ShapeOfProblem {
         int thread_id              = omp_get_thread_num();
         this->index_i0_[thread_id] = 0;
         this->index_j0_[thread_id] = 0;
-        auto &A(*pmat_[thread_id]);
-        // for (auto q=local_contribution_matrix_[thread_id].begin(); q !=
-        // this->local_contribution_matrix_[thread_id].end(); ++q) {
-        // (*this)(q->first.first,q->first.second, thread_id) += q->second;
-        for (const auto &aij : local_contribution_matrix_[thread_id]) {
+        auto &A(*pmat_);
 
-            A[std::make_pair(aij.first.first + index_i0_[thread_id], aij.first.second + index_j0_[thread_id])] +=
-                aij.second;
+#pragma omp critical
+        for (const auto &aij : local_contribution_matrix_[thread_id]) {
+            A[std::make_pair(aij.first.first, aij.first.second)] += aij.second;
         }
-        // std::cout << thread_id << "\t" <<
-        // this->local_contribution_matrix_.size() << std::endl;
-        // this->local_contribution_matrix_[thread_id].clear();
         local_contribution_matrix_[thread_id].clear();
     }
-    // double & addLocalContribution(int i, int j, int id_thread=0) {
-    //   return
-    //   openmp_mat_[id_thread][std::make_pair(i+openmp_index_i0_[id_thread],j+openmp_index_j0_[id_thread])];
-    // }
-    // void addLocalContribution_Opt(const FElement &FK) {
-    //     for (int i = 0; i < FK.NbDoF(); ++i) {
-    //         for (int j = 0; j < FK.NbDoF(); ++j) {
-    //             (*this)(FK.loc2glb(i), FK.loc2glb(j)) += loc_mat(i, j);
-    //         }
-    //     }
-    //     this->index_i0_[0] = 0;
-    //     this->index_j0_[0] = 0;
-    // }
+
     void addLocalContributionLagrange(int nend) {
         this->index_j0_[0] = 0;
         this->index_i0_[0] = 0;
+#pragma omp critical
         for (auto q = local_contribution_matrix_[0].begin(); q != this->local_contribution_matrix_[0].end(); ++q) {
             (*this)(q->first.first, nend) += q->second;
             (*this)(nend, q->first.first) += q->second;
@@ -267,12 +218,12 @@ template <typename Mesh> class ShapeOfProblem {
         int N = nb_dof_;
         SparseMatrixRC<double> Pl(N, N, P);
         { // P*A -> DF
-            SparseMatrixRC<double> A(N, N, mat_[0]);
-            multiply(Pl, A, mat_[0]);
+            SparseMatrixRC<double> A(N, N, mat_);
+            multiply(Pl, A, mat_);
         }
         { // (A*P)* -> DF
-            SparseMatrixRC<double> A(N, N, mat_[0]);
-            multiply(A, Pl, mat_[0]);
+            SparseMatrixRC<double> A(N, N, mat_);
+            multiply(A, Pl, mat_);
         }
 
         std::vector<R> x(N, 0.);
@@ -293,8 +244,8 @@ template <typename Mesh> class ShapeOfProblem {
 
         int N = nb_dof_;
         SparseMatrixRC<double> Pl(N, N, P);
-        SparseMatrixRC<double> A(N, N, mat_[0]);
-        multiply(Pl, A, mat_[0]);
+        SparseMatrixRC<double> A(N, N, mat_);
+        multiply(Pl, A, mat_);
 
         std::vector<R> x(N, 0.);
 
@@ -306,18 +257,18 @@ template <typename Mesh> class ShapeOfProblem {
     }
     void addMatMul(std::span<double> uuh) {
         assert(uuh.size() == nb_dof_);
-        MatriceMap<double> A(nb_dof_, nb_dof_, mat_[0]);
+        MatriceMap<double> A(nb_dof_, nb_dof_, mat_);
         A.addMatMul(uuh, rhs_);
     }
-    void gather_map() {
-        for (int i = 1; i < thread_count_max_; ++i) {
-            auto &A(mat_[i]);
-            for (const auto &aij : A) {
-                mat_[0][aij.first] += aij.second;
-            }
-            A.clear();
-        }
-    }
+    // void gather_map() {
+    //     for (int i = 1; i < thread_count_max_; ++i) {
+    //         auto &A(mat_[i]);
+    //         for (const auto &aij : A) {
+    //             mat_[0][aij.first] += aij.second;
+    //         }
+    //         A.clear();
+    //     }
+    // }
 };
 
 static ProblemOption defaultProblemOption;

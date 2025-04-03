@@ -123,6 +123,11 @@ class CutFEMLogger {
         }
     }
 
+    static void setSeverity(const Severity severity) {
+        CutFEMLogger &logger_instance = get();
+        logger_instance.m_severity    = severity;
+    }
+
     void open() {
         if (m_streamOpen) {
             return;
@@ -194,7 +199,9 @@ class CutFEMLogger {
                                      " " + wrapString(capitalize(severity)) + " " + msg;
 
         std::unique_lock<std::mutex> locker(m_logMutex);
-
+        if (severity < m_severity) {
+            return;
+        }
         if (m_output == LogOutput::Console) {
             std::cout << msg << std::endl;
         }
@@ -246,14 +253,14 @@ class CutFEMLogger {
     CutFEMLogger &operator()(const Severity severity) {
         std::unique_lock<std::mutex> locker(m_threadMsgMutex);
         m_threadsSeverityMap[threadId()] = severity;
-        m_severity                       = severity;
+        // m_severity                       = severity;
         return get();
     }
 
     CutFEMLogger &operator()(int line, const char *source_file, const Severity severity) {
         std::unique_lock<std::mutex> locker(m_threadMsgMutex);
         m_threadsSeverityMap[threadId()] = severity;
-        m_severity                       = severity;
+        // m_severity                       = severity;
         m_threadsLineMap[threadId()]     = line;
         m_threadsFilesMap[threadId()]    = source_file;
         return get();

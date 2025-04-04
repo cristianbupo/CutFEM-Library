@@ -80,7 +80,7 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
     while (std::getline(f, field)) {
         if (field.find("Vertices") != std::string::npos) {
             f >> nv;
-            std::cout << "  -- Nb of Vertex " << nv << std::endl;
+            // std::cout << "  -- Nb of Vertex " << nv << std::endl;
             assert(nv);
             vertices = new Vertex2[nv];
             double Pz;
@@ -93,7 +93,7 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
 
         if (field.find("Edges") != std::string::npos) {
             f >> nbe;
-            std::cout << "  -- Nb of border edges " << nbe << std::endl;
+            // std::cout << "  -- Nb of border edges " << nbe << std::endl;
             assert(nbe);
             borderelements = new BoundaryEdge2[nbe];
             mesb           = 0.;
@@ -105,7 +105,7 @@ void Mesh2::readMeshGmsh(std::ifstream &f) {
 
         if (field.find("Triangles") != std::string::npos) {
             f >> nt;
-            std::cout << "  -- Nb of Triangles " << nt << std::endl;
+            // std::cout << "  -- Nb of Triangles " << nt << std::endl;
             assert(nt);
             elements = new Triangle2[nt];
             mes      = 0;
@@ -121,8 +121,7 @@ void Mesh2::readMeshFreefem(std::ifstream &f) {
     int mv, mt, mbe;
     f >> mv >> mt >> mbe;
     if (verbosity)
-        std::cout << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe
-                  << std::endl;
+        // std::cout << "  -- Nb of Vertex " << mv << " " << " Nb of Triangles " << mt << " , Nb of border edges " << mbe << std::endl;
     this->set(mv, mt, mbe);
 
     assert(f.good() && nt && nv);

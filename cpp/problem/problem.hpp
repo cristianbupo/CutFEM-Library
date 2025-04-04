@@ -331,6 +331,7 @@ template <typename Mesh> class QuadratureOfProblem {
     typedef QuadratureFormular1d QFT;
     typedef typename QFT::QP QPT;
 
+    // CANNOT CHANGE HERE, NEED TO CHANGE IN PROBLEMOPTION
     int order_space_element_quadrature_ = 5;
     int order_space_bord_quadrature_    = 5;
 
@@ -358,6 +359,9 @@ template <typename Mesh> class QuadratureOfProblem {
         assert(itq < get_nb_quad_point_time());
         return (time_quadrature_formular) ? time_quadrature_formular->at(itq) : QPT(1., 0.);
     }
+
+    int get_quad_order_space() const {return order_space_element_quadrature_; }
+    int get_quad_order_border() const {return order_space_bord_quadrature_; }
 };
 
 #endif

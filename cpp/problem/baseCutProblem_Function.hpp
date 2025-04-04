@@ -1846,6 +1846,28 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh 
 }
 
 template <typename M>
+void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th, const MacroElementSurface<M> &macro) {
+    assert(!VF.isRHS());
+
+    progress bar(" Add Macro Stabilization CutMesh", macro.macro_element.size(), globalVariable::verbose);
+
+    for (auto me = macro.macro_element.begin(); me != macro.macro_element.end(); ++me) {
+        bar += 1;
+        for (auto it = me->second.inner_edge.begin(); it != me->second.inner_edge.end(); ++it) {
+
+            int k    = it->first;
+            int ifac = it->second;
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+
+            BaseFEM<M>::addPatchContribution(VF, k, kn, nullptr, 0, 1.);
+        }
+        this->addLocalContribution();
+    }
+    bar.end();
+}
+
+template <typename M>
 void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
 
     int number_of_quadrature_points = this->get_nb_quad_point_time();

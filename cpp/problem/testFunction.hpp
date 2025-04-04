@@ -340,7 +340,10 @@ template <typeMesh M> struct TestFunction {
     }
     void push(const std::vector<itemList_t> &l_u) { A.push_back(l_u); } // push a row of itemList_t
     int nbRow() const { return A.size(); }
-    int nbCol(int r = 0) const { return A[r].size(); }
+    int nbCol(int r = 0) const {
+        if ( nbRow() > r ) { return A[r].size(); }
+        return 0;
+    }
     std::pair<int, int> size() const { return {nbRow(), nbCol()}; } // return the size of the matrix A
     bool isScalar() const { return (nbRow() == 1 && nbCol() == 1); }
 
@@ -555,10 +558,10 @@ template <typeMesh mesh_t> TestFunction<mesh_t> operator*(const TestFunction<mes
 template <typeMesh mesh_t, typename Expr>
 TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, const TestFunction<mesh_t> &T) {
     auto [N, M] = T.size();
-    assert(M == 1);
+    // assert(M == 1);
     int D = mesh_t::D;
     TestFunction<mesh_t> Un;
-    if (N == fh.size()) {
+    if ((N == fh.size()) && (M == 1)) {
         for (int i = 0; i < N; i++) {
             auto new_list = T.getList(i, 0);
             for (auto &item : new_list.U) {
@@ -572,7 +575,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             }
             Un.push({0, 0}, new_list);
         }
-    } else if (N == D && fh.size() == 1) {
+    } else if ((N == D) && (fh.size() == 1) && (M == 1)) {
         for (int i = 0; i < N; i++) {
             auto new_list = T.getList(i, 0);
             for (auto &item : new_list.U) {
@@ -586,7 +589,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             }
             Un.push({i, 0}, new_list);
         }
-    } else if (N == 1 && fh.size() == D) {
+    } else if ((N == 1) && (fh.size() == D) && (M == 1)) {
         for (const auto &ff : fh) {
             auto new_list = T.getList(0, 0);
             for (auto &item : new_list.U) {
@@ -600,6 +603,30 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             }
             Un.push(new_list);
         }
+    } else if ((N == fh.size()) && (M == N) && (fh.size() == D)) {  //! Sebastian's unverified implementation (this seems to not work)
+                
+        // Loop over the independent variables
+        for (int i = 0; i < N; i++) {
+
+            // Loop over the components of the test variable
+            for (int j = 0; j < M; j++) {
+
+                auto new_list = T.getList(i, j);
+
+                for (auto &item : new_list.U) {
+                    if (item.expru.get() == nullptr) {
+                        item.expru = fh[i];
+                    } else {
+                        // assert(0);
+                        //    auto temp_p = item.expru;
+                        item.expru = item.expru * fh[i];
+                    }
+
+                }
+                Un.push({0, j}, new_list);
+            }
+        }
+
     } else {
         assert(0);
     }
@@ -624,14 +651,30 @@ template <typeMesh mesh_t> TestFunction<mesh_t> operator*(const TestFunction<mes
 
 template <typeMesh mesh_t>
 TestFunction<mesh_t> operator*(const std::shared_ptr<ExpressionVirtual> &fh, const TestFunction<mesh_t> &T) {
-    std::vector<std::shared_ptr<ExpressionVirtual>> ff = {fh};
-    return ff * T;
+    // std::vector<std::shared_ptr<ExpressionVirtual>> ff = {fh};
+    // return ff * T;
+    auto [N, M] = T.size();
+    int D       = mesh_t::D;
+    TestFunction<mesh_t> Un;
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++) {
+            auto new_list = T.getList(i, j);
+            for (auto &item : new_list.U) {
+                if (item.expru.get() == nullptr) {
+                    item.expru = fh;
+                } else {
+                    item.expru = item.expru * fh;
+                }
+            }
+            Un.push({i, j}, new_list);
+        }
+    }
+    return Un;
 }
 
 template <typeMesh mesh_t>
 TestFunction<mesh_t> operator*(const TestFunction<mesh_t> &T, const std::shared_ptr<ExpressionVirtual> &fh) {
-    std::vector<std::shared_ptr<ExpressionVirtual>> ff = {fh};
-    return ff * T;
+    return fh * T;
 }
 
 template <typeMesh mesh_t> TestFunction<mesh_t> operator*(const VirtualParameter &cc, const TestFunction<mesh_t> &T) {
@@ -727,9 +770,9 @@ template <typeMesh mesh_t> TestFunction<mesh_t> grad(const TestFunction<mesh_t> 
         for (int d = 0; d < D; ++d) {
 
             // Get the ItemList corresponding to component i
-            auto new_list = T.getList(
-                i,
-                0); // e.g. if T is a sum of two test functions, T = T1 + T2, new_list will have two components {T1, T2}
+            auto new_list = T.getList(i,
+                                      0); // e.g. if T is a sum of two test functions, T = T1 + T2, new_list will
+                                          // have two components {T1, T2}
 
             // Iterate over the test functions in the item list
             for (auto &item : new_list.U) {
@@ -738,12 +781,10 @@ template <typeMesh mesh_t> TestFunction<mesh_t> grad(const TestFunction<mesh_t> 
                                                 // otherwise take second derivative (or mixed derivative etc.)
             }
 
-            int irow =
-                T.isScalar()
-                    ? d
-                    : i; // if T is a scalar, then grad(T) is a vector and the derivatives of T are placed in the rows,
-            int jrow = T.isScalar() ? 0 : d; // otherwise grad(T) is a matrix and the components of T are placed in the
-                                             // rows, and the derivatives in the columns
+            int irow = T.isScalar() ? d : i;    // if T is a scalar, then grad(T) is a vector and the derivatives of T
+                                                // are placed in the rows,
+            int jrow = T.isScalar() ? 0 : d;    // otherwise grad(T) is a matrix and the components of T are placed in
+                                                // the rows, and the derivatives in the columns
             gradU.push({irow, jrow}, new_list); // push the differentiated item list into the gradU matrix
         }
     }
@@ -778,8 +819,8 @@ template <typeMesh mesh_t> TestFunction<mesh_t> div(const TestFunction<mesh_t> &
             item.du = D1(i);
         }
 
-        divU.push({0, 0}, new_list); // Result is a scalar function, so we push the differentiated item list into the
-                                     // same spot in the matrix
+        divU.push({0, 0}, new_list); // Result is a scalar function, so we push the differentiated item list into
+                                     // the same spot in the matrix
     }
 
     return divU;

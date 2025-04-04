@@ -460,6 +460,61 @@ ListItemVF<mesh_t> operator,(const TestFunction<mesh_t> &uu, const TestFunction<
     return item;
 }
 
+
+template <typeMesh mesh_t>
+ListItemVF<mesh_t> operator^(const TestFunction<mesh_t> &uu, const TestFunction<mesh_t> &vv) {
+    assert(uu.nbRow() == 2);
+    assert(uu.nbCol() == 1); // && nbCol()==1);
+    int D = mesh_t::D;
+    int l = 0;
+    for (int i = 0; i < uu.nbRow(); ++i) {
+        for (int j = 0; j < uu.nbCol(); ++j) {
+            l += uu(i, j).size() * vv(i, j).size();
+        }
+    }
+
+    ListItemVF<mesh_t> item(l);
+    item.isRHS_ = false;
+    int k = 0, kloc = 0;
+    // for (int i = 0; i < uu.nbRow(); ++i) {
+    //     for (int j = 0; j < uu.nbCol(); ++j) {
+    //         for (int ui = 0; ui < uu(i, j).size(); ++ui) {
+    //             const ItemTestFunction<mesh_t> &u(uu(i, j).getItem(ui));
+    //             for (int vi = 0; vi < vv(i, j).size(); ++vi) {
+    //                 const ItemTestFunction<mesh_t> &v(vv(i, j).getItem(vi));
+    //                 item(k) = ItemVF<mesh_t>(u, v);
+    //                 k++;
+    //             }
+    //         }
+    //     }
+    // }
+    {
+        for (int ui = 0; ui < uu(0, 0).size(); ++ui) {
+        const ItemTestFunction<mesh_t> &u(uu(0, 0).getItem(ui));
+                for (int vi = 0; vi < vv(1, 0).size(); ++vi) {
+                    const ItemTestFunction<mesh_t> &v(vv(1, 0).getItem(vi));
+                    item(k) = ItemVF<mesh_t>(u, v);
+                    k++;
+                }
+        }
+    }
+    {
+        for (int ui = 0; ui < uu(1, 0).size(); ++ui) {
+        const ItemTestFunction<mesh_t> &u(uu(1, 0).getItem(ui));
+                for (int vi = 0; vi < vv(0, 0).size(); ++vi) {
+                     ItemTestFunction<mesh_t> v(vv(0, 0).getItem(vi));
+                     v.c *= -1;
+                    item(k) = ItemVF<mesh_t>(u, v);
+                    k++;
+                }
+        }
+    }
+
+
+    item.reduce();
+    return item;
+}
+
 template <typeMesh mesh_t> ListItemVF<mesh_t> operator,(const R c, const TestFunction<mesh_t> &F) {
     int l = 0;
     for (int i = 0; i < F.nbRow(); ++i) {

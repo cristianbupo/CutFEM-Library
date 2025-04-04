@@ -27,8 +27,8 @@ template <typeMesh M> class InterfaceLevelSet : public Interface<M> {
     typedef FaceInterface<nve> Face;
     typedef SortArray<Ubyte, Element::Rd::d + 1> ElementIdx;
 
-    KN<byte> ls_sign;
-    KN<double> ls_;
+    std::vector<byte> ls_sign;
+    std::vector<double> ls_;
 
     std::vector<Rd> outward_normal_;
 

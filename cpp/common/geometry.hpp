@@ -21,24 +21,24 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 namespace geometry {
 
 template <typename Rd> struct Segment {
-   Rd A;
-   Rd B;
+    Rd A;
+    Rd B;
 
-   Segment(Rd a, Rd b) : A(a), B(b) {}
-   bool is_between(const Rd C) const;
+    Segment(Rd a, Rd b) : A(a), B(b) {}
+    bool is_between(const Rd C) const;
 };
 
 // equation cartesienne d'une droite
-typedef struct coefDroite {
-   double pente;
-   double ord_or;
-} Droite;
+struct Droite {
+    double pente;
+    double ord_or;
+};
 
 struct Interval {
-   double v_min, v_max;
-   Interval(double a, double b) : v_min(a), v_max(b) {}
-   Interval operator*(double x) const { return Interval(x * v_min, x * v_max); }
-   Interval operator+(double x) const { return Interval(x + v_min, x + v_max); }
+    double v_min, v_max;
+    Interval(double a, double b) : v_min(a), v_max(b) {}
+    Interval operator*(double x) const { return Interval(x * v_min, x * v_max); }
+    Interval operator+(double x) const { return Interval(x + v_min, x + v_max); }
 };
 
 Droite equation(const R2 a, const R2 b);
@@ -46,6 +46,7 @@ bool p_boncote(const R2 a, const R2 b, const R2 c, const R2 p);
 bool p_dans_triangle(const typename Mesh2::Element &K, const R2 P);
 bool p_dans_triangle(const R2 P, R2 a, R2 b, R2 c);
 int find_triangle_contenant_p(const Mesh2 &Th, const R2 P, int k_init = 0);
+int find_triangle_contenant_p_convex(const Mesh2 &Th, const R2 P, int k_init = 0);
 
 R3 map_point_to_simplex(const R3 N[4], const R3 P);
 R2 map_point_to_simplex(const R2 N[3], const R2 P);

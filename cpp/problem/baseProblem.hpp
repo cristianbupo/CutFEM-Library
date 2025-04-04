@@ -144,6 +144,7 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     // FElement& FKv, const RNMK_& fu, const RNMK_& fv, double Cint, int
     // id_thread) ;
     void addToMatrix_Opt(const itemVF_t &VF, const FElement &FK, const RNMK_ &fv, double Cint);
+
     void addToMatrix(const itemVF_t &VF, const TimeSlab &In, const FElement &FKu, const FElement &FKv, const RNMK_ &fu,
                      const RNMK_ &fv, double Cint);
 
@@ -168,7 +169,8 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     void addLinear(const Fct &f, const itemVFlist_t &VF, const Mesh &);
     void addElementContribution(const itemVFlist_t &VF, const int k, const TimeSlab *In, int itq, double cst_time);
     template <typename Fct>
-    void addElementContribution(const Fct &f, const itemVFlist_t &VF, const int k, const TimeSlab *In, int itq, double cst_time);
+    void addElementContribution(const Fct &f, const itemVFlist_t &VF, const int k, const TimeSlab *In, int itq,
+                                double cst_time);
 
     // integral on innerFace
     void addBilinear(const itemVFlist_t &VF, const Mesh &, const CFacet &b);
@@ -184,7 +186,7 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     void addPatchContribution(const itemVFlist_t &VF, const int k, const int kn, const TimeSlab *In, int itq,
                               double cst_time);
     void addPatchContributionMixed(const itemVFlist_t &VF, const int kb, const int kbn, const TimeSlab *In, int itq,
-                              double cst_time);
+                                   double cst_time);
 
     // integral on boundary
     void addBilinear(const itemVFlist_t &VF, const Mesh &, const CBorder &b, std::list<int> label = {});
@@ -257,10 +259,10 @@ template <typename Mesh> class FEM : public BaseFEM<Mesh>, public Solver {
     FEM(const FESpace &vh, const ProblemOption &option = defaultProblemOption)
         : BaseFEM<Mesh>(vh, option), Solver(option) {}
 
-    void solve() { Solver::solve(this->mat_[0], this->rhs_); }
+    void solve() { Solver::solve(this->mat_, this->rhs_); }
     void solve(std::string solverName) {
         this->solver_name_ = solverName;
-        Solver::solve(this->mat_[0], this->rhs_);
+        Solver::solve(this->mat_, this->rhs_);
     }
     void solve(std::map<std::pair<int, int>, R> &A, Rn &b) { Solver::solve(A, b); }
 };

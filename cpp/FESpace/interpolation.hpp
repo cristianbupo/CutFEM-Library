@@ -22,6 +22,78 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 
 // #include "../parallel/cfmpi.hpp"
 
+template <Space F, FunctionScalarFem T> void interpolate(const F &Mh, std::span<double> data, const T &f) {
+
+    typedef typename F::Rd Rd;
+    typedef typename F::Element::RdHat RdHat;
+    // Rn fhSend(Mh.nbDoF); fhSend = 1e+50;
+    assert(data.size() == Mh.nbDoF);
+    const int d   = 1;
+    const int nve = Mh.MaxNbNodePerElement;
+    KNM<R> Vpf(nve, 1);              // value of f at the interpolation points
+    KN<R> ggf(Mh.MaxNbDFPerElement); // stock the values of the dof of the interpolate
+
+    progress bar(" Interpolating", Mh.NbElement(), globalVariable::verbose);
+    // for (int t=Mh.first_element();t<Mh.last_element();
+    //      t+= Mh.next_element()) {      // loop over element
+    for (int t = 0; t < Mh.NbElement(); t += 1) {
+        bar += 1;
+        typename F::FElement K(Mh[t]);
+        const int nbdf = K.NbDoF(); // nof local
+
+        for (int p = 0; p < K.tfe->NbPtforInterpolation; p++) { // all interpolation points
+            Rd P(K.Pt(p));                                      // the coordinate of P in K hat
+            Vpf(p, 0) = f(t, P);
+        }
+
+        K.Pi_h(Vpf, ggf);
+        for (int df = 0; df < nbdf; df++) {
+            // fhSend[K(df)] =  ggf[df] ;
+            data[K(df)] = ggf[df];
+        }
+    }
+
+    bar.end();
+    // MPIcf::AllReduce(fhSend, fh, MPI_MIN);
+}
+
+template <Space F, FunctionVectorialFem T> void interpolate(const F &Mh, std::span<double> data, const T &f) {
+
+    typedef typename F::Rd Rd;
+    typedef typename F::Element::RdHat RdHat;
+    // Rn fhSend(Mh.nbDoF); fhSend = 1e+50;
+    assert(data.size() == Mh.nbDoF);
+    const int d   = Mh.N;
+    const int nve = Mh.MaxNbNodePerElement;
+    KNM<R> Vpf(nve, d);              // value of f at the interpolation points
+    KN<R> ggf(Mh.MaxNbDFPerElement); // stock the values of the dof of the interpolate
+
+    progress bar(" Interpolating", Mh.NbElement(), globalVariable::verbose);
+    // for (int t=Mh.first_element();t<Mh.last_element();
+    //      t+= Mh.next_element()) {      // loop over element
+    for (int t = 0; t < Mh.NbElement(); t += 1) {
+        bar += 1;
+        typename F::FElement K(Mh[t]);
+        const int nbdf = K.NbDoF(); // nof local
+
+        for (int p = 0; p < K.tfe->NbPtforInterpolation; p++) { // all interpolation points
+            Rd P(K.Pt(p));
+            for (int i = 0; i < d; ++i) {
+                Vpf(p, i) = f(t, P, i);
+            } // the coordinate of P in K hat
+        }
+
+        K.Pi_h(Vpf, ggf);
+        for (int df = 0; df < nbdf; df++) {
+            // fhSend[K(df)] =  ggf[df] ;
+            data[K(df)] = ggf[df];
+        }
+    }
+
+    bar.end();
+    // MPIcf::AllReduce(fhSend, fh, MPI_MIN);
+}
+
 template <Space F, typename T> void interpolate(const F &Mh, std::span<double> data, std::shared_ptr<T> &f) {
 
     typedef typename F::Rd Rd;
@@ -384,7 +456,7 @@ void interpolateOnBackGroundMesh(FunFEM<Mesh> &uh, const FunFEM<Mesh> &fh, const
     const auto &cutTh  = Vh_cut.get_mesh();
     const auto &Vh     = *uh.Vh;
 
-    uh.v = 0.;
+    std::ranges::fill(uh.v, 0.);
     for (int k = 0; k < Vh.NbElement(); ++k) {
         const auto &FK(Vh[k]);
 

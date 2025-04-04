@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
         //                                innerProduct(pPenParam * pow(h_i, 3) * jump(grad(div(v))), jump(grad(q))),
         //                            Kh_i, macro);
 
-        matlab::Export(darcy.mat_[0], "mat" + std::to_string(i) + "Cut.dat");
+        matlab::Export(darcy.mat_, "mat" + std::to_string(i) + "Cut.dat");
 
         darcy.solve("umfpack");
 
@@ -156,7 +156,10 @@ int main(int argc, char **argv) {
         auto fem_p      = ph.expr(0);
         double meanP    = integral(Kh_i, exactp, 0);
         double meanPfem = integral(Kh_i, fem_p, 0);
-        ph.v += (meanP - meanPfem) / area;
+
+        double cst_lagr = (meanP - meanPfem) / area;
+        // ph.v += (meanP - meanPfem) / area;
+        std::transform(ph.v.begin(), ph.v.end(), ph.v.begin(), [cst_lagr](double val) { return val + cst_lagr; });
 
         // L2 norm vel
         auto femSol_0dx  = dx(uh.expr(0));

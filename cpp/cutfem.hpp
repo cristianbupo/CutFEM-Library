@@ -29,6 +29,7 @@
 #include "num/print_container.hpp"
 #include "num/util.hpp"
 #include "num/matlab.hpp"
+#include "num/gnuplot.hpp"
 
 #include "FESpace/expression.hpp"
 #include "FESpace/integrationFunFEM.hpp"
@@ -37,6 +38,7 @@
 
 #include "solver/solver.hpp"
 
+#include "problem/boundary.hpp"
 #include "problem/baseProblem.hpp"
 #include "problem/generalNorm.hpp"
 #include "problem/projection.hpp"
@@ -44,4 +46,3 @@
 #include "problem/solver_curvature.hpp"
 #include "problem/solver_stokes.hpp"
 #include "problem/time_scheme.hpp"
-

@@ -126,6 +126,7 @@ template <class M> class Paraview {
             }
         }
         void build(const ActiveMesh<Mesh> &cutTh);
+        void build(const ActiveMesh<Mesh> &cutTh, int itq);
         void buildCut(const ActiveMesh<Mesh> &cutTh) {
 
             ntCut_    = 0;
@@ -191,14 +192,41 @@ template <class M> class Paraview {
             for (int k = 0; k < cutTh.NbElement(); ++k) {
                 int domain = cutTh.get_domain_element(k);
                 int kb     = cutTh.idxElementInBackMesh(k);
+             
+                    check_and_resize_array(kk);
+
+                    idx_in_Vh[kk] = std::make_pair(kb, domain);
+                    num_cell[kk]  = std::make_pair(nvCell_, numCell_);
+                    for (int i = 0; i < nvCell_; ++i) {
+                        mesh_node[kk].push_back(cutTh[k][i]);
+                    }
+                    nv_ += nvCell_;
+                    ntNotcut_++;
+                    kk++;
+                
+            }
+            shrinkToFit(kk + 1);
+        }
+        void buildNoCut(const ActiveMesh<Mesh> &cutTh, int itq) {
+
+            ntCut_    = 0;
+            ntNotcut_ = 0;
+            nv_       = 0;
+            int size0 = 1.5 * cutTh.NbElement();
+            clearAndResize(size0);
+
+            std::vector<Rd> list_node;
+            int kk = 0;
+            for (int k = 0; k < cutTh.NbElement(); ++k) {
+                int domain = cutTh.get_domain_element(k);
+                int kb     = cutTh.idxElementInBackMesh(k);
                 // Sometimes the following three lines should be outcommented, to view the solution in all quadrature
                 // points
-                if (cutTh.isInactive(k, 0)) {
+                if (cutTh.isInactive(k, itq)) {
                     continue;
                 }
-                if (cutTh.isCut(k, 0)) {
-
-                    const Cut_Part<Element> cutK(cutTh.get_cut_part(k, 0));
+                if (cutTh.isCut(k, itq)) {
+                    const Cut_Part<Element> cutK(cutTh.get_cut_part(k, itq));
 
                     if (cutK.multi_interface()) {
                         assert(0);
@@ -245,6 +273,9 @@ template <class M> class Paraview {
             }
             shrinkToFit(kk + 1);
         }
+        
+        
+        
         void build_active_mesh(const ActiveMesh<Mesh> &cutTh) {
 
             ntCut_    = 0;
@@ -1723,6 +1754,12 @@ template <class M> class Paraview {
     Paraview(const ActiveMesh<Mesh> &cutTh, std::string name) {
         outFile_ = name;
         mesh_data.build(cutTh);
+        this->writeFileMesh();
+        this->writeFileCell();
+    }
+        Paraview(const ActiveMesh<Mesh> &cutTh, int itq, std::string name) {
+        outFile_ = name;
+        mesh_data.build(cutTh, itq);
         this->writeFileMesh();
         this->writeFileCell();
     }

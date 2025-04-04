@@ -17,12 +17,28 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 
 template <>
 void Paraview<Mesh2>::ParaviewMesh::build(const ActiveMesh<Mesh> &Vh) {
-   return buildNoCut(Vh);
+   return buildNoCut(Vh, 0);
 }
 template <>
 void Paraview<MeshQuad2>::ParaviewMesh::build(const ActiveMesh<Mesh> &Vh) {
-   return buildNoCut(Vh);
+   return buildNoCut(Vh, 0);
 }
+
+template <>
+void Paraview<Mesh2>::ParaviewMesh::build(const ActiveMesh<Mesh> &Vh, int itq) {
+    if(itq == -1)
+        return buildNoCut(Vh);
+    else
+        return buildNoCut(Vh, itq);
+}
+template <>
+void Paraview<MeshQuad2>::ParaviewMesh::build(const ActiveMesh<Mesh> &Vh, int itq) {
+    if(itq == -1)
+        return buildNoCut(Vh);
+    else
+        return buildNoCut(Vh, itq);
+}
+
 template <>
 void Paraview<MeshHexa>::ParaviewMesh::build(const ActiveMesh<Mesh> &Vh) {
    return buildCut(Vh);

@@ -771,7 +771,7 @@ double integral(const std::shared_ptr<const ExpressionVirtual> &fh, const Interf
     for (int iface = interface.first_element(); iface < interface.last_element(); iface += interface.next_element()) {
         const int kb = interface.idxElementOfFace(iface); // idx on backMesh
         const R meas = interface.measure(iface);
-        const Rd normal(interface.normal(iface));
+        const Rd normal(-interface.normal(iface));
 
         for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
 

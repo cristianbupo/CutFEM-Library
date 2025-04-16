@@ -383,10 +383,6 @@ int main(int argc, char **argv) {
 #error "No stabilization defined"
 #endif
 
-#if defined(USE_MPI)
-    MPIcf cfMPI(argc, argv);
-#endif
-
     const int k = K;
     const int m = M;
 

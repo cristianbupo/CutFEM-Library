@@ -38,7 +38,7 @@ template <typename M> class BoundaryDirichlet {
     using dof_data_t   = DofData<D>;
 
   public:
-    // BoundaryDirichlet(const cutspace_t &Vh, std::vector<int> lab, const fct_t &f);
+    BoundaryDirichlet(const cutspace_t &Vh, std::vector<int> lab);
     BoundaryDirichlet(const space_t &Vh, std::vector<int> lab);
 
     void apply_inhomogeneous(std::map<std::pair<int, int>, double> &A);
@@ -51,79 +51,75 @@ template <typename M> class BoundaryDirichlet {
     std::map<int, dof_data_t> boundary_dofs;
 };
 
-// template <typename M>
-// BoundaryDirichlet<M>::BoundaryDirichlet(const cutspace_t &Vh, std::vector<int> lab, const fct_t &f) : space(Vh) {
-//     const auto &Th    = Vh.Th;
-//     const auto &cutTh = Vh.get_mesh();
+template <typename M>
+BoundaryDirichlet<M>::BoundaryDirichlet(const cutspace_t &Vh, std::vector<int> lab) {
+    const auto &Th    = Vh.Th;
+    const auto &cutTh = Vh.get_mesh();
 
-//     // loop over boundary elements
-//     for (int k = Th.first_boundary_element(); k < Th.last_boundary_element(); k += Th.next_boundary_element()) {
+    // loop over boundary elements
+    for (int k = Th.first_boundary_element(); k < Th.last_boundary_element(); k += Th.next_boundary_element()) {
 
-//         const auto &BE(Th.be(k));
-//         auto it_lab = std::find(lab.begin(), lab.end(), BE.lab);
+        const auto &BE(Th.be(k));
+        auto it_lab = std::find(lab.begin(), lab.end(), BE.lab);
 
-//         if (it_lab == lab.end())
-//             continue;
+        if (it_lab == lab.end())
+            continue;
 
-//         auto [elt_idx, face_idx] = Th.getBoundaryElement(k);
-//         std::vector<int> idxK = Vh.idxAllElementFromBackMesh(elt_idx, -1); // index of element elt_idx in the cut
-//         space assert(idxK.size() == 1);                                          // asserts that the boundary is not
-//         cut
+        auto [elt_idx, face_idx] = Th.getBoundaryElement(k);
+        std::vector<int> idxK = Vh.idxAllElementFromBackMesh(elt_idx, -1); // index of element elt_idx in the cut space
+        assert(idxK.size() == 1);                                          // asserts that the boundary is not cut
 
-//         const auto &T(Th[elt_idx]);
-//         // const auto FK(Vh[elt_idx]);
-//         const auto &FK(Vh[idxK[0]]);
+        const auto &T(Th[elt_idx]);
+        // const auto FK(Vh[elt_idx]);
+        const auto &FK(Vh[idxK[0]]);
 
-//         // auto dof_point = space(elt_idx);
-//         std::vector<Rd> dof_point;
-//         for (int p = 0; p < FK.tfe->NbPtforInterpolation; p++) {
-//             Rd P(FK.Pt(p));
-//             dof_point.push_back(P);
-//         }
+        const int domain = FK.get_domain();
 
-//         // int ndof_node = FK.getBasisFct()->getDofEntities()[0];
-//         // int ndof_edge = FK.getBasisFct().getDofEntities()[1];
-//         int ndof_edge_per_component = FK.tfe->ndfonEdge / Vh.N;
+        std::vector<Rd> dof_point(FK.tfe->NbPtforInterpolation);
+        FK.tfe->global_dofs(T, dof_point);
 
-//         for (int ic = 0; ic < Vh.N; ++ic) {
-//             for (size_t df_loc = 0, df = FK.dfcbegin(ic); df < FK.dfcend(ic); ++df, ++df_loc) {
+        // int ndof_node = FK.getBasisFct()->getDofEntities()[0];
+        // int ndof_edge = FK.getBasisFct().getDofEntities()[1];
+        int ndof_edge_per_component = FK.tfe->ndfonEdge / Vh.N;
 
-//                 // here need a fct that give the item from the dof for P3 for example
-//                 int id_item       = df_loc;
-//                 bool is_on_border = false;
+        for (int ic = 0; ic < Vh.N; ++ic) {
+            for (size_t df_loc = 0, df = FK.dfcbegin(ic); df < FK.dfcend(ic); ++df, ++df_loc) {
 
-//                 // case 1: dof is on node. E.g. (0, 1, 2) if triangle
-//                 if (id_item < T.nv) {
-//                     for (int i = 0; i < elt_t::nva; ++i) {
-//                         int i_e = elt_t::nvedge.at(face_idx).at(i);
-//                         if (i_e == id_item) {
-//                             is_on_border = true;
-//                             break;
-//                         }
-//                     }
-//                 }
-//                 // case 2: dof is on an edge (or face)
-//                 else if (id_item < T.nv + T.ne * ndof_edge_per_component) { // df if on an edge
+                // here need a fct that give the item from the dof for P3 for example
+                int id_item       = df_loc;
+                bool is_on_border = false;
 
-//                     int id_face = (id_item - T.nv) / ndof_edge_per_component;
-//                     // std::cout << "id_item = " << id_item << std::endl;
-//                     // std::cout << "id_item - T.nv = " << id_item - T.nv << std::endl;
-//                     // std::cout << "id_face = " << id_face << std::endl;
-//                     // std::cout << "ndof_edge = " << ndof_edge_per_component << std::endl;
-//                     if (id_face == face_idx) {
-//                         is_on_border = true;
-//                     }
-//                 }
-//                 if (is_on_border) {
-//                     Rd P                   = dof_point.at(df_loc);
-//                     size_t df_glob         = FK.loc2glb(df);
-//                     double val             = f.eval(elt_idx, P, ic, op_id);
-//                     boundary_dofs[df_glob] = DofData<D>(elt_idx, ic,  P);
-//                 }
-//             }
-//         }
-//     }
-// }
+                // case 1: dof is on node. E.g. (0, 1, 2) if triangle
+                if (id_item < T.nv) {
+                    for (int i = 0; i < elt_t::nva; ++i) {
+                        int i_e = elt_t::nvedge.at(face_idx).at(i);
+                        if (i_e == id_item) {
+                            is_on_border = true;
+                            break;
+                        }
+                    }
+                }
+                // case 2: dof is on an edge (or face)
+                else if (id_item < T.nv + T.ne * ndof_edge_per_component) { // df if on an edge
+
+                    int id_face = (id_item - T.nv) / ndof_edge_per_component;
+                    // std::cout << "id_item = " << id_item << std::endl;
+                    // std::cout << "id_item - T.nv = " << id_item - T.nv << std::endl;
+                    // std::cout << "id_face = " << id_face << std::endl;
+                    // std::cout << "ndof_edge = " << ndof_edge_per_component << std::endl;
+                    if (id_face == face_idx) {
+                        is_on_border = true;
+                    }
+                }
+                if (is_on_border) {
+                    Rd P                   = dof_point.at(df_loc);
+                    size_t df_glob         = FK.loc2glb(df);
+                    boundary_dofs[df_glob] = DofData<D>(elt_idx, domain, ic, P);
+                }
+            }
+        }
+    }
+}
 
 template <typename M> BoundaryDirichlet<M>::BoundaryDirichlet(const space_t &Vh, std::vector<int> lab) {
     const mesh_t &Th = Vh.Th;

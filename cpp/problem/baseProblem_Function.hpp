@@ -1236,10 +1236,11 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, 
 
         addInterfaceContribution(VF, gamma, iface, 0., nullptr, 1., 0);
         this->addLocalContribution();
-        // }
+        }
     }
     bar.end();
 }
+
 
 template <typename M>
 void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, const TimeSlab &In, int itq,

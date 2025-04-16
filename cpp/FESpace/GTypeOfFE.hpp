@@ -149,6 +149,15 @@ template <class Mesh> class GTypeOfFE : public dataTypeOfFE {
     virtual bf_type referenceBasisFunction(int i) const {
         return [](double *x, int c0) { return 0.; };
     };
+    virtual void global_dofs(const Element& T, std::vector<Rd>& x) const {
+        assert(x.size() == NbPtforInterpolation);
+
+        for (int i = 0; auto &p : x) {
+            p = T(Pt_Pi_h[i++]);
+        }
+    }
+
+
     /*
      * Simple constructor for simple finite element
      * (not for union of FE)

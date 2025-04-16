@@ -143,11 +143,26 @@ template <typename M> BoundaryDirichlet<M>::BoundaryDirichlet(const space_t &Vh,
 
         const int domain = FK.get_domain();
 
-        std::vector<Rd> dof_point;
-        for (int p = 0; p < FK.tfe->NbPtforInterpolation; p++) {
-            Rd P(FK.Pt(p));
-            dof_point.push_back(P);
-        }
+        std::vector<Rd> dof_point(FK.tfe->NbPtforInterpolation);
+        FK.tfe->global_dofs(T, dof_point);
+
+        // std::cout << "typeid(*FK.tfe).name() = " << typeid(*FK.tfe).name() << std::endl;
+        
+        // std::vector<Rd> dof_point;
+        // for (int p = 0; p < FK.tfe->NbPtforInterpolation; p++) {
+        //     Rd P(FK.Pt(p));
+        //     dof_point.push_back(P);
+        // }
+        // if (T.EdgeOrientation(0) < 0) {
+        //     std::swap(dof_point[3], dof_point[4]); // 3,4
+        // }
+        // if (T.EdgeOrientation(1) < 0) {
+        //     std::swap(dof_point[5], dof_point[6]); // 5,6
+        // }
+        // if (T.EdgeOrientation(2) < 0) {
+        //     std::swap(dof_point[7], dof_point[8]); // 7,8
+        // }
+
 
         int ndof_edge_per_component = FK.tfe->ndfonEdge / Vh.N;
 
@@ -198,7 +213,7 @@ template <typename M> void BoundaryDirichlet<M>::apply_inhomogeneous(std::map<st
         std::pair<int, int> max_val = std::make_pair(df + 1, 0);
 
         auto it_begin = std::find_if(it_start, A_map.end(), [&min_val](auto &a) { return a.first >= min_val; });
-        auto it_end   = std::find_if(it_begin, A_map.end(), [&max_val](auto &a) { return a.first > max_val; });
+        auto it_end   = std::find_if(it_begin, A_map.end(), [&max_val](auto &a) { return a.first >= max_val; });
 
         nz_rm += std::distance(it_begin, it_end);
         A_map.erase(it_begin, it_end);

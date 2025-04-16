@@ -56,9 +56,10 @@ template <class Mesh> class GTypeOfFESum : public GTypeOfFE<Mesh> {
     GTypeOfFESum(std::vector<GTypeOfFE<Mesh> const *> &t);
 
     void init(InterpolationMatrix<RdHat> &M) const;
-    void FB(const What_d whatd, const Element &K, const Rd &P, KNMK_<R> &val) const;
-    void FB(const What_d whatd, const Element &K, const Rd &P, KNMK_<R> &val, const RNM_ &J) const;
-    virtual void get_Coef_Pi_h(const GbaseFElement<Mesh> &K, KN_<double> &v) const;
+    void FB(const What_d whatd, const Element &K, const Rd &P, KNMK_<R> &val) const override;
+    void FB(const What_d whatd, const Element &K, const Rd &P, KNMK_<R> &val, const RNM_ &J) const override;
+    virtual void get_Coef_Pi_h(const GbaseFElement<Mesh> &K, KN_<double> &v) const override;
+    void global_dofs(const Element& T, std::vector<Rd>& x) const override {teb[0]->global_dofs(T, x);}
     void build();
     ~GTypeOfFESum() {}
 };

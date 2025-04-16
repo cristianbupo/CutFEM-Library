@@ -5873,10 +5873,11 @@ int main(int argc, char **argv) {
     Levelset<2> phi;
     const std::string solver_name = "mumps";
     ProblemOption option;
-    const int quadrature_order_space =
-        5; // in each space dimension -> quadrature_order_space^2 quadrature points per element
+    const int quadrature_order_space = 5; // in each space dimension -> quadrature_order_space^2 quadrature points per element
     option.order_space_element_quadrature_ = quadrature_order_space;
     AlgoimCutFEM<mesh_t, Levelset<2>> convdiff(qTime, phi, option);
+
+    const size_t deg_interpolation_vel = 2;
 
     // Method parameters
     const double tau_F_bulk = 1.; // face stabilization
@@ -5958,7 +5959,7 @@ int main(int argc, char **argv) {
         const Uint ndf_time_slab = Ih[0].NbDoF();
 
         // Velocity field
-        LagrangeQuad2 FEvelocity(2);
+        LagrangeQuad2 FEvelocity(deg_interpolation_vel);
         fespace_t VelVh(Th, FEvelocity);
         fct_t vel(VelVh, fun_velocity);
 

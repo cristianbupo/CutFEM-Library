@@ -383,10 +383,6 @@ int main(int argc, char **argv) {
 #error "No stabilization defined"
 #endif
 
-#if defined(USE_MPI)
-    MPIcf cfMPI(argc, argv);
-#endif
-
     const int k = K;
     const int m = M;
 
@@ -412,6 +408,7 @@ int main(int argc, char **argv) {
     Levelset<2> phi;
     ProblemOption option;
 #ifdef USE_MPI
+    MPIcf cfMPI(argc, argv);
     option.solver_name_ = "mumps";
 #else
     //option.solver_name_ = "umfpack";

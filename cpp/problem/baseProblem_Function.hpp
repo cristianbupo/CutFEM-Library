@@ -1241,6 +1241,7 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, 
     bar.end();
 }
 
+
 template <typename M>
 void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, const TimeSlab &In, int itq,
                              std::list<int> label) {

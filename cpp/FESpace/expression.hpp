@@ -112,6 +112,14 @@ class FunFEMVirtual {
     };
 
     std::span<double> array() const { return v; }
+
+    // FunFEMVirtual& operator+=(const FunFEMVirtual &other) {
+    //     std::vector<double> u_dof_n(data_uh.begin() + n * Wh.get_nb_dof(),
+    //     data_uh.begin() + (n + 1) * Wh.get_nb_dof());
+    //     std::transform(sol.begin(), sol.end(), u_dof_n.begin(), sol.begin(),
+    //     std::plus<double>()); // sum up all dofs
+
+    // }
 };
 
 /**

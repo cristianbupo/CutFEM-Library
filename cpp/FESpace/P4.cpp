@@ -77,8 +77,8 @@ class TypeOfFE_P4Lagrange2d : public GTypeOfFE<Mesh2> {
       assert(ipj_Pi_h.N() == kk);
    }
 
-   void FB(const What_d, const Element &K, const Rd &PHat, RNMK_ &val) const;
-   void get_Coef_Pi_h(const GbaseFElement<Mesh2> &K, KN_<double> &v) const {
+   void FB(const What_d, const Element &K, const Rd &PHat, RNMK_ &val) const override;
+   void get_Coef_Pi_h(const GbaseFElement<Mesh2> &K, KN_<double> &v) const override {
       for (int i = 0; i < 15 + 6; ++i) {
          v[i] = 1;
       }
@@ -112,6 +112,27 @@ class TypeOfFE_P4Lagrange2d : public GTypeOfFE<Mesh2> {
          }
       }
    }
+   void global_dofs(const Element& K, std::vector<Rd>& x) const override {
+        assert(x.size() == NbPtforInterpolation);
+
+        for (int i = 0; auto &p : x) {
+            p = K(Pt_Pi_h[i++]);
+        }
+
+        if (K.EdgeOrientation(0) < 0) {
+            std::swap(x[3], x[5]); // 3,4
+         }
+      
+         if (K.EdgeOrientation(1) < 0) {
+            std::swap(x[6], x[8]); // 5,6
+         }
+      
+         if (K.EdgeOrientation(2) < 0) {
+            std::swap(x[9], x[11]); // 7,8
+         }
+    }
+
+
 };
 
 // on what     nu df on node node of df

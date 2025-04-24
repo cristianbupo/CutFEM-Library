@@ -559,6 +559,7 @@ template <typeMesh mesh_t, typename Expr>
 TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, const TestFunction<mesh_t> &T) {
     auto [N, M] = T.size();
     // assert(M == 1);
+    
     int D = mesh_t::D;
     TestFunction<mesh_t> Un;
     if ((N == fh.size()) && (M == 1)) {
@@ -604,6 +605,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             Un.push(new_list);
         }
     } else if ((N == fh.size()) && (M == N) && (fh.size() == D)) {  //! Sebastian's unverified implementation (this seems to not work)
+        // If fh is Rd and the test function T is a dxd matrix, then this function will return T*fh, not fh*T
                 
         // Loop over the independent variables
         for (int i = 0; i < N; i++) {
@@ -611,7 +613,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
             // Loop over the components of the test variable
             for (int j = 0; j < M; j++) {
 
-                auto new_list = T.getList(i, j);
+                auto new_list = T.getList(j, i);
 
                 for (auto &item : new_list.U) {
                     if (item.expru.get() == nullptr) {
@@ -623,7 +625,7 @@ TestFunction<mesh_t> operator*(const std::vector<std::shared_ptr<Expr>> &fh, con
                     }
 
                 }
-                Un.push({0, j}, new_list);
+                Un.push({j, 0}, new_list);
             }
         }
 

@@ -93,6 +93,12 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     virtual void addBorderContribution(const itemVFlist_t &VF, const Element &K, const BorderElement &BE, int ifac,
                                        const TimeSlab *In, int itq, double cst_time);
 
+    // integral on fitted part of the boundary of a cut element
+    void addBilinearIntersection(const itemVFlist_t &VF, const CutMesh &, const CutMesh &, const CBorder &b, std::list<int> label = {});
+    void addLinearIntersection(const itemVFlist_t &VF, const CutMesh &, const CutMesh &, const CBorder &b, std::list<int> label = {});
+    void addIntersectedBorderContribution(const itemVFlist_t &VF, const CutMesh &, const Element &K, const BorderElement &BE, int ifac,
+                               const TimeSlab *In, int itq, double cst_time);
+
     void setDirichlet(const FunFEM<Mesh> &gh, const CutMesh &Th, std::list<int> label = {});
     void setDirichlet(const FunFEM<Mesh> &gh, const CutMesh &Th, const TimeSlab &In, std::list<int> label = {});
     void setDirichletHcurl(const FunFEM<Mesh> &gh, const CutMesh &Th, std::list<int> label = {});

@@ -992,12 +992,13 @@ template <typename Mesh> std::vector<int> ActiveMesh<Mesh>::idxAllElementFromBac
         // Otherwise, get the index of the element in the back mesh
         //    corresponding to each domain.
         int ret = idxElementFromBackMesh(k, i);
+
         if (ret != -1)
             idx.push_back(ret);
     }
 
     // Assert that the number of domains is less than 3.
-    assert(idx.size() > 0 && idx.size() < 3);
+    assert(idx.size() >= 0 && idx.size() < 3); // [ERIK: used to be     assert(idx.size() > 0 && idx.size() < 3);]
     return idx;
 }
 

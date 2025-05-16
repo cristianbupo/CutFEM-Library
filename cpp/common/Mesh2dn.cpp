@@ -500,3 +500,122 @@ Mesh2 refine_barycentric(const Mesh2 &Th) {
 
     return Th2;
 }
+
+
+
+BarycentricMesh2::BarycentricMesh2(int nx, int ny, R orx, R ory, R lx, R ly)
+    : Mesh2() // initially empty mesh
+{
+
+    using Element       = typename Mesh2::Element;
+    using BorderElement = typename Mesh2::BorderElement;
+    using Key           = std::pair<size_t, size_t>;
+    int idx_ref[3][3]   = {{0, 1, 3}, {1, 2, 3}, {2, 0, 3}};
+
+    const Mesh2 Th_base(nx, ny, orx, ory, lx, ly); // original mesh to refine
+    const size_t E  = Th_base.nt;
+    const size_t mt = 3 * E;
+    const size_t mv = Th_base.nv + E;
+    const size_t mbe = Th_base.nbe;
+
+    this->set(mv, mt, mbe);
+
+    macro_elements.resize(E);
+    inverse_macro_map.resize(mt);
+    local_subelement_map.resize(mt);    
+
+    std::map<Key, size_t> new_nodes;
+    size_t iv = 0;
+    size_t if0 = Th_base.nv + 1;
+    // size_t next_elem_id = 0;
+    size_t tinfty = -1;
+
+
+    // Create vertices
+    for (size_t k = 0; k < E; ++k) {
+        const Element &K(Th_base[k]);
+        std::array<int, 6> idxK;
+        int ivl = 0;
+        int iv_glob;
+
+        // Corner vertices
+        for (int i = 0; i < 3; ++i) {
+            iv_glob = Th_base(K[i]);
+            Key key(iv_glob, tinfty);
+
+            auto pk = new_nodes.find(key);
+            if (pk == new_nodes.end()) {
+                idxK[ivl++] = iv;
+                new_nodes[key] = iv;
+                R2 P = K[i];
+                this->vertices[iv].x = P.x;
+                this->vertices[iv].y = P.y;
+                iv++;
+            } else {
+                idxK[ivl++] = pk->second;
+            }
+        }
+
+        // Barycenter vertex
+        iv_glob = k + if0;
+        Key key(iv_glob, tinfty);
+        auto pk = new_nodes.find(key);
+        if (pk == new_nodes.end()) {
+            idxK[ivl++] = iv;
+            new_nodes[key] = iv;
+            R2 P = (K[0] + K[1] + K[2]) / 3.0;
+            this->vertices[iv].x = P.x;
+            this->vertices[iv].y = P.y;
+            iv++;
+        } else {
+            idxK[ivl++] = pk->second;
+        }
+
+        std::array<std::size_t, 3> sub_ids;
+
+        // Sub-triangles
+        for (int i = 0; i < 3; ++i) {
+            std::array<int, 3> indT = {
+                idxK[idx_ref[i][0]],
+                idxK[idx_ref[i][1]],
+                idxK[idx_ref[i][2]]
+            };
+            this->elements[3*k + i].set(this->vertices, indT.data(), 0);
+            sub_ids[i] = 3*k + i;
+            
+            inverse_macro_map[3*k + i] = k;
+            local_subelement_map[3*k + i] = i;
+        }
+
+        macro_elements[k] = sub_ids;
+    }
+
+    // Boundary elements
+    int nbe_id = 0;
+    for (int ke = 0; ke < Th_base.nbe; ++ke) {
+        int kf;
+        int k = Th_base.BoundaryElement(ke, kf);
+        const Element &K = Th_base[k];
+        const BorderElement &Be = Th_base.be(ke);
+
+        std::array<int, 2> idxBE;
+
+        for (int j = 0; j < 2; ++j) {
+            int node = Th_base(K[Element::nvedge[kf][j]]);
+            Key key(node, tinfty);
+            auto it = new_nodes.find(key);
+            if (it == new_nodes.end()) {
+                std::cerr << "Missing boundary vertex\n";
+                exit(1);
+            }
+            idxBE[j] = it->second;
+        }
+
+        this->borderelements[nbe_id++].set(this->vertices, idxBE.data(), Be.lab);
+    }
+
+    this->BuildBound();
+    this->BuildAdj();
+}
+
+

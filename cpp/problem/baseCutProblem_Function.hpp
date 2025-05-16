@@ -1446,10 +1446,12 @@ void BaseCutFEM<Mesh>::setDirichletHcurl(const FunFEM<Mesh> &gh, const CutMesh &
     }
 
     // Ensure there's exactly one matrix in the problem
-    assert(this->pmat_.size() == 1);
+    // assert(this->pmat_.size() == 1);
 
     // Modify the matrix and the right-hand side to enforce the Dirichlet boundary conditions
-    eraseAndSetRow(this->get_nb_dof(), *(this->pmat_[0]), this->rhs_, dof2set);
+    
+    eraseAndSetRowCol(this->get_nb_dof(), this->mat_, this->rhs_, dof2set);
+    
 }
 
 
@@ -1506,11 +1508,12 @@ void BaseCutFEM<Mesh>::setDirichletHone(const FunFEM<Mesh> &gh, const CutMesh &c
     }
 
     // Ensure there's exactly one matrix in the problem
-    assert(this->pmat_.size() == 1);
+    // assert(this->pmat_.size() == 1);
 
     // Modify the matrix and the right-hand side to enforce the Dirichlet boundary conditions
     // eraseAndSetRow(this->get_nb_dof(), *(this->pmat_[0]), this->rhs_, dof2set);
-    eraseAndSetRowCol(this->get_nb_dof(), *(this->pmat_[0]), this->rhs_, dof2set);
+
+    eraseAndSetRowCol(this->get_nb_dof(), *(this->pmat_), this->rhs_, dof2set);
 }
 
 template <typename Mesh> void BaseCutFEM<Mesh>::removeDofForHansbo(const FESpace &Vh) {
@@ -2828,6 +2831,9 @@ void BaseCutFEM<M>::addIntersectedBorderContribution(const itemVFlist_t &VF, con
     double h     = K.get_h();
     Rd normal    = K.N(ifac);
 
+    // std::cout << "K[0] = " << K[0] << ", K[1] = " << K[1] << ", K[2] = " << K[2] << "\n";
+    // std::cout << "normal = " << normal << "\n";
+
     // U and V HAS TO BE ON THE SAME MESH
     const FESpace &Vh(VF.get_spaceV(0));
     const CutMesh &Th(Vh.get_mesh());
@@ -2850,7 +2856,8 @@ void BaseCutFEM<M>::addIntersectedBorderContribution(const itemVFlist_t &VF, con
         typename Element::Face face;
         const Cut_Part<typename Element::Face> cutFace(activeMesh.get_cut_face(face, k_active, ifac, itq));
         const Cut_Part<Element> cutK(activeMesh.get_cut_part(k_active, itq));
-        // std::cout << k_surf << " : " << k_active << std::endl;
+        // std::cout << "k_active = " << k_active << std::endl;
+
         double meas_cut = cutK.measure();
         // LOOP OVER ELEMENTS IN THE CUT
         for (auto it = cutFace.element_begin(); it != cutFace.element_end(); ++it) {

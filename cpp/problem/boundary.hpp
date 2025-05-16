@@ -144,7 +144,9 @@ BoundaryDirichlet<M>::BoundaryDirichlet(const cutspace_t &Vh, std::vector<int> l
         // std::vector<int> idxK = Vh.idxAllElementFromBackMesh(elt_idx, -1); // index of element elt_idx in the cut space
         // assert(idxK.size() == 1);                                          // asserts that the boundary is not cut
         
-        assert(idxK.size() == 1);
+        // assert(idxK.size() == 1);
+        if (idxK.size() == 0) continue;
+
         int k = idxK[0];
         const auto &FK(Vh[k]);  // Get the finite element for the current element in the finite element space
         const int domain = FK.get_domain();

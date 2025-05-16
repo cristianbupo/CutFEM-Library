@@ -1033,6 +1033,7 @@ void BaseFEM<M>::addBorderContribution(const itemVFlist_t &VF, const Element &K,
     double h     = K.get_h();
     Rd normal    = K.N(ifac);
 
+
     // U and V HAS TO BE ON THE SAME MESH
     const FESpace &Vh(VF.get_spaceV(0));
     int kb                = Vh.Th(K);
@@ -1492,6 +1493,7 @@ void BaseFEM<M>::addInterfaceContribution(const itemVFlist_t &VF, const Interfac
 
     const Rd normal(-interface.normal(ifac));
 
+
     // GET THE QUADRATURE RULE
     const QFB &qfb(this->get_quadrature_formular_cutFace());
 
@@ -1917,7 +1919,7 @@ void BaseFEM<M>::addLagrangeMultiplier(const itemVFlist_t &VF, double val, const
 
     int ndf = this->rhs_.size();
     this->rhs_.resize(ndf + 1);
-    this->rhs_(ndf) = val;
+    this->rhs_.at(ndf) = val;
     // this->nb_dof_ += 1; //? added but doesn't make a difference
 
     for (int iface = gamma.first_element(); iface < gamma.last_element(); iface += gamma.next_element()) {

@@ -63,13 +63,13 @@ class BarycentricMesh2 : public Mesh2 {
     public:
         BarycentricMesh2(int nx, int ny, R orx, R ory, R lx, R ly);  
         
-        std::size_t get_macro_element(std::size_t i) {
-            assert(0 <= i <= this->nt);
+        std::size_t get_macro_element(std::size_t i) const {
+            assert(0 <= i && i < this->nt);  
             return inverse_macro_map[i];
         }
 
-        std::size_t get_local_subelement(std::size_t i) {
-            assert(0 <= i <= this->nt);
+        std::size_t get_local_subelement(std::size_t i) const {
+            assert(0 <= i && i < this->nt);
             return local_subelement_map[i];
         }
 

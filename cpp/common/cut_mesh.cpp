@@ -8,12 +8,18 @@ BarycentricActiveMesh::BarycentricActiveMesh(const BarycentricMesh2 &th)
     
 void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign_domain_remove) {
     int dom_size = this->get_nb_domain();
-    this->idx_element_domain.clear();
+    idx_element_domain.resize(0);
+    in_active_mesh_.resize(21); // handles up to 21 domains
 
-    // Clear background ↔ active mesh index structures
+    // Resize time-level for stationary case
+    for (int i = 0; i < 21; ++i)
+        in_active_mesh_[i].resize(1); // 1 quadrature point in time
+
+    // Prepare containers
     for (int d = 0; d < dom_size; ++d) {
-        this->idx_in_background_mesh_[d].clear();
-        this->idx_from_background_mesh_[d].clear();
+        idx_in_background_mesh_[d].resize(0);
+        int nt_max = idx_from_background_mesh_[d].size();
+        idx_in_background_mesh_[d].reserve(nt_max);
     }
 
     std::vector<int> nt(dom_size, 0);
@@ -39,13 +45,19 @@ void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign
         // Keep all three subelements
         for (std::size_t i = 0; i < 3; ++i) {
             int sub_k = sub_elems[i];
+            const auto signK = interface.get_SignElement(sub_k);
 
             for (int d = 0; d < dom_size; ++d) {
-                this->idx_in_background_mesh_[d].push_back(sub_k);
-                this->idx_from_background_mesh_[d][sub_k] = nt[d];
+                int local_id = nt[d];
+
+                idx_in_background_mesh_[d].push_back(sub_k);
+                idx_from_background_mesh_[d][sub_k] = local_id;
 
                 if (interface.isCut(sub_k)) {
-                    this->interface_id_[0][{d, nt[d]}].emplace_back(&interface, -sign_domain_remove);
+                    interface_id_[0][{d, local_id}].emplace_back(&interface, -sign_domain_remove);
+                } else if (signK.sign() == sign_domain_remove) {
+                    // std::cout << "sub_k = " << sub_k << "\n";
+                    // in_active_mesh_[d][0][local_id] = false; //! to exclude elements completely outside of domain from isInactive
                 }
 
                 ++nt[d];
@@ -53,10 +65,117 @@ void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign
         }
     }
 
-    this->idx_element_domain.push_back(0);
+    idx_element_domain.push_back(0);
     for (int d = 0; d < dom_size; ++d) {
-        this->idx_in_background_mesh_[d].shrink_to_fit();
-        this->idx_element_domain.push_back(this->idx_element_domain.back() + nt[d]);
+        idx_in_background_mesh_[d].shrink_to_fit();
+        idx_element_domain.push_back(idx_element_domain.back() + nt[d]);
     }
 }
+
+    
+
+// void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign_domain_remove) {
+//     int dom_size = this->get_nb_domain();
+//     idx_element_domain.resize(0);
+//     in_active_mesh_.resize(21);
+
+//     for (int i = 0; i < 21; ++i)
+//         in_active_mesh_[i].resize(1);   // 1 quadrature point in time when stationary
+
+
+//     {
+//         // Iterate through number of remaining subdomains
+//         for (int d = 0; d < dom_size; ++d) {
+//             idx_in_background_mesh_[d].resize(0);
+//             // Compute number of elements in subdomain d
+//             int nt_max = idx_from_background_mesh_[d].size();
+//             // Reserve memory for these elements
+//             idx_in_background_mesh_[d].reserve(nt_max);
+//         }
+//     }
+
+//     std::vector<int> nt(dom_size, 0);
+//     const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
+
+//     for (int d = 0; d < dom_size; ++d) {
+        
+//         for (auto it_k = idx_from_background_mesh_[d].begin(); it_k != idx_from_background_mesh_[d].end();) {
+            
+//             int kb = it_k->first;  // background mesh element index
+//             int k  = it_k->second; // active mesh element index
+
+//             // Get interface segment
+//             auto it_gamma = interface_id_[0].find(std::make_pair(d, k));
+            
+//             // Get the sign of the level set function in the element kb
+//             const auto signK = interface.get_SignElement(kb);
+//             bool is_cut = interface.isCut(kb);
+
+//             // Skip elements fully in the remove domain *unless* someone in the macro is cut
+//             if ((signK.sign() == sign_domain_remove) && !is_cut) {
+
+//                 const auto &elements_in_macro = Th_bary.macro_elements[Th_bary.get_macro_element(kb)];
+//                 bool is_macro_cut = false;
+
+//                 std::cout << "Element kb = " << kb << " is NOT cut and OUTSIDE domain\n";
+//                 // Check subelements
+//                 for (std::size_t sub_k : elements_in_macro) {
+//                     if (sub_k == kb) continue;  // already checked in "is_cut"
+//                         std::cout << "Neighbor sub_k = " << sub_k << "\n";
+//                     if (interface.isCut(sub_k)) {
+//                         is_macro_cut = true;
+//                         in_active_mesh_[d][0][kb] = false;   //! added to try to make isInactive method exclude elements that are entirely outside the domain but in the active mesh
+
+//                         std::cout << "Neighbor sub_k = " << sub_k << " IS CUT\n";
+//                         break; // no need to check further
+//                     }
+//                 }
+
+//                 // Exclude macro if none of its elements are cut
+//                 if (!is_macro_cut) {
+//                     // std::cout << "it_k = " << it_k->first << ", " << it_k->second << "\n";
+//                     std::cout << "Macro element belonging to kb = " << kb << " is NOT active\n";
+//                     it_k = idx_from_background_mesh_[d].erase(it_k);
+                    
+//                     continue; // skip to next
+//                 }
+//             }
+
+//             // Save and erase old interfaces
+//             int nb_interface = (it_gamma == interface_id_[0].end()) ? 0 : it_gamma->second.size();
+//             std::vector<const Interface<Mesh2> *> old_interface(nb_interface);
+//             std::vector<int> ss(nb_interface);
+//             for (int i = 0; i < nb_interface; ++i)
+//                 old_interface[i] = it_gamma->second[i].first;
+//             for (int i = 0; i < nb_interface; ++i)
+//                 ss[i] = it_gamma->second[i].second;
+//             if (it_gamma != interface_id_[0].end()) {
+//                 auto ittt = interface_id_[0].erase(it_gamma);
+//             }
+
+//             // Set new indices and put back interfaces
+//             idx_in_background_mesh_[d].push_back(kb);
+//             it_k->second = nt[d];
+//             for (int i = 0; i < nb_interface; ++i) {
+//                 interface_id_[0][std::make_pair(d, nt[d])].push_back(std::make_pair(old_interface[i], ss[i]));
+//             }
+
+//             // Is cut so need to add interface and sign
+//             // if (signK.cut()) {    //! Was like this before
+//             if (is_cut) {
+//                 interface_id_[0][std::make_pair(d, nt[d])].push_back(std::make_pair(&interface, -sign_domain_remove));
+//             }
+//             nt[d]++;
+//             it_k++;
+//         }
+//     }
+
+//     idx_element_domain.push_back(0);
+//     for (int d = 0; d < dom_size; ++d) {
+//         idx_in_background_mesh_[d].resize(nt[d]);
+//         idx_in_background_mesh_[d].shrink_to_fit();
+//         int sum_nt = idx_element_domain[d] + nt[d];
+//         idx_element_domain.push_back(sum_nt);
+//     }
+// }
     

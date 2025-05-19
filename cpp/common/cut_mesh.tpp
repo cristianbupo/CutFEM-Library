@@ -210,7 +210,7 @@ template <typename Mesh> void ActiveMesh<Mesh>::truncate(const Interface<Mesh> &
             if ((signK.sign() == sign_domain_remove) && !is_cut) {
                 // if (signK.sign() == sign_domain_remove) {
 
-                it_k = idx_from_background_mesh_[d].erase(it_k);
+                it_k = idx_from_background_mesh_[d].erase(it_k);    // deletes it_k from map and sets it_k to the next element
 
                 continue;
             }

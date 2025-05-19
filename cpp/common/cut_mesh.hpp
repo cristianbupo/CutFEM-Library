@@ -156,7 +156,7 @@ template <typename Mesh> class ActiveMesh {
 
     ActiveMesh(const Mesh &th, const TimeInterface<Mesh> &interface);
 
-    void truncate(const Interface<Mesh> &interface, int sign_domain);
+    virtual void truncate(const Interface<Mesh> &interface, int sign_domain);
 
     /**
      * @brief Create active mesh for one time-dependent subdomain.
@@ -264,6 +264,15 @@ template <typename Mesh> class ActiveMesh {
     Physical_Partition<Element> build_local_partition(const int k, int t = 0) const;
     Physical_Partition<Face> build_local_partition(Face &face, const int k, int ifac, int t = 0) const;
 };
+
+
+class BarycentricActiveMesh : public ActiveMesh<Mesh2> {
+    public:
+        BarycentricActiveMesh(const BarycentricMesh2 &th);
+        void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
+    };
+    
+
 
 typedef ActiveMesh<Mesh2> ActiveMeshT2;
 typedef ActiveMesh<Mesh3> ActiveMeshT3;

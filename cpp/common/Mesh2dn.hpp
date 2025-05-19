@@ -73,9 +73,9 @@ class BarycentricMesh2 : public Mesh2 {
             return local_subelement_map[i];
         }
 
-    private:
         // Maps each base mesh triangle to its 3 refined children
         std::vector<std::array<std::size_t, 3>> macro_elements;
+    private:
 
         // Maps each refined triangle to its parent macro triangle
         std::vector<std::size_t> inverse_macro_map;

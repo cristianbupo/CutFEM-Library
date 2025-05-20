@@ -158,13 +158,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, int domain, con
     typedef typename FElement::Rd Rd;
     typedef typename QF::QuadraturePoint QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+
+        if (Th.isInactive(k, 0))
             continue;
 
         const Cut_Part<Element> cutK(Th.get_cut_part(k, 0));
@@ -214,13 +217,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex, int 
     using v_t       = typename fe_t::Rd;
     using qp_t      = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+        
+        if (Th.isInactive(k, 0))
             continue;
 
         const Cut_Part<e_t> cutK(Th.get_cut_part(k, 0));
@@ -261,13 +267,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double *
     typedef typename QF::QuadraturePoint QuadraturePoint;
     typedef typename ActiveMesh<Mesh>::Element Element;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+        
+        if (Th.isInactive(k, 0))
             continue;
 
         const Cut_Part<Element> cutK(Th.get_cut_part(k, 0));
@@ -314,13 +323,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex,
     typedef typename QF::QuadraturePoint QuadraturePoint;
     typedef typename ActiveMesh<Mesh>::Element Element;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+
+        if (Th.isInactive(k, 0))
             continue;
 
         const Cut_Part<Element> cutK(Th.get_cut_part(k, 0));
@@ -385,7 +397,7 @@ double L2normCut_T(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh
     using QF        = typename FElement::QF;
     using QuadraturePoint = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
@@ -469,7 +481,7 @@ double L2normSurf_2(const std::shared_ptr<ExpressionVirtual> &fh, const Fct &fex
     typedef typename FElement::Rd Rd;
     typedef typename QFB::QuadraturePoint QuadraturePoint;
 
-    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(5));
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8));
     What_d Fop = Fwhatd(op_id);
 
     double val = 0.;
@@ -508,7 +520,7 @@ double L2normSurf_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double 
     // typedef GenericInterface<Mesh> Interface;
     typedef typename QFB::QuadraturePoint QuadraturePoint;
 
-    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(5));
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8));
     What_d Fop = Fwhatd(op_id);
 
     double val = 0.;
@@ -602,7 +614,7 @@ double L2norm_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double *, i
     typedef typename FElement::Rd Rd;
     typedef typename QF::QuadraturePoint QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
     What_d Fop = Fwhatd(op_id);
     double val = 0.;
 
@@ -644,7 +656,7 @@ template <typename M> double L2norm_2(const std::shared_ptr<ExpressionVirtual> &
     typedef typename FElement::Rd Rd;
     typedef typename QF::QuadraturePoint QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
     What_d Fop = Fwhatd(op_id);
     double val = 0.;
 
@@ -748,7 +760,7 @@ double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(dou
     typedef typename FElement::Rd Rd;
     typedef typename QFB::QuadraturePoint QuadraturePoint;
 
-    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(5)); //? should it be 2 instead of 3 here?
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8)); //? should it be 2 instead of 3 here?
     What_d Fop = Fwhatd(op_id);
 
     double val = 0.;
@@ -763,6 +775,44 @@ double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(dou
             Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
 
             val = std::max(val, fabs(fh->evalOnBackMesh(kb, 0, mip, tt) - fex(mip, fh->cu, tt)));
+        }
+    }
+    double val_receive = 0;
+#ifdef USE_MPI
+    MPIcf::AllReduce(val, val_receive, MPI_MAX);
+#else
+    val_receive = val;
+#endif
+
+    return val_receive;
+}
+
+template <typename Mesh>
+double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, const Interface<Mesh> &interface) {
+    typedef GFESpace<Mesh> FESpace;
+    typedef typename FESpace::FElement FElement;
+    typedef typename FElement::QFB QFB;
+    typedef typename FElement::Rd Rd;
+    typedef typename QFB::QuadraturePoint QuadraturePoint;
+
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8)); //? should it be 2 instead of 3 here?
+    What_d Fop = Fwhatd(op_id);
+
+    double val = 0.;
+
+    for (int iface = interface.first_element(); iface < interface.last_element(); iface += interface.next_element()) {
+
+        const int kb = interface.idxElementOfFace(iface); // idx on backMesh
+
+        const Rd normal(-interface.normal(iface));
+
+
+        for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+
+            QuadraturePoint ip(qfb[ipq]);                                                  // integration point
+            Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
+
+            val = std::max(val, std::fabs(fh->evalOnBackMesh(kb, 0, mip, normal)));
         }
     }
     double val_receive = 0;
@@ -794,8 +844,8 @@ double maxNormCut(const std::shared_ptr<ExpressionVirtual> &fh, const ActiveMesh
     using v_t       = typename fe_t::Rd;
     using qp_t      = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(5));
-    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(5));
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
+    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(8));
 
     What_d Fop = Fwhatd(op_id);
     double val = 0.;
@@ -856,8 +906,8 @@ double maxNormCut(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex, const
     using v_t       = typename fe_t::Rd;
     using qp_t      = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(5));
-    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(5));
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
+    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(8));
 
     What_d Fop = Fwhatd(op_id);
     double val = 0.;

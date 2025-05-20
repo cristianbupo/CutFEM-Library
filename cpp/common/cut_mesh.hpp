@@ -136,7 +136,7 @@ template <typename Mesh> class ActiveMesh {
     int nb_quadrature_time_{1};
 
     // a list of the elements that are in the active mesh for some time quadrature point, but not for all
-    std::vector<std::vector<std::map<int, bool>>> in_active_mesh_; // [dom][itq][idx_element] -> true/false
+    std::vector<std::vector<std::map<int, bool>>> not_in_active_mesh_; // [dom][itq][idx_element] -> true/false
 
     // Constructors
   public:
@@ -180,7 +180,7 @@ template <typename Mesh> class ActiveMesh {
      *
      * @param interface Interface<Mesh> object.
      */
-    void createSurfaceMesh(const Interface<Mesh> &interface);
+    virtual void createSurfaceMesh(const Interface<Mesh> &interface);
 
     /**
      * @brief Create an active mesh of a time-dependent surface.
@@ -270,6 +270,9 @@ class BarycentricActiveMesh : public ActiveMesh<Mesh2> {
     public:
         BarycentricActiveMesh(const BarycentricMesh2 &th);
         void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
+        void createSurfaceMesh(const Interface<Mesh2> &interface) override;
+
+
     };
     
 

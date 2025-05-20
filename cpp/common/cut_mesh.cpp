@@ -9,18 +9,23 @@ BarycentricActiveMesh::BarycentricActiveMesh(const BarycentricMesh2 &th)
 void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign_domain_remove) {
     int dom_size = this->get_nb_domain();
     idx_element_domain.resize(0);
-    in_active_mesh_.resize(21); // handles up to 21 domains
+    not_in_active_mesh_.resize(21); // handles up to 21 domains
 
     // Resize time-level for stationary case
     for (int i = 0; i < 21; ++i)
-        in_active_mesh_[i].resize(1); // 1 quadrature point in time
+        not_in_active_mesh_[i].resize(1); // 1 quadrature point in time
 
     // Prepare containers
+    // for (int d = 0; d < dom_size; ++d) {
+    //     idx_in_background_mesh_[d].resize(0);
+    //     int nt_max = idx_from_background_mesh_[d].size();
+    //     idx_in_background_mesh_[d].reserve(nt_max);
+    // }
     for (int d = 0; d < dom_size; ++d) {
-        idx_in_background_mesh_[d].resize(0);
-        int nt_max = idx_from_background_mesh_[d].size();
-        idx_in_background_mesh_[d].reserve(nt_max);
+        this->idx_in_background_mesh_[d].clear();
+        this->idx_from_background_mesh_[d].clear();
     }
+
 
     std::vector<int> nt(dom_size, 0);
     const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
@@ -57,7 +62,7 @@ void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign
                     interface_id_[0][{d, local_id}].emplace_back(&interface, -sign_domain_remove);
                 } else if (signK.sign() == sign_domain_remove) {
                     // std::cout << "sub_k = " << sub_k << "\n";
-                    // in_active_mesh_[d][0][local_id] = false; //! to exclude elements completely outside of domain from isInactive
+                    not_in_active_mesh_[d][0][local_id] = true; //! to exclude elements completely outside of domain from isInactive
                 }
 
                 ++nt[d];
@@ -72,15 +77,87 @@ void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign
     }
 }
 
-    
+
+
+void BarycentricActiveMesh::createSurfaceMesh(const Interface<Mesh2> &interface) {
+    int dom_size = this->get_nb_domain();
+    idx_element_domain.resize(0);
+    not_in_active_mesh_.resize(21); // handles up to 21 domains
+
+    // Resize time-level for stationary case
+    for (int i = 0; i < 21; ++i)
+        not_in_active_mesh_[i].resize(1); // 1 quadrature point in time
+
+    // Prepare containers
+    // for (int d = 0; d < dom_size; ++d) {
+    //     idx_in_background_mesh_[d].resize(0);
+    //     int nt_max = idx_from_background_mesh_[d].size();
+    //     idx_in_background_mesh_[d].reserve(nt_max);
+    // }
+    for (int d = 0; d < dom_size; ++d) {
+        this->idx_in_background_mesh_[d].clear();
+        this->idx_from_background_mesh_[d].clear();
+    }
+
+
+    std::vector<int> nt(dom_size, 0);
+    const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
+
+    for (std::size_t macro_k = 0; macro_k < Th_bary.macro_elements.size(); ++macro_k) {
+        const auto &sub_elems = Th_bary.macro_elements[macro_k];
+
+        bool keep_macro = false;
+        for (std::size_t i = 0; i < 3; ++i) {
+            int sub_k = sub_elems[i];
+            const auto signK = interface.get_SignElement(sub_k);
+
+            if (interface.isCut(sub_k)) {
+                keep_macro = true;
+                break;
+            }
+        }
+
+        if (!keep_macro)
+            continue;
+
+        // Keep all three subelements
+        for (std::size_t i = 0; i < 3; ++i) {
+            int sub_k = sub_elems[i];
+            const auto signK = interface.get_SignElement(sub_k);
+
+            for (int d = 0; d < dom_size; ++d) {
+                int local_id = nt[d];
+
+                idx_in_background_mesh_[d].push_back(sub_k);
+                idx_from_background_mesh_[d][sub_k] = local_id;
+
+                if (interface.isCut(sub_k)) {
+                    interface_id_[0][{d, local_id}].emplace_back(&interface, 0);
+                } else {
+                    // std::cout << "sub_k = " << sub_k << "\n";
+                    not_in_active_mesh_[d][0][local_id] = true; //! to exclude elements completely outside of domain from isInactive
+                }
+
+                ++nt[d];
+            }
+        }
+    }
+
+    idx_element_domain.push_back(0);
+    for (int d = 0; d < dom_size; ++d) {
+        idx_in_background_mesh_[d].shrink_to_fit();
+        idx_element_domain.push_back(idx_element_domain.back() + nt[d]);
+    }
+}
+
 
 // void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign_domain_remove) {
 //     int dom_size = this->get_nb_domain();
 //     idx_element_domain.resize(0);
-//     in_active_mesh_.resize(21);
+//     not_in_active_mesh_.resize(21);
 
 //     for (int i = 0; i < 21; ++i)
-//         in_active_mesh_[i].resize(1);   // 1 quadrature point in time when stationary
+//         not_in_active_mesh_[i].resize(1);   // 1 quadrature point in time when stationary
 
 
 //     {
@@ -124,7 +201,7 @@ void BarycentricActiveMesh::truncate(const Interface<Mesh2> &interface, int sign
 //                         std::cout << "Neighbor sub_k = " << sub_k << "\n";
 //                     if (interface.isCut(sub_k)) {
 //                         is_macro_cut = true;
-//                         in_active_mesh_[d][0][kb] = false;   //! added to try to make isInactive method exclude elements that are entirely outside the domain but in the active mesh
+//                         not_in_active_mesh_[d][0][kb] = false;   //! added to try to make isInactive method exclude elements that are entirely outside the domain but in the active mesh
 
 //                         std::cout << "Neighbor sub_k = " << sub_k << " IS CUT\n";
 //                         break; // no need to check further

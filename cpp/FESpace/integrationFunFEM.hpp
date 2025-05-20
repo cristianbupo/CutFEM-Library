@@ -601,11 +601,12 @@ template <typename M> double integral(const ActiveMesh<M> &Th, const double C, i
 // Integration on Mesh
 // ===============================================================
 
-template <typename Mesh> double integral(const Mesh &Th, const std::shared_ptr<const ExpressionVirtual> &fh) {
+template <typeMesh Mesh> double integral(const Mesh &Th, const std::shared_ptr<const ExpressionVirtual> &fh) {
+    
     double val = integral(Th, fh, 0);
     return val;
 }
-template <typename Mesh> double integral(const Mesh &Th, const std::shared_ptr<const ExpressionVirtual> &fh, int itq) {
+template <typeMesh Mesh> double integral(const Mesh &Th, const std::shared_ptr<const ExpressionVirtual> &fh, int itq) {
     typedef typename Mesh::Element Element;
     typedef GFESpace<Mesh> FESpace;
     typedef typename FESpace::FElement FElement;
@@ -640,14 +641,14 @@ template <typename Mesh> double integral(const Mesh &Th, const std::shared_ptr<c
     return val_receive;
 }
 
-template <typename Mesh> double integral(const Mesh &Th, const FunFEM<Mesh> &fh, int c0) {
+template <typeMesh Mesh> double integral(const Mesh &Th, const FunFEM<Mesh> &fh, int c0) {
     // ExpressionFunFEM<Mesh> ui(fh, c0, op_id);
     std::shared_ptr<const ExpressionVirtual> ui = std::make_shared<ExpressionFunFEM<Mesh>>(fh, c0, op_id);
     double val                                  = integral(Th, ui, 0);
     return val;
 }
 
-template <typename Mesh> double integral(const Mesh &Th, const double c) {
+template <typeMesh Mesh> double integral(const Mesh &Th, const double c) {
     typedef typename Mesh::Element Element;
     typedef GFESpace<Mesh> FESpace;
     typedef typename FESpace::FElement FElement;

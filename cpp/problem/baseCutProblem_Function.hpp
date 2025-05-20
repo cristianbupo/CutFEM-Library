@@ -38,6 +38,9 @@ template <typename M> void BaseCutFEM<M>::addBilinear(const itemVFlist_t &VF, co
 
         bar += Th.next_element();
 
+        if (Th.isInactive(k, 0))
+            continue;
+
         if (Th.isCut(k, 0)) {
             addElementContribution(VF, k, nullptr, 0, 1.);
         } else {
@@ -249,6 +252,9 @@ template <typename M> void BaseCutFEM<M>::addLinear(const itemVFlist_t &VF, cons
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
         bar += Th.next_element();
 
+        if (Th.isInactive(k, 0))
+            continue;
+
         if (Th.isCut(k, 0)) {
             addElementContribution(VF, k, nullptr, 0, 1.);
         } else {
@@ -267,6 +273,9 @@ void BaseCutFEM<M>::addLinear(const Fct &f, const itemVFlist_t &VF, const CutMes
     assert(VF.isRHS());
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+        if (Th.isInactive(k, 0))
+            continue;
 
         if (Th.isCut(k, 0)) {
             addElementContribution(f, VF, k, nullptr, 0, 1.);
@@ -545,6 +554,9 @@ void BaseCutFEM<M>::addBilinear(const itemVFlist_t &VF, const CutMesh &Th, const
     assert(!VF.isRHS());
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
+        if (Th.isInactive(k, 0))
+            continue;
+
         if (Th.isCut(k, 0)) {
             addElementContribution(VF, k, nullptr, 0, 1.);
             addElementContributionOtherSide(VF, k, nullptr, 0, espE);
@@ -558,6 +570,8 @@ template <typename M>
 void BaseCutFEM<M>::addLinear(const itemVFlist_t &VF, const CutMesh &Th, const CExtension &ext, const int espE) {
     assert(VF.isRHS());
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        if (Th.isInactive(k, 0))
+            continue;
 
         if (Th.isCut(k, 0)) {
             addElementContribution(VF, k, nullptr, 0, 1.);
@@ -2338,6 +2352,10 @@ template <typename M> void BaseCutFEM<M>::addLagrangeMultiplier(const itemVFlist
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
         bar += Th.next_element();
+
+        if (Th.isInactive(k, 0))
+            continue;
+
         if (Th.isCut(k, 0))
             addLagrangeContribution(VF, k, nullptr, 0, 1);
         else

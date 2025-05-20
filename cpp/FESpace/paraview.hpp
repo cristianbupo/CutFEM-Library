@@ -167,6 +167,7 @@ template <class M> class Paraview {
 
                 } else {
                     // not cut
+
                     idx_in_Vh[kk] = std::make_pair(kb, domain);
                     num_cell[kk]  = std::make_pair(nvCell_, numCell_);
                     for (int i = 0; i < nvCell_; ++i) {
@@ -259,6 +260,7 @@ template <class M> class Paraview {
                         kk++;
                     }
                 } else {
+
                     check_and_resize_array(kk);
 
                     idx_in_Vh[kk] = std::make_pair(kb, domain);
@@ -691,7 +693,49 @@ template <class M> class Paraview {
                 kk++;
             }
         }
+        void buildSmallElements(const MacroElementSurface<M> &macro) {
+            assert(macro.Th_active);
+            auto &cutTh(*(macro.Th_active));
+            auto &intf(macro.interface);
+            auto &Th(*intf.backMesh);
+            ntCut_    = 0;
+            ntNotcut_ = 0;
+            nv_       = 0;
+            int size0 = cutTh.NbElement();
+            clearAndResize(size0);
 
+            int domain = 0;
+
+            std::vector<Rd> list_node;
+            int kk = 0;
+            // for (int k = 0; k < cutTh.NbElement(); ++k) {
+            for (int iface = intf.first_element(); iface < intf.last_element(); iface += intf.next_element()) {
+
+                // int domain = cutTh.get_domain_element(k);
+                // int kb     = cutTh.idxElementInBackMesh(k);
+                const int kb = intf.idxElementOfFace(iface);
+
+                // if (domain != dom) {
+                //     assert(0);
+                //     continue;
+                // }
+
+                // std::cout << "kb = " << kb << ", macro.isSmall(kb) = " <<macro.isSmall(kb) << "\n";
+                if (!macro.isSmall(iface))
+                    continue;
+                check_and_resize_array(kk);
+
+                idx_in_Vh[kk] = std::make_pair(kb, domain);
+                num_cell[kk]  = std::make_pair(nvCell_, numCell_);
+                for (int i = 0; i < nvCell_; ++i) {
+                    mesh_node[kk].push_back(Th[kb][i]);
+                }
+                nv_ += nvCell_;
+                ntNotcut_++;
+                kk++;
+            }
+        }
+        
         void build_macro_element(const TimeMacroElement<M> &macro, int dom) {
 
             const ActiveMesh<Mesh> &cutTh(macro.Th);
@@ -1299,42 +1343,6 @@ template <class M> class Paraview {
 
                 if (domain != dom)
                     continue;
-                if (!macro.isSmall(k))
-                    continue;
-                check_and_resize_array(kk);
-
-                idx_in_Vh[kk] = std::make_pair(kb, domain);
-                num_cell[kk]  = std::make_pair(nvCell_, numCell_);
-                for (int i = 0; i < nvCell_; ++i) {
-                    mesh_node[kk].push_back(cutTh[k][i]);
-                }
-                nv_ += nvCell_;
-                ntNotcut_++;
-                kk++;
-            }
-        }
-
-        void buildSmallElements(const MacroElementSurface<M> &macro) {
-            assert(macro.Th_active);
-            const ActiveMesh<Mesh> &cutTh(*(macro.Th_active));
-            ntCut_    = 0;
-            ntNotcut_ = 0;
-            nv_       = 0;
-            int size0 = cutTh.NbElement();
-            clearAndResize(size0);
-
-            int dom = 0;
-
-            std::vector<Rd> list_node;
-            int kk = 0;
-            for (int k = 0; k < cutTh.NbElement(); ++k) {
-                int domain = cutTh.get_domain_element(k);
-                int kb     = cutTh.idxElementInBackMesh(k);
-
-                if (domain != dom) {
-                    assert(0);
-                    continue;
-                }
                 if (!macro.isSmall(k))
                     continue;
                 check_and_resize_array(kk);

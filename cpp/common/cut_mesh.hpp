@@ -165,7 +165,7 @@ template <typename Mesh> class ActiveMesh {
      * @param interface Time-dependent interface.
      * @param sign_domain Sign of the signed distance function in the domain you want to remove.
      */
-    void truncate(const TimeInterface<Mesh> &interface, int sign_domain);
+    virtual void truncate(const TimeInterface<Mesh> &interface, int sign_domain);
 
     /**
      * @brief I don't know what this does. //?
@@ -270,6 +270,7 @@ class BarycentricActiveMesh : public ActiveMesh<Mesh2> {
     public:
         BarycentricActiveMesh(const BarycentricMesh2 &th);
         void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
+        void truncate(const TimeInterface<Mesh2> &interface, int sign_domain) override;
         void createSurfaceMesh(const Interface<Mesh2> &interface) override;
 
 

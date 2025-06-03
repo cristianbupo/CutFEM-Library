@@ -273,7 +273,7 @@ template <typename Mesh> void ActiveMesh<Mesh>::truncate(const TimeInterface<Mes
         }
     }
 
-    std::vector<int> nt(dom_size, 0.); //! nt is never changed after this line? why are its components just 0.?
+    std::vector<int> nt(dom_size, 0.); 
 
     // Loop over all subdomains
     for (int d = 0; d < dom_size; ++d) {

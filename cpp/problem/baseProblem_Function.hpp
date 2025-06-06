@@ -823,11 +823,15 @@ void BaseFEM<M>::addPatchContributionMixed(const itemVFlist_t &VF, const int kb,
         assert(Vhv.get_mesh().get_nb_domain() == 1);
         assert(Vhu.get_mesh().get_nb_domain() == 1);
 
-        const int ku = VF[l].onWhatElementIsTrialFunction(k, kn);
-        const int kv = VF[l].onWhatElementIsTestFunction(k, kn);
+        // const int ku = VF[l].onWhatElementIsTrialFunction(k, kn);
+        // const int kv = VF[l].onWhatElementIsTestFunction(k, kn);
+        const int kbu = VF[l].onWhatElementIsTrialFunction(kb, kbn);
+        const int kbv = VF[l].onWhatElementIsTestFunction(kb, kbn);
 
-        int kbv = Vhv.idxElementInBackMesh(kv);
-        int kbu = Vhu.idxElementInBackMesh(ku);
+        // int kbv = Vhv.idxElementInBackMesh(kv);
+        // int kbu = Vhu.idxElementInBackMesh(ku);
+        int kv = Vhv.idxElementFromBackMesh(kbv, 0);
+        int ku = Vhu.idxElementFromBackMesh(kbu, 0);
 
         const FElement &FKu(Vhu[ku]);
         const FElement &FKv(Vhv[kv]);
@@ -841,8 +845,7 @@ void BaseFEM<M>::addPatchContributionMixed(const itemVFlist_t &VF, const int kb,
         RNMK_ fu(this->databf_ + (same ? 0 : FKv.NbDoF() * FKv.N * lastop), FKu.NbDoF(), FKu.N, lastop);
         What_d Fop = Fwhatd(lastop);
 
-        // COMPUTE COEFFICIENT
-
+        // Loop over both elements in the patch
         for (auto e : {k, kn}) {
 
             const FElement &FK(Vh[e]);

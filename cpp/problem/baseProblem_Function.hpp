@@ -248,6 +248,45 @@ template <typename Mesh> void BaseFEM<Mesh>::addBilinear(const itemVFlist_t &VF,
     bar.end();
 }
 
+template <typename Mesh> void BaseFEM<Mesh>::addBilinear(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
+    for (int itq = 0; itq < this->get_nb_quad_point_time(); ++itq) {
+        assert(!VF.isRHS());
+        progress bar("Add Bilinear Mesh", Th.last_element(), globalVariable::verbose);
+        
+        // Get the time quadrature
+        auto tq = this->get_quadrature_time(itq);
+
+        // Map the time quadrature to the time slab
+        double tid = In.map(tq);
+
+#pragma omp parallel default(shared) num_threads(this->get_num_threads())
+        {
+            int thread_id = omp_get_thread_num();
+
+            // Calculate the offset for the current thread
+            long offset = thread_id * this->offset_bf_time;
+
+            // Create a matrix to store the time basis functions for this thread
+            RNMK_ bf_time(this->databf_time_ + offset, In.NbDoF(), 1, op_dz);
+
+            // Compute the time basis functions for this time quadrature point
+            In.BF(tq.x, bf_time);
+
+            // Calculate the time integration constant
+            double cst_time = tq.a * In.get_measure();
+
+#pragma omp for
+            for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+                bar += Th.next_element();
+                BaseFEM<Mesh>::addElementContribution(VF, k, &In, itq, cst_time);
+
+                this->addLocalContribution();
+            }
+            bar.end();
+        }
+    }
+}
+
 template <typename Mesh> void BaseFEM<Mesh>::addLinear(const itemVFlist_t &VF, const Mesh &Th) {
     assert(VF.isRHS());
     progress bar("Add Linear Mesh", Th.last_element(), globalVariable::verbose);

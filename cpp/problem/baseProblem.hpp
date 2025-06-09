@@ -164,6 +164,7 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     // Integral on K
     void addBilinear(const itemVFlist_t &VF, const Mesh &);
     void addBilinear(const itemVFlist_t &VF, const CutMesh &);
+    void addBilinear(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &);
     void addLinear(const itemVFlist_t &VF, const Mesh &);
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const Mesh &);

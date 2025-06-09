@@ -187,7 +187,7 @@ template <typename Mesh> class ActiveMesh {
      *
      * @param interface TimeInterface<Mesh> object.
      */
-    void createSurfaceMesh(const TimeInterface<Mesh> &interface);
+    virtual void createSurfaceMesh(const TimeInterface<Mesh> &interface);
 
     /**
      * @brief Dont know what this does. //?
@@ -272,6 +272,7 @@ class BarycentricActiveMesh : public ActiveMesh<Mesh2> {
         void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
         void truncate(const TimeInterface<Mesh2> &interface, int sign_domain) override;
         void createSurfaceMesh(const Interface<Mesh2> &interface) override;
+        void createSurfaceMesh(const TimeInterface<Mesh2> &interface) override;
 
 
     };

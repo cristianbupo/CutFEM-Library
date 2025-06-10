@@ -386,7 +386,7 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex,
  * @return int_{In} ||u-uh||^2_{L^2(Omega(t))} dt
  */
 template <typename Mesh, typename fct_t>
-double L2normCut_T(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+double L2L2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
                  const QuadratureFormular1d &qTime, int num_components) {
 
     using mesh_t    = Mesh;
@@ -401,7 +401,7 @@ double L2normCut_T(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh
 
     double val = 0.;
 
-    const int domain = 0; // do only for main domain
+    // const int domain = 0; // do only for main domain
 
     // Loop over number of components of functions
     for (int i = 0; i < num_components; ++i) {

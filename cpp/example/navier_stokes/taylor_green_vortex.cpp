@@ -418,8 +418,8 @@ int main(int argc, char **argv) {
             fct_t fun_uh_t(Vhn, In, data_uh);
             fct_t fun_ph_t(Phn, In, data_ph);
 
-            error_I_uh += L2normCut_T(fun_uh_t, fun_u_d, Thi, In, qTime, 2);
-            error_I_ph += L2normCut_T(fun_ph_t, fun_p_d, Thi, In, qTime, 1);
+            error_I_uh += L2L2normCut(fun_uh_t, fun_u_d, Thi, In, qTime, 2);
+            error_I_ph += L2L2normCut(fun_ph_t, fun_p_d, Thi, In, qTime, 1);
 
             // std::cout << " ||u(T)-uh(T)||_2 / ||u(T)||_2 = " << error_uh / u_norm
             // << '\n'; std::cout << " ||p(T)-ph(T)||_2 / ||p(T)||_2 = " << error_ph /

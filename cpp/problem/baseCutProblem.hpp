@@ -53,6 +53,8 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     template <typename Fct> void addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &);
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, int itq, const TimeSlab &In);
+    template <typename Fct>
+    void addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In);
 
     void addLinear(const itemVFlist_t &VF, const CutMesh &, int itq, const TimeSlab &In);
     void addLinear(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In);

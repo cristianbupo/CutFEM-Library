@@ -208,10 +208,10 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
                      std::list<int> label = {});
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In,
-                   std::list<int> label);
+                   std::list<int> label = {});
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In, int itq,
-                   std::list<int> label);
+                   std::list<int> label = {});
     template <typename Fct>
     void addInterfaceContribution(const Fct &f, const itemVFlist_t &VF, const Interface<Mesh> &gamma, int ifac,
                                   double tid, const TimeSlab *In, double cst_time, int itq);

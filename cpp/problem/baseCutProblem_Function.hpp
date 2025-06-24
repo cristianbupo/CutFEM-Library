@@ -314,6 +314,8 @@ void BaseCutFEM<M>::addLinear(const itemVFlist_t &VF, const CutMesh &Th, int itq
 template <typename M>
 template <typename Fct>
 void BaseCutFEM<M>::addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, int itq, const TimeSlab &In) {
+    //! DOES NOT WORK SAFELY
+    assert(0);
     assert(VF.isRHS());
     auto tq    = this->get_quadrature_time(itq);
     double tid = In.map(tq);
@@ -337,6 +339,8 @@ void BaseCutFEM<M>::addLinear(const Fct &f, const itemVFlist_t &VF, const CutMes
 template <typename M>
 template <typename Fct>
 void BaseCutFEM<M>::addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
+    //! DOES NOT WORK SAFELY, CHECK E.G. time_nitsche.cpp
+    assert(0);
     assert(VF.isRHS());
     for (int itq = 0; itq < this->get_nb_quad_point_time(); ++itq) {
         auto tq    = this->get_quadrature_time(itq);
@@ -3059,26 +3063,15 @@ template <typename M> void BaseCutFEM<M>::initialSolution(std::span<double> u0) 
     this->mapU0_.clear();
 }
 
-/**
- * @brief Save the coefficients of the solution.
- * @note The coefficients are stored in a map with keys representing the domain and the global index of the degrees of
- * freedom (DOFs) in the back space of the finite element space, and values representing the coefficients of the
- * solution.
- *
- * @param sol The vector of coefficients representing the numerical solution.
- * @tparam M The type of the mesh.
- * @tparam V The type of the vector for storing the coefficients.
- * @requires V to be a NonAllocVector or a vector with element type KN<typename V::element_type>.
- */
+
 template <typename M> void BaseCutFEM<M>::saveSolution(std::span<double> sol) {
-    // Note: this method doesn't change the input sol
+    
+    this->mapU0_.clear(); 
 
-    this->mapU0_.clear(); // Clear the map of coefficients.
+    int id_domain_0 = 0;                       
+    int nbTime      = this->get_nb_dof_time(); 
 
-    int id_domain_0 = 0;                       // Initialize the domain ID to 0.
-    int nbTime      = this->get_nb_dof_time(); // Get the number of degrees of freedom in time.
-
-    // Iterate over the finite element spaces in the map of indices.
+    // Iterate over the finite element spaces in the finite element system
     for (typename std::map<const FESpace *, int>::const_iterator q = this->mapIdx0_.begin(); q != this->mapIdx0_.end();
          ++q) {
         const FESpace &Wh = *q->first;               // Get the finite element space.
@@ -3087,6 +3080,7 @@ template <typename M> void BaseCutFEM<M>::saveSolution(std::span<double> sol) {
         const FESpace &backVh = Wh.get_back_space(); // Get the back space of the finite element space.
 
         // Pointer to the vector of coefficients of size nbTime*N_{h,i}^n
+        // std::cout << "Wh.get_nb_dof() = " << Wh.get_nb_dof() << ", n0 = " << n0 << "\n";
         const KN_<double> solS = sol.subspan(n0, Wh.get_nb_dof() * nbTime);
 
         // Iterate over the elements in the current active mesh.

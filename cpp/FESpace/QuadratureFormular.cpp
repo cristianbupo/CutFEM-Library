@@ -299,8 +299,9 @@ const double pLob_n7_2 = 0.355555555555556;
 //---------------------------------------------------------------------------------
 const QuadratureFormular1d QF_LumpP1_1D(1, QuadratureFormular1d::QP(0.5, 0.), QuadratureFormular1d::QP(0.5, 1.));
 //---------------------------------------------------------------------------------
-static GQuadraturePoint<R1> P_QF_Euler[1] = {QuadratureFormular1d::QP(1, R1(0.))};
-const QuadratureFormular1d QF_Euler(1, 1, P_QF_Euler);
+static GQuadraturePoint<R1> P_QF_Euler[2] = {QuadratureFormular1d::QP(0., R1(0.)),
+                                             QuadratureFormular1d::QP(1, R1(1.))};
+const QuadratureFormular1d QF_Euler(1, 2, P_QF_Euler);
 //---------------------------------------------------------------------------------
 static GQuadraturePoint<R1> P_QF_Lobatto1[2] = {QuadratureFormular1d::QP(0.5, R1(0.)),
                                                 QuadratureFormular1d::QP(0.5, R1(1.))};

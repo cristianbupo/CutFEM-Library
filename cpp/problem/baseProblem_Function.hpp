@@ -1325,6 +1325,7 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const TimeInterface<M> &gam
 template <typename M>
 void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const TimeInterface<M> &gamma, const TimeSlab &In, int itq,
                              std::list<int> label) {
+
     assert(!VF.isRHS());
     bool all_label = (label.size() == 0);
     auto tq        = this->get_quadrature_time(itq);
@@ -1343,10 +1344,10 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const TimeInterface<M> &gam
         const typename Interface<M>::Face &face = (*gamma[itq])[iface]; // the face
         // std::cout << "label " << label << ", face.lab " << face.lab << std::endl;
         // if (util::contain(label, face.lab) || all_label) {
-
+        
         addInterfaceContribution(VF, *gamma[itq], iface, tid, &In, cst_time, itq);
         this->addLocalContribution();
-        //}
+        // }
     }
     bar.end();
 }

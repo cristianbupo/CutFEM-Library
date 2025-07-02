@@ -248,6 +248,9 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
                                        const TimeSlab *In, int itq, double cst_time);
 
     void addLagrangeVecToRowAndCol(const std::span<double> vecRow, const std::span<double> vecCol, const R val_rhs);
+
+    // integral for global face stabilization
+    void addPatchStabilization(const itemVFlist_t &VF, const Mesh &, const TimeSlab &In);
 };
 
 template <typename Mesh> class FEM : public BaseFEM<Mesh>, public Solver {

@@ -2251,7 +2251,7 @@ void BaseFEM<M>::addLagrangeVecToRowAndCol(const std::span<double> vecRow, const
  * @param In Time slab
  */
 template <typename M>
-void BaseFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const M &Th, const TimeSlab &In) {
+void BaseFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
 
     int number_of_quadrature_points = this->get_nb_quad_point_time();
 

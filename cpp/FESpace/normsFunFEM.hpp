@@ -401,14 +401,14 @@ double L2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> 
     const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
-    const size_t op_t = 0;  // corresponds to taking the value of the function in time, not a derivative
+    const size_t op_t  = 0;  // corresponds to taking the value of the function in time, not a derivative
     const size_t op_id = 0; // corresponds to taking the value of the function in space, not a derivative
 
     // const int domain = 0; // do only for main domain
     
     int nb_dom = Th.get_nb_domain();
 
-    // Loop over number of subdomains
+    // Loop over number of subdomains   //! actually might not correctly sum up from all the subdomains
     double L2_err = 0.;
     for (int domain = 0; domain < nb_dom; ++domain) {
 
@@ -826,9 +826,8 @@ double LinfL2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Me
 
     double max_val = 0.;
 
-    // Loop in time
+    // Loop over all time quadrature points in In
     for (int itq = 0; itq < qTime.n; ++itq) {
-        
         max_val = std::max(max_val, L2normCut(fh, f, Th, In, qTime, itq, num_components));
     }
 
@@ -863,7 +862,7 @@ double LinfH1normCut(const FunFEM<Mesh> &fh, const fct_t &f, const grad_fct_t &g
 
     double max_val = 0.;
 
-    // Loop in time
+    // Loop over all time quadrature points in In
     for (int itq = 0; itq < qTime.n; ++itq) {
         
         max_val = std::max(max_val, H1normCut(fh, f, grad_f, Th, In, qTime, itq, num_components));

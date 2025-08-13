@@ -2255,6 +2255,8 @@ void BaseFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th
 
     int number_of_quadrature_points = this->get_nb_quad_point_time();
 
+    size_t num_stab_faces = 0;
+
     // Loop through time quadrature points
     for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
         assert(!VF.isRHS());
@@ -2284,19 +2286,82 @@ void BaseFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th
                 if (kn < k)
                     continue;
 
-                std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element
-                std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+                // std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element
+                // std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
 
                 // Add patch contribution
                 // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
                 addPatchContribution(VF, k, kn, &In, itq, cst_time);
+                num_stab_faces++;
             }
             this->addLocalContribution();
         }
         bar.end();
     }
+
+    std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
 }
 
+
+/**
+ * @brief Face stabilization in all faces of the background mesh
+ *
+ * @tparam M Mesh
+ * @param VF stabilization integrand
+ * @param Th Mesh
+ * @param In Time slab
+ */
+template <typename M>
+void BaseFEM<M>::addFaceStabilization(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
+
+    int number_of_quadrature_points = this->get_nb_quad_point_time();
+
+    size_t num_stab_faces = 0;
+
+    // Loop through time quadrature points
+    for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
+        assert(!VF.isRHS());
+
+        // Compute contribution from time basis functions
+        auto tq    = this->get_quadrature_time(itq);
+        double tid = In.map(tq);
+        KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
+        RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
+        In.BF(tq.x, bf_time); // compute time basic funtions
+        double cst_time = tq.a * In.get_measure();
+
+        std::string title = " Add Face Stab, In(" + std::to_string(itq) + ")";
+        progress bar(title.c_str(), Th.last_element(), globalVariable::verbose);
+
+        // Loop through all mesh elements
+        for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+            bar += Th.next_element();
+
+            // Loop through the element's edges
+            for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+
+                int jfac = ifac;
+                int kn   = Th.ElementAdj(k, jfac); // get neighbor element's index
+
+                // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
+                if (kn < k)
+                    continue;
+
+                std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element
+                std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+
+                // Add patch contribution
+                // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
+                addFaceContribution(VF, e1, e2, &In, itq, cst_time);
+                num_stab_faces++;
+            }
+            this->addLocalContribution();
+        }
+        bar.end();
+    }
+
+    // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+}
 
 
 

@@ -1811,6 +1811,8 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
     assert(!VF.isRHS());
     progress bar(" Add Patch Stabilization CutMesh", Th.last_element(), globalVariable::verbose);
 
+    size_t num_stab_faces = 0;
+
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
         bar += Th.next_element();
 
@@ -1823,14 +1825,17 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
             if (kn < k)
                 continue;
+        
 
-            std::pair<int, int> e1 = std::make_pair(k, ifac);
-            std::pair<int, int> e2 = std::make_pair(kn, jfac);
+            // std::pair<int, int> e1 = std::make_pair(k, ifac);
+            // std::pair<int, int> e2 = std::make_pair(kn, jfac);
             BaseFEM<M>::addPatchContribution(VF, k, kn, nullptr, 0, 1.);
+            num_stab_faces++;
         }
         this->addLocalContribution();
     }
     bar.end();
+    std::cout << "Number of stabilized faces: " << num_stab_faces << "\n";
 }
 
 template <typename M> void BaseCutFEM<M>::addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th) {

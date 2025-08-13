@@ -311,34 +311,44 @@ template <class M> class Paraview {
             int size0 = cutTh.NbElement();
             clearAndResize(size0);
 
+            size_t num_stab_faces = 0;
+
             std::vector<Rd> list_node;
             int kk = 0;
             for (int k = 0; k < cutTh.NbElement(); ++k) {
                 int kb = cutTh.idxElementInBackMesh(k);
+
+                // if (!cutTh.isCut(k, 0) && !cutTh.isInactive(k, 0))
+                //     continue;
+
                 if ((cutTh.isStabilizeElement(k) && cutTh.get_domain_element(k) == domain) || domain == -1) {
-                    const Element &K(cutTh[k]);
-                    for (int e = 0; e < Element::nea; ++e) {
-                        check_and_resize_array(kk);
+                const Element &K(cutTh[k]);
+                for (int e = 0; e < Element::nea; ++e) {
+                    check_and_resize_array(kk);
 
-                        int je = e;
-                        int kn = cutTh.ElementAdj(k, je);
+                    int je = e;
+                    int kn = cutTh.ElementAdj(k, je);
 
-                        if (kn == -1)
-                            continue;
+                    if (kn == -1)
+                        continue;
+                    // if (kn < k)
+                    //     continue;
 
-                        int nv_loc    = Element::nva;
-                        num_cell[kk]  = std::make_pair(nv_loc, 3);
-                        idx_in_Vh[kk] = std::make_pair(kb, domain);
-                        nv_ += nv_loc;
-                        for (int i = 0; i < nv_loc; ++i) {
-                            mesh_node[kk].push_back(K[Element::nvedge[e][i]]);
-                        }
-                        ntCut_++;
-                        kk++;
+                    int nv_loc    = Element::nva;
+                    num_cell[kk]  = std::make_pair(nv_loc, 3);
+                    idx_in_Vh[kk] = std::make_pair(kb, domain);
+                    nv_ += nv_loc;
+                    for (int i = 0; i < nv_loc; ++i) {
+                        mesh_node[kk].push_back(K[Element::nvedge[e][i]]);
                     }
+                    ntCut_++;
+                    kk++;
+                    num_stab_faces++;
+                }
                 }
             }
             shrinkToFit(kk + 1);
+            std::cout << "Number of stabilized faces in Paraview: " << num_stab_faces << "\n";
         }
 
         void build_macro_element(const MacroElement<M> &macro, int dom) {

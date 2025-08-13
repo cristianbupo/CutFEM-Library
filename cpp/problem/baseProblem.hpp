@@ -251,6 +251,7 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
 
     // integral for global face stabilization
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
+    void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
 };
 
 template <typename Mesh> class FEM : public BaseFEM<Mesh>, public Solver {

@@ -571,7 +571,7 @@ BarycentricMesh2::BarycentricMesh2(int nx, int ny, R orx, R ory, R lx, R ly)
             idxK[ivl++] = pk->second;
         }
 
-        std::array<std::size_t, 3> sub_ids;
+        std::array<int, 3> sub_ids;
 
         // Sub-triangles
         for (int i = 0; i < 3; ++i) {

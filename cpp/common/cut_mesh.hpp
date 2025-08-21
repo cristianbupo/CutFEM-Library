@@ -167,6 +167,8 @@ template <typename Mesh> class ActiveMesh {
      */
     virtual void truncate(const TimeInterface<Mesh> &interface, int sign_domain);
 
+    void truncate_global(const TimeInterface<Mesh> &interface, int sign_domain);
+
     /**
      * @brief I don't know what this does. //?
      *
@@ -266,16 +268,37 @@ template <typename Mesh> class ActiveMesh {
 };
 
 
-class BarycentricActiveMesh : public ActiveMesh<Mesh2> {
-    public:
-        BarycentricActiveMesh(const BarycentricMesh2 &th);
-        void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
-        void truncate(const TimeInterface<Mesh2> &interface, int sign_domain) override;
-        void createSurfaceMesh(const Interface<Mesh2> &interface) override;
-        void createSurfaceMesh(const TimeInterface<Mesh2> &interface) override;
+class BarycentricActiveMesh2 : public ActiveMesh<Mesh2> {
+public:
 
+    BarycentricActiveMesh2(const BarycentricMesh2 &th);
 
-    };
+    // ActiveMesh overrides
+    void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
+    void truncate(const TimeInterface<Mesh2> &interface, int sign_domain) override;
+    void createSurfaceMesh(const Interface<Mesh2> &interface) override;
+    void createSurfaceMesh(const TimeInterface<Mesh2> &interface) override;
+
+    // Queries (stationary: itq=0)
+    bool is_macro_cut(int kept_macro_id, int itq = 0) const;
+    bool is_macro_interior(int kept_macro_id, int itq = 0) const;
+    bool is_macro_inactive(int macro_k, int itq) const;
+    bool stabilize_macro(int macro_k) const;
+
+    int get_macro_in_background_mesh(int k_active) const;
+    int get_macro_in_active_mesh(int k_bg) const;
+
+    std::vector<std::array<int, 3>> active_macro_elements;
+    std::vector<int> inverse_active_macro_map;
+    std::vector<int> macro_in_background_mesh;              // takes active index as argument
+    std::unordered_map<int,int> macro_in_active_mesh;       // takes background index as argument
+    int nb_active_macros;
+// private:
+    
+
+    
+};
+
     
 
 

@@ -2299,7 +2299,7 @@ void BaseFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th
         bar.end();
     }
 
-    std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+    // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
 }
 
 

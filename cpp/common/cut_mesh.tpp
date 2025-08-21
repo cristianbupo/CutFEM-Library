@@ -366,6 +366,120 @@ template <typename Mesh> void ActiveMesh<Mesh>::truncate(const TimeInterface<Mes
     }
 }
 
+
+template <typename Mesh> void ActiveMesh<Mesh>::truncate_global(const TimeInterface<Mesh> &interface, int sign_domain_remove) {
+
+    int n_tid = interface.size();
+    assert(n_tid < interface_id_.size());
+    nb_quadrature_time_ = n_tid;
+    not_in_active_mesh_.resize(21);
+    for (int i = 0; i < 21; ++i)
+        not_in_active_mesh_[i].resize(nb_quadrature_time_);
+
+    int dom_size = this->get_nb_domain();
+    idx_element_domain.resize(0);
+
+    {
+        for (int d = 0; d < dom_size; ++d) {
+            idx_in_background_mesh_[d].resize(0);
+            int nt_max = idx_from_background_mesh_[d].size();
+            idx_in_background_mesh_[d].reserve(nt_max);
+        }
+    }
+
+    std::vector<int> nt(dom_size, 0.); 
+
+    // Loop over all subdomains
+    for (int d = 0; d < dom_size; ++d) {
+        // Loop over all elements in the active mesh of subdomain d
+        for (auto it_k = idx_from_background_mesh_[d].begin(); it_k != idx_from_background_mesh_[d].end();) {
+
+            // Index of the element in the background mesh
+            int kb = it_k->first;
+            // Index of the element in the active mesh
+            int k  = it_k->second;
+
+            // Variable to check status if the element is active or inactive
+            bool active_element = false;
+            // Temporary variable to hold the sign of the element
+            int s;
+
+            // Loop over all time quadrature points
+            for (int t = 0; t < interface.size() - 1; ++t) {
+                // Get SignElement at time t
+                const SignElement<typename ActiveMesh<Mesh>::Element> signKi  = interface(t)->get_SignElement(kb);
+                // Get SignElement at time t+1
+                const SignElement<typename ActiveMesh<Mesh>::Element> signKii = interface(t + 1)->get_SignElement(kb);
+                // Save the sign of element at time t
+                s                                                             = signKi.sign();
+
+                const bool Ki_cut  = interface(t)->isCut(kb);
+                const bool Kii_cut = interface(t + 1)->isCut(kb);
+
+                // Check if the element is cut in either t or t+1 or if the sign of the element changes
+                // -> that means it's active
+
+                // if (signKi.cut() || signKii.cut() || signKi.sign() * signKii.sign() <= 0) {
+                if (Ki_cut || Kii_cut || signKi.sign() * signKii.sign() <= 0) {
+                    active_element = true;
+                    break;
+                }
+            }
+
+            // //! CONTINUE HERE
+            // // REMOVE THE Mesh::Element IN THE INPUT DOMAIN
+            // if (s == sign_domain_remove && !active_element) {
+            //     it_k = idx_from_background_mesh_[d].erase(it_k);
+            //     continue;
+            // }
+
+            // SAVE AND ERASE OLD INTERFACES
+            for (int it = 0; it < n_tid; ++it) {
+                auto it_gamma = interface_id_[it].find(std::make_pair(d, k));
+
+                int nb_interface = (it_gamma == interface_id_[it].end()) ? 0 : it_gamma->second.size();
+                std::vector<const Interface<Mesh> *> old_interface(nb_interface);
+                std::vector<int> ss(nb_interface);
+                for (int i = 0; i < nb_interface; ++i)
+                    old_interface[i] = it_gamma->second[i].first;
+                for (int i = 0; i < nb_interface; ++i)
+                    ss[i] = it_gamma->second[i].second;
+                if (it_gamma != interface_id_[it].end()) {
+                    auto ittt = interface_id_[it].erase(it_gamma);
+                }
+                // PUT BACK INTERFACES
+                for (int i = 0; i < nb_interface; ++i) {
+                    interface_id_[it][std::make_pair(d, nt[d])].push_back(std::make_pair(old_interface[i], ss[i]));
+                }
+                // IS CUT SO NEED TO ADD INTERFACE AND SIGN
+                const SignElement<typename ActiveMesh<Mesh>::Element> signK = interface(it)->get_SignElement(kb);
+                bool K_is_cut                                               = interface(it)->isCut(kb);
+
+                // if (signK.cut()) {
+                if (K_is_cut) {
+                    interface_id_[it][std::make_pair(d, nt[d])].push_back(
+                        std::make_pair(interface[it], -sign_domain_remove));
+                } else if (signK.sign() == sign_domain_remove && !K_is_cut) {
+                    not_in_active_mesh_[d][it][nt[d]] = true;
+                }
+            }
+            // // SET NEW INDICES AND PUT BACK INTERFACES
+            idx_in_background_mesh_[d].push_back(kb);
+            it_k->second = nt[d];
+            nt[d]++;
+            it_k++;
+        }
+    }
+
+    idx_element_domain.push_back(0);
+    for (int d = 0; d < dom_size; ++d) {
+        idx_in_background_mesh_[d].resize(nt[d]);
+        idx_in_background_mesh_[d].shrink_to_fit();
+        int sum_nt = idx_element_domain[d] + nt[d];
+        idx_element_domain.push_back(sum_nt);
+    }
+}
+
 //  TODO Comment: construct a subdomain corresponding to the positive sign
 template <typename Mesh> void ActiveMesh<Mesh>::add(const Interface<Mesh> &interface, int sign_domain) {
 

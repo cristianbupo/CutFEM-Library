@@ -35,9 +35,11 @@ class Mesh2;
 class Mesh3;
 class MeshQuad2;
 class MeshHexa;
+class BarycentricMesh2;
+
 template <typename C>
 concept typeMesh = std::is_same_v<Mesh1, C> || std::is_same_v<Mesh2, C> || std::is_same_v<Mesh3, C> ||
-                   std::is_same_v<MeshHexa, C> || std::is_same_v<MeshQuad2, C>;
+                   std::is_same_v<MeshHexa, C> || std::is_same_v<MeshQuad2, C>|| std::is_same_v<BarycentricMesh2, C>;
 
 template <typename C>
 concept meshQuadrilateral = std::is_same_v<MeshQuad2, C> || std::is_same_v<MeshHexa, C>;

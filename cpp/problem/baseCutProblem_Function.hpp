@@ -1683,12 +1683,14 @@ template <typename M> void BaseCutFEM<M>::addFaceStabilization(const itemVFlist_
 
         if (!Th.isCut(k, 0) && !Th.isInactive(k, 0))
             continue;
+
         for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
 
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
-            if (kn < k)
+            if(kn == -1) continue;
+            if (kn < k && Th.isCut(kn,0)) 
                 continue;
 
             std::pair<int, int> e1 = std::make_pair(k, ifac);
@@ -1823,7 +1825,10 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
-            if (kn < k)
+            // if (kn < k)
+            //     continue;
+            if(kn == -1) continue;
+            if (kn < k && Th.isCut(kn,0)) 
                 continue;
         
 
@@ -1946,7 +1951,10 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh 
                 int kn   = Th.ElementAdj(k, jfac); // get neighbor element's index
 
                 // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
-                if (kn < k)
+                // However, we don't want this condition to apply if kn is an interior element, since then we won't reach
+                // this edge from the other side of the edge again, since the interior element won't be looped over
+                //if ((kn < k) && (Th.isCut(kn,itq) || Th.isInactive(kn,itq)))
+                if ((kn < k) && (Th.isStabilizeElement(k)))
                     continue;
 
                 std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element

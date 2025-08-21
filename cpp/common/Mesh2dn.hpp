@@ -63,25 +63,25 @@ class BarycentricMesh2 : public Mesh2 {
     public:
         BarycentricMesh2(int nx, int ny, R orx, R ory, R lx, R ly);  
         
-        std::size_t get_macro_element(std::size_t i) const {
+        int get_macro_element(int i) const {
             assert(0 <= i && i < this->nt);  
             return inverse_macro_map[i];
         }
 
-        std::size_t get_local_subelement(std::size_t i) const {
+        int get_local_subelement(int i) const {
             assert(0 <= i && i < this->nt);
             return local_subelement_map[i];
         }
 
         // Maps each base mesh triangle to its 3 refined children
-        std::vector<std::array<std::size_t, 3>> macro_elements;
+        std::vector<std::array<int, 3>> macro_elements;
     private:
 
         // Maps each refined triangle to its parent macro triangle
-        std::vector<std::size_t> inverse_macro_map;
+        std::vector<int> inverse_macro_map;
 
         // Optionally, which local subtriangle (0, 1, or 2) each refined element is
-        std::vector<std::size_t> local_subelement_map;
+        std::vector<int> local_subelement_map;
 
 };
 

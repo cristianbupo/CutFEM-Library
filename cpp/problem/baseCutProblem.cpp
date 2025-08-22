@@ -5,8 +5,6 @@
 
 // If BaseCutFEM lives in a namespace, wrap the specialization with it:
 
-#include "baseCutProblem.hpp"
-
 // specialization for BarycentricMesh2
 // template<>
 // void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF,
@@ -110,54 +108,64 @@ void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF,
 }
 
 
-// template <>
-// void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In) {
+template <>
+void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In) {
 
-//     int number_of_quadrature_points = this->get_nb_quad_point_time();
+    int number_of_quadrature_points = this->get_nb_quad_point_time();
 
-//     // Loop through time quadrature points
-//     for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
-//         assert(!VF.isRHS());
+    int num_stab_faces = 0;
 
-//         // Compute contribution from time basis functions
-//         auto tq    = this->get_quadrature_time(itq);
-//         double tid = In.map(tq);
-//         KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
-//         RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
-//         In.BF(tq.x, bf_time); // compute time basic funtions
-//         double cst_time = tq.a * In.get_measure();
+    // Loop through time quadrature points
+    for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
+        assert(!VF.isRHS());
 
-//         // Loop through active macro elements
-//         for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+        // Compute contribution from time basis functions
+        auto tq    = this->get_quadrature_time(itq);
+        double tid = In.map(tq);
+        KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
+        RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
+        In.BF(tq.x, bf_time); // compute time basic funtions
+        double cst_time = tq.a * In.get_measure();
 
-//             // Exclude elements whose edges do not need stabilization
-//             if (!Th.stabilize_macro(km))
-//                 continue;
+        // Loop through active macro elements
+        for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
 
-//             const auto& micro_elements = Th.active_macro_elements[km];
+            // Exclude elements whose edges do not need stabilization
+            if (!Th.stabilize_macro(km))
+                continue;
 
-//             // Loop over all micro elements in the macro element
-//             for (int k_micro : micro_elements) {
+            const auto& micro_elements = Th.active_macro_elements[km];
 
-//                 // Loop through the element's edges
-//                 for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+            // Loop over all micro elements in the macro element
+            for (int k_micro : micro_elements) {
 
-//                     int jfac = ifac;
-//                     int kn   = Th.ElementAdj(k_micro, jfac); // get neighbor micro element's index
-//                     int kn_macro = Th.inverse_active_macro_map[kn];
-//                     // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
-//                     if ((kn < k_micro) && (Th.stabilize_macro(kn_macro, itq)))
-//                         continue;
+                // Loop through the element's edges
+                for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
 
-//                     std::pair<int, int> e1 = std::make_pair(k_micro, ifac);  // (element index, edge index) current element
-//                     std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+                    int jfac = ifac;
+                    int kn   = Th.ElementAdj(k_micro, jfac); // get neighbor micro element's index
 
-//                     // Add patch contribution
-//                     // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
-//                     BaseFEM<Mesh2>::addPatchContribution(VF, k_micro, kn, &In, itq, cst_time);
-//                 }
-//                 this->addLocalContribution();
-//             }
-//         }
-//     }
-// }
+                    // std::cout << "kn = " << kn << "\n";
+                    int kn_macro = Th.inverse_active_macro_map[kn];
+                    // std::cout << "kn_macro = " << kn_macro << "\n";
+                    if (kn == -1)
+                        continue;
+                    // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
+                    if ((kn < k_micro) && (Th.stabilize_macro(kn_macro)))
+                        continue;
+
+                    // std::cout << "Stabilizing face between active micro element " << k_micro << " with coordinates (" << Th[k_micro][0] << ", " << Th[k_micro][1] << ", " << Th[k_micro][2] << ") " <<  " and " << kn << " with coordinates (" << Th[kn][0] << ", " << Th[kn][1] << ", " << Th[kn][2] << ") " <<  "\n";
+                    num_stab_faces++;
+                    std::pair<int, int> e1 = std::make_pair(k_micro, ifac);  // (element index, edge index) current element
+                    std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+
+                    // Add patch contribution
+                    // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
+                    BaseFEM<Mesh2>::addPatchContribution(VF, k_micro, kn, &In, itq, cst_time);
+                }
+                this->addLocalContribution();
+            }
+        }
+    }
+    // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+}

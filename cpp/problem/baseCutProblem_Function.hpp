@@ -1748,7 +1748,7 @@ template <typename M> void BaseCutFEM<M>::addFaceStabilizationMixed(const itemVF
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
-            if (kn < k)
+            if ((kn < k) && Th.isCut(kn, 0))
                 continue;
 
             int kb  = Th.idxElementInBackMesh(k);
@@ -1796,7 +1796,9 @@ void BaseCutFEM<M>::addFaceStabilization(const itemVFlist_t &VF, const CutMesh &
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
-            if (kn < k)
+            if (kn == -1)
+                continue;
+            if ((kn < k) && Th.isStabilizeElement(kn))
                 continue;
 
             std::pair<int, int> e1 = std::make_pair(k, ifac);
@@ -1827,7 +1829,7 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
             // if (kn < k)
             //     continue;
-            if(kn == -1) continue;
+            if (kn == -1) continue;
             if (kn < k && Th.isCut(kn,0)) 
                 continue;
         
@@ -1844,6 +1846,7 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
 }
 
 template <typename M> void BaseCutFEM<M>::addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th) {
+    assert(0);  //! DO NOT USE, INNER EDGE SPECIAL CASE NOT FIXED
     assert(!VF.isRHS());
     progress bar(" Add Mixed Patch Stabilization CutMesh", Th.last_element(), globalVariable::verbose);
 
@@ -1920,6 +1923,7 @@ template <typename M>
 void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
 
     int number_of_quadrature_points = this->get_nb_quad_point_time();
+    int num_stab_faces = 0;
 
     // Loop through time quadrature points
     for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
@@ -1954,11 +1958,15 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh 
                 // However, we don't want this condition to apply if kn is an interior element, since then we won't reach
                 // this edge from the other side of the edge again, since the interior element won't be looped over
                 //if ((kn < k) && (Th.isCut(kn,itq) || Th.isInactive(kn,itq)))
-                if ((kn < k) && (Th.isStabilizeElement(k)))
+
+                if (kn == -1) continue;
+
+                if ((kn < k) && (Th.isStabilizeElement(kn)))
                     continue;
 
                 std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element
                 std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+                num_stab_faces++;
 
                 // Add patch contribution
                 // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
@@ -1968,6 +1976,7 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh 
         }
         bar.end();
     }
+    // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
 }
 
 /**
@@ -2014,7 +2023,9 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const ActiveMe
             int kn   = Th.ElementAdj(k, jfac); // get neighbor element's index
 
             // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
-            if (kn < k)
+            if (kn == -1) 
+                continue;
+            if ((kn < k) && (!(Th.isCut(kn, itq) || Th.isInactive(kn, itq))))
                 continue;
 
             std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element
@@ -2138,7 +2149,9 @@ void BaseCutFEM<M>::addFaceStabilization(const itemVFlist_t &VF, const CutMesh &
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
-            if (kn < k)
+            if (kn == -1)
+                continue;
+            if ((kn < k) && (!(Th.isCut(kn, itq)) && !Th.isInactive(kn, itq)))
                 continue;
 
             std::pair<int, int> e1 = std::make_pair(k, ifac);
@@ -2154,6 +2167,7 @@ void BaseCutFEM<M>::addFaceStabilization(const itemVFlist_t &VF, const CutMesh &
 template <typename M>
 void BaseCutFEM<M>::addFaceStabilizationSpecial(const itemVFlist_t &VF, const CutMesh &Th, int itq,
                                                 const TimeSlab &In) {
+
     assert(!VF.isRHS());
     auto tq    = this->get_quadrature_time(itq);
     double tid = In.map(tq);
@@ -2176,9 +2190,11 @@ void BaseCutFEM<M>::addFaceStabilizationSpecial(const itemVFlist_t &VF, const Cu
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
-            if (kn < k)
+            if (kn == -1)
                 continue;
-
+            if ((kn < k) && Th.isStabilizeElement(kn))
+                continue;
+            
             std::pair<int, int> e1 = std::make_pair(k, ifac);
             std::pair<int, int> e2 = std::make_pair(kn, jfac);
             number_of_stabilized_edges += 1;

@@ -397,7 +397,11 @@ bool BarycentricActiveMesh2::is_macro_inactive(int macro_k, int t /*=0*/) const 
 
 // Stabilize if macro is cut OR inactive at ANY time instance
 bool BarycentricActiveMesh2::stabilize_macro(int macro_k) const {
-    assert(0 <= macro_k && macro_k < (int)active_macro_elements.size());
+    if (!(0 <= macro_k && macro_k < (int)active_macro_elements.size())) {
+        std::cout << "macro_k = " << macro_k << " index out of range";
+        assert(0);
+    }
+    // assert(0 <= macro_k && macro_k < (int)active_macro_elements.size());
     for (int t = 0; t < nb_quadrature_time_; ++t)
         if (is_macro_cut(macro_k, t) || is_macro_inactive(macro_k, t)) return true;
     return false;

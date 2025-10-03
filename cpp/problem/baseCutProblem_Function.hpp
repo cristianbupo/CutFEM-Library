@@ -197,6 +197,76 @@ void BaseCutFEM<M>::addBilinear(const itemVFlist_t &VF, const CutMesh &Th, int i
 }
 
 /**
+ * @brief Bilinear form integrated over given time quadrature points in a subset of the time slab.
+ *
+ * @tparam M Mesh
+ * @param VF Bilinear form
+ * @param Th Active mesh
+ * @param In Time slab, needed here because the basis functions in time live here
+ * @param quad_pts quadrature points Jn subset In
+ * @param phi vector of level-set functions evaluated in quad_pts 
+ * @note the interfaces that are associated with the active mesh Th do not coincide with the interfaces
+ * in phi, but the time quadrature points quad_pts must be a subset in the time interval In associated with Th
+ */
+// template <typename M>
+// void BaseCutFEM<M>::addBilinear(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In, const std::vector<double> &quad_pts, const TimeInterface<Mesh> &interface) {
+//     // Assert that the input is not a RHS
+//     assert(!VF.isRHS());
+
+//     assert(quad_pts.size() != 0);
+
+//     // get end points of In on the reference interval [0,1]
+//     double tq0 = In.map(this->get_quadrature_time(0));
+//     double tqN = In.map(this->get_quadrature_time(this->get_nb_quad_point_time()-1));
+
+//     assert(tq0 <= quad_pts[0]);
+//     assert(quad_pts.back() <= tqN);
+
+//     for (int itq = 0; itq < quad_pts.size(); ++itq) {
+
+//         double tid = quad_pts[itq];
+
+//         double t_ref = (tid-tq0) / (tqN-tq0);   // This maps tid from *In* to [0,1] for evaluation of the time basis functions
+        
+//         // Allocate memory for the time-dependent basis functions
+//         RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
+
+//         // Compute the time basic functions
+//         In.BF(t_ref, bf_time);
+
+//         // Set the title for the progress bar
+//         std::string title = " Add Bilinear Kh, In(" + std::to_string(itq) + ")";
+
+//         // Initialize the progress bar
+//         progress bar(title.c_str(), Th.last_element(), globalVariable::verbose);
+
+//         // Loop over each element of the active mesh
+//         for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+//             // Increment the progress bar
+//             bar += Th.next_element();
+
+//             // Skip the element if it is inactive at iteration "itq"
+//             if (Th.isInactive(k, itq))
+//                 continue;
+
+//             // If the element is cut, add its contribution using BaseCutFEM
+//             if (Th.isCut(k, itq))
+//                 addElementContribution(VF, k, &In, itq, cst_time);
+//             // Else, add its contribution using BaseFEM
+//             else
+//                 BaseFEM<M>::addElementContribution(VF, k, &In, itq, cst_time);
+
+//             // Add the local contribution
+//             this->addLocalContribution();
+//         }
+
+//         // End the progress bar
+//         bar.end();
+//     }
+// }
+
+
+/**
  * @brief Add bilinear in specific time
  *
  * @tparam M
@@ -315,7 +385,7 @@ template <typename M>
 template <typename Fct>
 void BaseCutFEM<M>::addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, int itq, const TimeSlab &In) {
     //! DOES NOT WORK SAFELY
-    assert(0);
+    // assert(0);
     assert(VF.isRHS());
     auto tq    = this->get_quadrature_time(itq);
     double tid = In.map(tq);
@@ -1948,6 +2018,8 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh 
             if (!Th.isStabilizeElement(k))
                 continue;
 
+            // std::cout << "Stabilized element " << k << "\n";
+
             // Loop through the element's edges
             for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
 
@@ -1978,6 +2050,70 @@ void BaseCutFEM<M>::addPatchStabilization(const itemVFlist_t &VF, const CutMesh 
     }
     // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
 }
+
+
+template <typename M>
+void BaseCutFEM<M>::addPatchStabilizationExterior(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In) {
+
+    int number_of_quadrature_points = this->get_nb_quad_point_time();
+    int num_stab_faces = 0;
+
+    // Loop through time quadrature points
+    for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
+        assert(!VF.isRHS());
+
+        // Compute contribution from time basis functions
+        auto tq    = this->get_quadrature_time(itq);
+        double tid = In.map(tq);
+        KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
+        RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
+        In.BF(tq.x, bf_time); // compute time basic funtions
+        double cst_time = tq.a * In.get_measure();
+
+        std::string title = " Add Patch Stab, In(" + std::to_string(itq) + ")";
+        progress bar(title.c_str(), Th.last_element(), globalVariable::verbose);
+
+        // Loop through active mesh elements
+        for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+            bar += Th.next_element();
+
+            // Exclude elements who are not exterior
+            if (!Th.isExterior(k))
+                continue;
+
+            // Loop through the element's edges
+            for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+
+                int jfac = ifac;
+                int kn   = Th.ElementAdj(k, jfac); // get neighbor element's index
+
+                // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
+                // However, we don't want this condition to apply if kn is an interior element, since then we won't reach
+                // this edge from the other side of the edge again, since the interior element won't be looped over
+                //if ((kn < k) && (Th.isCut(kn,itq) || Th.isInactive(kn,itq)))
+
+                if (kn == -1) continue;
+
+                if ((kn < k) && (!Th.isExterior(kn)))
+                    continue;
+
+                std::pair<int, int> e1 = std::make_pair(k, ifac);  // (element index, edge index) current element
+                std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+                num_stab_faces++;
+
+                // Add patch contribution
+                // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
+                BaseFEM<M>::addPatchContribution(VF, k, kn, &In, itq, cst_time);
+            }
+            this->addLocalContribution();
+        }
+        bar.end();
+    }
+    // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+}
+
+
+
 
 /**
  * @brief Patch stabilization in specific time quadrature point
@@ -2996,6 +3132,75 @@ void BaseCutFEM<M>::addIntersectedBorderContribution(const itemVFlist_t &VF, con
 }
 
 
+
+
+template <typename M> void BaseCutFEM<M>::addBilinearInner(const itemVFlist_t &VF, const CutMesh &Th) {
+    assert(!VF.isRHS());
+    progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+        bar += Th.next_element();
+
+        if (Th.isCut(k, 0)) {
+            continue;
+        } else {
+            BaseFEM<M>::addElementContribution(VF, k, nullptr, 0, 1.);
+        }
+        this->addLocalContribution();
+    }
+    bar.end();
+}
+
+template <typename M> void BaseCutFEM<M>::addLinearInner(const itemVFlist_t &VF, const CutMesh &Th) {
+    assert(VF.isRHS());
+    progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+        bar += Th.next_element();
+
+        if (Th.isCut(k, 0)) {
+            continue;
+        } else {
+            BaseFEM<M>::addElementContribution(VF, k, nullptr, 0, 1.);
+        }
+    }
+    bar.end();
+}
+
+template <typename M> void BaseCutFEM<M>::addBilinearInnerBorder(const itemVFlist_t &VF, const CutMesh &Th) {
+    assert(!VF.isRHS());
+    progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+        bar += Th.next_element();
+
+        // Loop only over cut elements for efficiency
+        if (!Th.isCut(k, 0)) {
+            continue;
+        } 
+        
+        // Find the face that neighbors an interior element
+        for (int ifac = 0; ifac < Element::nea; ++ifac) { 
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+
+            // an neighboring element can be 1) outside of the domain, 2) another cut element or 3) inside of the domain 
+            if ((kn == -1) || Th.isCut(kn, 0))
+                continue;
+            
+            assert(!Th.isCut(kn, 0) && Th.isCut(k, 0));
+
+            BaseFEM<M>::addInnerBorderContribution(VF, k, ifac, nullptr, 0, 1.);
+            
+        }
+        
+        this->addLocalContribution();
+    }
+    bar.end();
+}
 
 
 //! CHECK DOCUMENTATION ON THE TWO BELOW METHODS

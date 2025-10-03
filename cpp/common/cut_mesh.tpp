@@ -257,6 +257,7 @@ template <typename Mesh> void ActiveMesh<Mesh>::truncate(const TimeInterface<Mes
 
     int n_tid = interface.size();
     assert(n_tid < interface_id_.size());
+    
     nb_quadrature_time_ = n_tid;
     not_in_active_mesh_.resize(21);
     for (int i = 0; i < 21; ++i)
@@ -937,6 +938,20 @@ template <typename Mesh> bool ActiveMesh<Mesh>::isStabilizeElement(int k) const 
     return false;
 }
 
+// true if element k is inactive in all time instances
+template <typename Mesh> bool ActiveMesh<Mesh>::isExterior(int k) const {
+    for (int i = 0; i < nb_quadrature_time_; ++i) {
+        
+        if (!this->isInactive(k, i)) {
+            // std::cout << "Element " << k << " not exterior\n";
+            return false;
+        }
+    }
+
+    // std::cout << "Element " << k << " IS exterior\n";
+    return true;
+}
+
 template <typename Mesh> bool ActiveMesh<Mesh>::isInactive(int k, int t) const {
     // Get the domain index for the element
     int domain = get_domain_element(k);
@@ -944,9 +959,15 @@ template <typename Mesh> bool ActiveMesh<Mesh>::isInactive(int k, int t) const {
     int kloc   = idxK_in_domain(k, domain);
     // Search for the element in the active mesh at time t
     auto it    = not_in_active_mesh_[domain].at(t).find(kloc);
-    // If the element was found, return true; otherwise, return false
-    if (it == not_in_active_mesh_[domain].at(t).end())
+    
+    // std::cout << "itq = " << t << "\n";
+    // If the element was not found, return false; otherwise, return true
+    if (it == not_in_active_mesh_[domain].at(t).end()) {
+        // std::cout << "Element " << kloc << " is ACTIVE\n";
         return false;
+    }
+        
+    // std::cout << "Element " << kloc << " is inactive\n";
     return true;
 }
 
@@ -1039,7 +1060,7 @@ Cut_Part<typename ActiveMesh<Mesh>::Element> ActiveMesh<Mesh>::get_cut_part(int 
         return Cut_Part<typename ActiveMesh<Mesh>::Element>(it->second.at(0).first->get_partition(kb),
                                                             it->second.at(0).second);
     else {
-        std::cout << it->second.size() << std::endl;
+        // std::cout << it->second.size() << std::endl;
         // return the partition of the element k in the time t
         // and the local index of the interface
         return Cut_Part<typename ActiveMesh<Mesh>::Element>(this->build_local_partition(k), 0);

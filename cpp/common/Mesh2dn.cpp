@@ -619,3 +619,62 @@ BarycentricMesh2::BarycentricMesh2(int nx, int ny, R orx, R ory, R lx, R ly)
 }
 
 
+// In BarycentricMesh2 (e.g. after the constructor)
+int BarycentricMesh2::element_adj(int k_macro, int iface_adj) const {
+    // k_macro  : macro element index in the base triangulation
+    // iface_adj: which macro face (0,1,2) to cross
+    // returns  : adjacent macro index across that face, or -1 if boundary
+
+    assert(0 <= k_macro && k_macro < static_cast<int>(macro_elements.size()));
+    assert(0 <= iface_adj && iface_adj < 3);
+
+    // The subtriangle that contains the macro face "iface_adj".
+    // By construction (idx_ref = {{0,1,3},{1,2,3},{2,0,3}}), the sub with local id i
+    // has the OUTER edge between its local vertices (0,1).
+    const int sub_id = macro_elements[k_macro][iface_adj];
+
+    // For a triangle whose local vertices are (0,1,2), the edge-local indexing used in this codebase
+    // is standard: edge 0 = (1,2), edge 1 = (2,0), edge 2 = (0,1).
+    // Hence, for sub {0,1,3} the outer edge is local edge 2,
+    // for sub {1,2,3} the outer edge is local edge 0,
+    // for sub {2,0,3} the outer edge is local edge 1.
+    static const int outer_edge_of_sub[3] = {2, 0, 1};
+    const int kf_outer = outer_edge_of_sub[iface_adj];
+
+    // Get the two GLOBAL vertex indices of that outer edge.
+    const auto &Ksub = this->elements[sub_id];
+    const int vA = (*this)( Ksub[Mesh2::Element::nvedge[kf_outer][0]] );
+    const int vB = (*this)( Ksub[Mesh2::Element::nvedge[kf_outer][1]] );
+
+    // 1) Check if this edge is on the boundary → then no adjacent macro.
+    for (int ke = 0; ke < this->nbe; ++ke) {
+        const auto &Be = this->be(ke);
+        const int b0 = (*this)(Be[0]);
+        const int b1 = (*this)(Be[1]);
+        if ((b0 == vA && b1 == vB) || (b0 == vB && b1 == vA)) {
+            return -1; // border face
+        }
+    }
+
+    // 2) Interior: find the *other* subelement sharing this edge, then map to its macro.
+    // This is O(nt) but nt = 3 * (#macros), so cheap.
+    for (int k = 0; k < this->nt; ++k) {
+        if (k == sub_id) continue;
+        
+        const auto &E = this->elements[k];
+
+        // Check each edge of E
+        for (int e = 0; e < 3; ++e) {
+            const int w0 = (*this)( E[Mesh2::Element::nvedge[e][0]] );
+            const int w1 = (*this)( E[Mesh2::Element::nvedge[e][1]] );
+            if ((w0 == vA && w1 == vB) || (w0 == vB && w1 == vA)) {
+                const int k_macro_nei = inverse_macro_map[k];
+                if (k_macro_nei != k_macro) // should always be true, but be safe
+                    return k_macro_nei;
+            }
+        }
+    }
+
+    // Should never get here; fall back to border semantics.
+    return -1;
+}

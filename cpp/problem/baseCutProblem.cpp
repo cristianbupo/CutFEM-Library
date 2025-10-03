@@ -108,64 +108,252 @@ void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF,
 }
 
 
-template <>
-void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In) {
+// template <>
+// void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In) {
 
-    int number_of_quadrature_points = this->get_nb_quad_point_time();
+//     int number_of_quadrature_points = this->get_nb_quad_point_time();
 
-    int num_stab_faces = 0;
+//     int num_stab_faces = 0;
 
-    // Loop through time quadrature points
-    for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
-        assert(!VF.isRHS());
+//     // Loop through time quadrature points
+//     for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
+//         assert(!VF.isRHS());
 
-        // Compute contribution from time basis functions
-        auto tq    = this->get_quadrature_time(itq);
-        double tid = In.map(tq);
-        KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
-        RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
-        In.BF(tq.x, bf_time); // compute time basic funtions
-        double cst_time = tq.a * In.get_measure();
+//         // Compute contribution from time basis functions
+//         auto tq    = this->get_quadrature_time(itq);
+//         double tid = In.map(tq);
+//         KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
+//         RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
+//         In.BF(tq.x, bf_time); // compute time basic funtions
+//         double cst_time = tq.a * In.get_measure();
 
-        // Loop through active macro elements
-        for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+//         // Loop through active macro elements
+//         for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
 
-            // Exclude elements whose edges do not need stabilization
-            if (!Th.stabilize_macro(km))
-                continue;
+//             // Exclude elements whose edges do not need stabilization
+//             if (!Th.stabilize_macro(km))
+//                 continue;
 
-            const auto& micro_elements = Th.active_macro_elements[km];
+//             std::cout << "km = " << km << " is stabilized\n";
 
-            // Loop over all micro elements in the macro element
-            for (int k_micro : micro_elements) {
+//             const auto& micro_elements = Th.active_macro_elements[km];
 
-                // Loop through the element's edges
-                for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+//             // Loop over all micro elements in the macro element
+//             for (int k_micro : micro_elements) {
 
-                    int jfac = ifac;
-                    int kn   = Th.ElementAdj(k_micro, jfac); // get neighbor micro element's index
+//                 // Loop through the element's edges
+//                 for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
 
-                    // std::cout << "kn = " << kn << "\n";
-                    int kn_macro = Th.inverse_active_macro_map[kn];
-                    // std::cout << "kn_macro = " << kn_macro << "\n";
-                    if (kn == -1)
-                        continue;
-                    // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
-                    if ((kn < k_micro) && (Th.stabilize_macro(kn_macro)))
-                        continue;
+//                     int jfac = ifac;
+//                     int kn   = Th.ElementAdj(k_micro, jfac); // get neighbor micro element's index
 
-                    // std::cout << "Stabilizing face between active micro element " << k_micro << " with coordinates (" << Th[k_micro][0] << ", " << Th[k_micro][1] << ", " << Th[k_micro][2] << ") " <<  " and " << kn << " with coordinates (" << Th[kn][0] << ", " << Th[kn][1] << ", " << Th[kn][2] << ") " <<  "\n";
-                    num_stab_faces++;
-                    std::pair<int, int> e1 = std::make_pair(k_micro, ifac);  // (element index, edge index) current element
-                    std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+//                     // std::cout << "kn = " << kn << "\n";
+//                     int kn_macro = Th.inverse_active_macro_map[kn];
+//                     // std::cout << "kn_macro = " << kn_macro << "\n";
+//                     if (kn == -1)
+//                         continue;
+//                     // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
+//                     if ((kn < k_micro) && (Th.stabilize_macro(kn_macro)))
+//                         continue;
 
-                    // Add patch contribution
-                    // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
-                    BaseFEM<Mesh2>::addPatchContribution(VF, k_micro, kn, &In, itq, cst_time);
-                }
-                this->addLocalContribution();
-            }
-        }
+//                     // std::cout << "Stabilizing face between active micro element " << k_micro << " with coordinates (" << Th[k_micro][0] << ", " << Th[k_micro][1] << ", " << Th[k_micro][2] << ") " <<  " and " << kn << " with coordinates (" << Th[kn][0] << ", " << Th[kn][1] << ", " << Th[kn][2] << ") " <<  "\n";
+//                     num_stab_faces++;
+//                     std::pair<int, int> e1 = std::make_pair(k_micro, ifac);  // (element index, edge index) current element
+//                     std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+
+//                     // Add patch contribution
+//                     // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
+//                     BaseFEM<Mesh2>::addPatchContribution(VF, k_micro, kn, &In, itq, cst_time);
+//                 }
+//                 this->addLocalContribution();
+//             }
+//         }
+//     }
+//     // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+// }
+
+
+// Stabilize edges corresponding to macro elements that are entirely OUTSIDE of the domain
+// template <>
+// void BaseCutFEM<Mesh2>::addPatchStabilizationExterior(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In) {
+
+//     int number_of_quadrature_points = this->get_nb_quad_point_time();
+
+//     int num_stab_faces = 0;
+
+//     // Loop through time quadrature points
+//     for (int itq = 0; itq < number_of_quadrature_points; ++itq) {
+//         assert(!VF.isRHS());
+
+//         // Compute contribution from time basis functions
+//         auto tq    = this->get_quadrature_time(itq);
+//         double tid = In.map(tq);
+//         KNMK<double> basisFunTime(In.NbDoF(), 1, op_dz + 1);
+//         RNMK_ bf_time(this->databf_time_, In.NbDoF(), 1, op_dz);
+//         In.BF(tq.x, bf_time); // compute time basic funtions
+//         double cst_time = tq.a * In.get_measure();
+
+//         // Loop through active macro elements
+//         for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+
+//             // Exclude elements who are not entirely outside of the active mesh
+//             if (!Th.is_macro_exterior(km))
+//                 continue;
+
+//             std::cout << "km = " << km << " is exterior\n";
+
+//             const auto& micro_elements = Th.active_macro_elements[km];
+
+//             // Loop over all micro elements in the macro element
+//             for (int k_micro : micro_elements) {
+
+//                 // Loop through the element's edges
+//                 for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+
+//                     int jfac = ifac;
+//                     int kn   = Th.ElementAdj(k_micro, jfac); // get neighbor micro element's index
+
+//                     // std::cout << "kn = " << kn << "\n";
+//                     int kn_macro = Th.inverse_active_macro_map[kn];
+//                     // std::cout << "kn_macro = " << kn_macro << "\n";
+//                     if (kn == -1)
+//                         continue;
+//                     // By skipping neighbors with smaller indices, we avoid adding contribution to the same edge twice
+//                     //if ((kn < k_micro) && (Th.stabilize_macro(kn_macro)))
+//                     if ((kn < k_micro))
+//                         continue;
+
+//                     // std::cout << "Stabilizing face between active micro element " << k_micro << " with coordinates (" << Th[k_micro][0] << ", " << Th[k_micro][1] << ", " << Th[k_micro][2] << ") " <<  " and " << kn << " with coordinates (" << Th[kn][0] << ", " << Th[kn][1] << ", " << Th[kn][2] << ") " <<  "\n";
+//                     num_stab_faces++;
+//                     std::pair<int, int> e1 = std::make_pair(k_micro, ifac);  // (element index, edge index) current element
+//                     std::pair<int, int> e2 = std::make_pair(kn, jfac); // (element index, edge index) neighbor element
+
+//                     // Add patch contribution
+//                     // BaseFEM<M>::addFaceContribution(VF, e1, e2, &In, itq, cst_time);
+//                     BaseFEM<Mesh2>::addPatchContribution(VF, k_micro, kn, &In, itq, cst_time);
+//                 }
+//                 this->addLocalContribution();
+//             }
+//         }
+//     }
+//     // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+// }
+
+
+
+
+template <> void BaseCutFEM<Mesh2>::addBilinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(!VF.isRHS());
+    progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+
+    for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+        
+        if (Th.is_macro_cut(km))
+            continue;
+
+        assert(Th.is_macro_interior(km));
+        
+        const auto& micro_elements = Th.active_macro_elements[km];
+
+        // Loop over all micro elements in the macro element
+        for (int k_micro : micro_elements) 
+            BaseFEM<Mesh2>::addElementContribution(VF, k_micro, nullptr, 0, 1.);
+        
+        this->addLocalContribution();
     }
-    // std::cout << "Number of stabilized faces: " << num_stab_faces / number_of_quadrature_points << "\n";
+    bar.end();
+}
+
+template <> void BaseCutFEM<Mesh2>::addLinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(VF.isRHS());
+    progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+    for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+        
+        if (Th.is_macro_cut(km))
+            continue;
+
+        assert(Th.is_macro_interior(km));
+        
+        const auto& micro_elements = Th.active_macro_elements[km];
+
+        // Loop over all micro elements in the macro element
+        for (int k_micro : micro_elements) 
+            BaseFEM<Mesh2>::addElementContribution(VF, k_micro, nullptr, 0, 1.);
+        
+        this->addLocalContribution();
+    }
+    bar.end();
+}
+
+template <> void BaseCutFEM<Mesh2>::addBilinearInnerBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(!VF.isRHS());
+#pragma omp parallel for num_threads(this->get_num_threads())
+
+    for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+
+        // Loop only over cut elements for efficiency
+        if (!Th.is_macro_cut(km))
+            continue;
+
+        const auto& micro_elements = Th.active_macro_elements[km];
+
+        for (int k_micro : micro_elements) {
+            
+            for (int ifac = 0; ifac < Element::nea; ++ifac) {
+                int jfac = ifac;
+                int kn_micro = Th.ElementAdj(k_micro, jfac);
+
+            // a neighboring element can be 1) outside of the domain, 2) another cut element, 
+            // 3) inside of the domain but in the same macro element, or 4) inside of the domain and in another macro element
+                if ((Th.inverse_active_macro_map[k_micro] == Th.inverse_active_macro_map[kn_micro]) || (kn_micro == -1) || Th.isCut(kn_micro, 0))
+                    continue;
+                
+                assert(!Th.isCut(kn_micro, 0));
+                assert(Th.is_macro_interior(Th.inverse_active_macro_map[kn_micro]));
+
+                // std::cout << "Integrating on edge between micro elements " << k_micro << " (macro element " << Th.inverse_active_macro_map[k_micro] << ") and " << kn_micro << " (macro element " << Th.inverse_active_macro_map[kn_micro] << ")\n";
+                BaseFEM<Mesh2>::addInnerBorderContribution(VF, k_micro, ifac, nullptr, 0, 1.);
+            
+            }
+        
+        }
+
+        // Find the face that neighbors an interior element
+        // for (int iface = 0; iface < Element::nea; ++iface) {
+        //     int kn_macro = Th.macro_adjacent(km, iface);
+            
+        //     if ((kn_macro == -1) || Th.is_macro_cut(kn_macro))
+        //         continue;
+            
+        //     std::cout << "Integrating on iface = " << iface << ", kn_macro = " << kn_macro << "\n";
+
+
+        //     for (int k_micro : micro_elements) 
+        //         BaseFEM<Mesh2>::addInnerBorderContribution(VF, k_micro, ifac, nullptr, 0, 1.);
+        // }
+    //     
+    //     if (!Th.isCut(k, 0)) {
+    //         continue;
+    //     } 
+        
+    //     // Find the face that neighbors an interior element
+    //     for (int ifac = 0; ifac < Element::nea; ++ifac) { 
+    //         int jfac = ifac;
+    //         int kn   = Th.ElementAdj(k, jfac);
+
+    //         // an neighboring element can be 1) outside of the domain, 2) another cut element or 3) inside of the domain 
+    //         if ((kn == -1) || Th.isCut(kn, 0))
+    //             continue;
+            
+    //         assert(!Th.isCut(kn, 0) && Th.isCut(k, 0));
+
+    //         BaseFEM<Mesh2>::addInnerBorderContribution(VF, k, ifac, nullptr, 0, 1.);
+            
+    //     }
+        
+    //     this->addLocalContribution();
+    }
+
 }

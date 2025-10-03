@@ -1,7 +1,7 @@
 #include "../cutfem.hpp"
 
 using mesh_t     = Mesh2;
-using funtest_t  = TestFunction<mesh_t::D>;
+using funtest_t  = TestFunction<mesh_t>;
 using fct_t      = FunFEM<mesh_t>;
 using cutmesh_t  = ActiveMesh<mesh_t>;
 using space_t    = GFESpace<mesh_t>;
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
     int thread_count = 1;
     double cpubegin  = MPIcf::Wtime();
 
-    Logger::initialize("log_navier_Stokes.txt");
+    CutFEMLogger::initialize("log_navier_Stokes.txt");
 
     // MESH DEFINITION
     // ---------------------------------------------
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     optionProblem.clear_matrix_ = true;
     std::vector<std::map<std::pair<int, int>, double>> mat_NL(thread_count);
 
-    CutFEM<mesh_t> stokes(qTime, thread_count, optionProblem);
+    CutFEM<mesh_t> stokes(qTime, optionProblem);
 
     CutFEMParameter mu(0.1, 0.1);
     CutFEMParameter rho(1., 1.);

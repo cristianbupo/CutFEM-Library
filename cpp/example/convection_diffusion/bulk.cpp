@@ -74,7 +74,7 @@ template <int N> struct Levelset {
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
         R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
-        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17);
+        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17 - 1e-14);
     }
 
     // gradient of level set function
@@ -219,7 +219,7 @@ template <int N> struct Levelset {
 
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
-        return (P[0] - (W - C * P[1] * P[1]) * t) * (P[0] - (W - C * P[1] * P[1]) * t) + P[1] * P[1] - R0 * R0;
+        return (P[0] - (W - C * P[1] * P[1]) * t) * (P[0] - (W - C * P[1] * P[1]) * t) + P[1] * P[1] - R0 * R0 - 1e-14;
     }
 
     // gradient of level set function
@@ -346,10 +346,10 @@ std::vector<const GTypeOfFE<Mesh1> *> FE_time   = {&DataFE<Mesh1>::P0Poly, &Data
 // Define example, method and stabilization, and polynomial order in time and space
 
 #define kite         // example (circle/kite)
-#define non_conservative // method (conservative/non_conservative)
+#define conservative // method (conservative/non_conservative)
 #define fullstab        // stabilization (fullstab/macro)
-#define K 1          // polynomial order in time (0/1/2/3)
-#define M 1          // polynomial order in space (1/2/3)
+#define K 2          // polynomial order in time (0/1/2/3)
+#define M 2          // polynomial order in space (1/2/3)
 
 
 int main(int argc, char **argv) {
@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
     assert(k >= 0 && k <= 3);
     assert(m >= 1 && m <= 3);
 
-    const size_t iterations = 1;   // number of mesh refinements
+    const size_t iterations = 5;   // number of mesh refinements
     double h                = 0.1; // starting mesh size
     int nx, ny;
 

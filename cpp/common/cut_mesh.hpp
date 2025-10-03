@@ -167,7 +167,7 @@ template <typename Mesh> class ActiveMesh {
      */
     virtual void truncate(const TimeInterface<Mesh> &interface, int sign_domain);
 
-    void truncate_global(const TimeInterface<Mesh> &interface, int sign_domain);
+    virtual void truncate_global(const TimeInterface<Mesh> &interface, int sign_domain);
 
     /**
      * @brief I don't know what this does. //?
@@ -222,6 +222,7 @@ template <typename Mesh> class ActiveMesh {
     bool isCut(int k, int t) const;
     bool isCutFace(int k, int ifac, int t) const;
     bool isStabilizeElement(int k) const;
+    bool isExterior(int k) const;
     bool isInactive(int k, int t) const;
 
     const Interface<Mesh> &get_interface(int k, int t) const;
@@ -276,6 +277,7 @@ public:
     // ActiveMesh overrides
     void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
     void truncate(const TimeInterface<Mesh2> &interface, int sign_domain) override;
+    // void truncate_global(const TimeInterface<Mesh2> &interface, int sign_domain) override;
     void createSurfaceMesh(const Interface<Mesh2> &interface) override;
     void createSurfaceMesh(const TimeInterface<Mesh2> &interface) override;
 
@@ -283,8 +285,10 @@ public:
     bool is_macro_cut(int kept_macro_id, int itq = 0) const;
     bool is_macro_interior(int kept_macro_id, int itq = 0) const;
     bool is_macro_inactive(int macro_k, int itq) const;
+    bool is_macro_exterior(int macro_k) const;
     bool stabilize_macro(int macro_k) const;
 
+    int macro_adjacent(const int macro_k, const int iface_adj) const;
     int get_macro_in_background_mesh(int k_active) const;
     int get_macro_in_active_mesh(int k_bg) const;
 

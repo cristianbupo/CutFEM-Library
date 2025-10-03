@@ -129,6 +129,14 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     void addInterfaceRidgeContribution(const itemVFlist_t &VF, const Interface<Mesh> &interface, int ifac,
                                        const TimeSlab *In, int itq, double cst_time);
 
+    // Integration on border of inner active mesh
+    void addLinearInner(const itemVFlist_t &VF, const CutMesh &Th);
+    void addBilinearInner(const itemVFlist_t &VF, const CutMesh &Th);
+    void addBilinearInnerBorder(const itemVFlist_t &VF, const CutMesh &Th);
+    void addLinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+    void addBilinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+    void addBilinearInnerBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+
     // Face stabilization
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &);
     void addFaceStabilizationMixed(const itemVFlist_t &VF, const CutMesh &);
@@ -160,7 +168,9 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const MacroElement<Mesh> &);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const MacroElementSurface<Mesh> &);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
-    void addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &, const TimeSlab &In);
+    void addPatchStabilizationExterior(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In);
+    // void addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &, const TimeSlab &In);
+    // void addPatchStabilizationExterior(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In, const int itq);
     void addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th);
 

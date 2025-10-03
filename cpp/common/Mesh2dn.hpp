@@ -73,6 +73,8 @@ class BarycentricMesh2 : public Mesh2 {
             return local_subelement_map[i];
         }
 
+        int element_adj(int k_macro, int iface_adj) const;
+
         // Maps each base mesh triangle to its 3 refined children
         std::vector<std::array<int, 3>> macro_elements;
     private:

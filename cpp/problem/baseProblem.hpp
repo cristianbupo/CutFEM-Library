@@ -195,6 +195,10 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     void addBorderContribution(const itemVFlist_t &VF, const Element &K, const BorderElement &BE, int ifac,
                                const TimeSlab *In, int itq, double cst_time);
 
+    // integral on active mesh boundary
+    void addInnerBorderContribution(const itemVFlist_t &VF, const int k, const int ifac,
+                                    const TimeSlab *In, int itq, double cst_time);
+
     void setDirichlet(const FunFEM<Mesh> &, const Mesh &, std::list<int> label = {});
     void setDirichletHone(const FunFEM<Mesh> &gh, const Mesh &Th, std::list<int> label = {});
 
@@ -202,6 +206,8 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     void addBilinear(const itemVFlist_t &VF, const Interface<Mesh> &gamma, std::list<int> label = {});
     void addBilinear(const itemVFlist_t &VF, const Interface<Mesh> &gamma, const TimeSlab &In, int itq,
                      std::list<int> label = {});
+
+    void addBilinearAbsTest(const itemVFlist_t &VF, const Interface<Mesh> &gamma, std::list<int> label = {});
     void addBilinear(const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In,
                      std::list<int> label = {});
     void addBilinear(const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In, int itq,

@@ -70,4 +70,42 @@ class TypeOfFE_NumberSpace2d : public GTypeOfFE<Mesh2> {
 // GTypeOfFE<Mesh2> &PNumberSpace(Number_Space);
 // template <> GTypeOfFE<Mesh2> &DataFE<Mesh2>::NumberSpace = Number_Space;
 
+
+class TypeOfFE_NumberSpace2dQ : public GTypeOfFE<MeshQuad2> {
+
+    typedef MeshQuad2 Mesh;
+    typedef typename Mesh::Element E;
+    static const int nbNodeOnItem[4];
+
+  public:
+    static const int k   = 0;
+    static const int ndf = 1;
+    static int Data[];
+    static double alpha_Pi_h[];
+
+    TypeOfFE_NumberSpace2dQ() : GTypeOfFE<MeshQuad2>(ndf, 1, Data, 1, 1, alpha_Pi_h) {
+
+        GTypeOfFE<Mesh>::basisFctType   = BasisFctType::P0;
+        GTypeOfFE<Mesh>::polynomialOrder = 0;
+
+        static const R2 Pt[1] = {R2(1. / 3, 1. / 3)};
+
+        for (int i = 0; i < ndf; ++i) {
+            Pt_Pi_h[i]  = Pt[i];
+            ipj_Pi_h[i] = IPJ(i, i, 0);
+        }
+
+        // for (int i = 0; i < ndf; ++i) {
+        //     Pt_Pi_h[i]  = Pt[i];
+        //     ipj_Pi_h[i] = IPJ(i, i, 0);
+        // }
+    }
+
+    // void Pi_h_alpha(const baseFElement &K, KN_< double > &v) const {
+    //   for (int i = 0; i < 3; ++i) v[i] = 1;
+    // }
+
+    void FB(const What_d, const Element &, const Rd &, RNMK_ &) const;
+};
+
 #endif // __NUMBER_SPACE_HPP__

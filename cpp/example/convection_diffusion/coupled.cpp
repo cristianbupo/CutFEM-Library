@@ -54,7 +54,7 @@ template <int N> struct Levelset {
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
         R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
-        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17);
+        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17 - 1e-14);
     }
 
     // gradient of level set function
@@ -2848,7 +2848,7 @@ template <int N> struct Levelset {
 
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
-        return P[0] * P[0] + (P[1] - (1 - P[0] * P[0]) * t) * (P[1] - (1 - P[0] * P[0]) * t) - R0 * R0;
+        return P[0] * P[0] + (P[1] - (1 - P[0] * P[0]) * t) * (P[1] - (1 - P[0] * P[0]) * t) - R0 * R0 - 1e-14;
     }
 
     // gradient of level set function

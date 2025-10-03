@@ -1145,6 +1145,87 @@ void BaseFEM<M>::addBorderContribution(const itemVFlist_t &VF, const Element &K,
     }
 }
 
+
+template <typename M>
+void BaseFEM<M>::addInnerBorderContribution(const itemVFlist_t &VF, const int k, const int ifac,
+                                       const TimeSlab *In, int itq, double cst_time) {
+
+    typedef typename FElement::RdHatBord RdHatBord;
+
+    const FESpace &Vh(VF.get_spaceV(0));
+    const FElement &FK(Vh[k]);
+    const Element &K(FK.T);
+
+    // Compute parameter connected to the mesh.
+    double measK = K.measure();
+    double meas  = K.mesureBord(ifac);
+    double h     = K.get_h();
+    Rd normal    = -K.N(ifac);  // when calling this function, we are coming from a cut element into an interior element, but we want the normal to point outwards from the inner domain, so we change the sign!
+
+    // U and V HAS TO BE ON THE SAME MESH
+    int kb = Vh.idxElementInBackMesh(k);
+
+    // GET THE QUADRATURE RULE
+    const QFB &qfb(this->get_quadrature_formular_dK());
+    auto tq    = this->get_quadrature_time(itq);
+    double tid = (In) ? (double)In->map(tq) : 0.;
+
+    // LOOP OVER THE VARIATIONAL FORMULATION ITEMS
+    for (int l = 0; l < VF.size(); ++l) {
+        // if(!VF[l].on(domain)) continue;
+
+        // FINTE ELEMENT SPACES && ELEMENTS
+        const FESpace &Vhv(VF.get_spaceV(l));
+        const FESpace &Vhu(VF.get_spaceU(l));
+        assert(Vhv.get_nb_element() == Vhu.get_nb_element());
+        bool same = (VF.isRHS() || (&Vhu == &Vhv));
+
+        const FElement &FKu(Vhu[k]);
+        const FElement &FKv(Vhv[k]);
+        int domain = FKv.get_domain();
+        this->initIndex(FKu, FKv);
+
+        // BF MEMORY MANAGEMENT -
+        int lastop = getLastop(VF[l].du, VF[l].dv);
+        RNMK_ fv(this->databf_, FKv.NbDoF(), FKv.N, lastop);
+        RNMK_ fu(this->databf_ + (same ? 0 : FKv.NbDoF() * FKv.N * lastop), FKu.NbDoF(), FKu.N, lastop);
+        What_d Fop = Fwhatd(lastop);
+
+        // COMPUTE COEFFICIENT
+        double coef = VF[l].computeCoefElement(h, meas, measK, measK, domain);
+        coef *= VF[l].computeCoefFromNormal(normal);
+
+        // LOOP OVER QUADRATURE IN SPACE
+        for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+            typename QFB::QuadraturePoint ip(qfb[ipq]);
+            const Rd ip_edge = K.mapToReferenceElement((RdHatBord)ip, ifac);
+            const Rd mip     = K.mapToPhysicalElement(ip_edge);
+            
+            double Cint      = meas * ip.getWeight() * cst_time;
+
+            // EVALUATE THE BASIS FUNCTIONS
+            FKv.BF(Fop, ip_edge, fv);
+            if (!same)
+                FKu.BF(Fop, ip_edge, fu);
+
+            Cint *= VF[l].evaluateFunctionOnBackgroundMesh(kb, domain, mip, tid, normal);
+            Cint *= coef * VF[l].c;
+
+            if (In) {
+                if (VF.isRHS())
+                    this->addToRHS(VF[l], *In, FKv, fv, Cint);
+                else
+                    this->addToMatrix(VF[l], *In, FKu, FKv, fu, fv, Cint);
+            } else {
+                if (VF.isRHS())
+                    this->addToRHS(VF[l], FKv, fv, Cint);
+                else
+                    this->addToMatrix(VF[l], FKu, FKv, fu, fv, Cint);
+            }
+        }
+    }
+}
+
 template <typename Mesh>
 void BaseFEM<Mesh>::setDirichlet(const FunFEM<Mesh> &gh, const Mesh &Th, std::list<int> label) {
 
@@ -1284,6 +1365,126 @@ void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, 
     bar.end();
 }
 
+//! trying
+template <typename M>
+void BaseFEM<M>::addBilinearAbsTest(const itemVFlist_t &VF, const Interface<M> &gamma, std::list<int> label) {
+typedef typename FElement::RdHatBord RdHatBord;
+    
+    assert(!VF.isRHS());
+    bool all_label = (label.size() == 0);
+    progress bar(" Add Bilinear Interface", gamma.last_element(), globalVariable::verbose);
+
+    double cst_time = 1.;
+    for (int iface = gamma.first_element(); iface < gamma.last_element(); iface += gamma.next_element()) {
+        const typename Interface<M>::Face &face = gamma[iface]; // the face
+        bar += gamma.next_element();
+        
+        if (util::contain(label, face.lab) || all_label) {
+
+            // GET IDX ELEMENT CONTAINING FACE ON backMes
+            const int kb = gamma.idxElementOfFace(iface);
+            const Element &K(gamma.get_element(kb));
+            double measK = K.measure();
+            double h     = K.get_h();
+            double meas  = gamma.measure(iface);
+            std::array<double, 2> measCut;
+
+            { // compute each cut part
+                const FESpace &Vh(VF.get_spaceV(0));
+                const ActiveMesh<M> &Th(Vh.get_mesh());
+                std::vector<int> idxV = Vh.idxAllElementFromBackMesh(kb, -1);
+
+                const Cut_Part<Element> cutK(Th.get_cut_part(idxV[0], 0));
+                measCut[0] = cutK.measure();
+                measCut[1] = measCut[0];
+                if (idxV.size() == 2) {
+                    const Cut_Part<Element> cutK(Th.get_cut_part(idxV[1], 0));
+                    measCut[1] = cutK.measure();
+                }
+            }
+
+            const Rd normal(-gamma.normal(iface));
+
+
+            // GET THE QUADRATURE RULE
+            const QFB &qfb(this->get_quadrature_formular_cutFace());
+
+            std::vector<double> contributions;
+
+            for (int l = 0; l < VF.size(); ++l) {
+                std::cout << "l = " << l << "\n";
+                // if(!VF[l].on(domain)) continue;
+
+                // FINITE ELEMENT SPACES && ELEMENTS
+                const FESpace &Vhv(VF.get_spaceV(l));
+                const FESpace &Vhu(VF.get_spaceU(l));
+                bool same = (VF.isRHS() || (&Vhu == &Vhv));
+
+                std::vector<int> idxV = Vhv.idxAllElementFromBackMesh(kb, VF[l].get_domain_test_function());
+                std::vector<int> idxU = (same) ? idxV : Vhu.idxAllElementFromBackMesh(kb, VF[l].get_domain_trial_function());
+
+                int kv = VF[l].onWhatElementIsTestFunction(idxV);
+                int ku = VF[l].onWhatElementIsTrialFunction(idxU);
+
+                const FElement &FKu(Vhu[ku]);
+                const FElement &FKv(Vhv[kv]);
+                int domu = FKu.get_domain();
+                int domv = FKv.get_domain();
+                this->initIndex(FKu, FKv);
+
+                // BF MEMORY MANAGEMENT -
+                int lastop = getLastop(VF[l].du, VF[l].dv);
+                RNMK_ fv(this->databf_, FKv.NbDoF(), FKv.N, lastop);
+                RNMK_ fu(this->databf_ + (same ? 0 : FKv.NbDoF() * FKv.N * lastop), FKu.NbDoF(), FKu.N, lastop);
+                What_d Fop = Fwhatd(lastop);
+
+                // COMPUTE COEFFICIENT && NORMAL
+                double coef = VF[l].computeCoefInterface(h, meas, measK, measCut, {domu, domv});
+                // std::cout << "coef bf: " << coef << "\n";
+                coef *= VF[l].computeCoefFromNormal(normal);    //? how does this work with abs?
+                // std::cout << "coef aft: " << coef << "\n";
+                // getchar();
+
+                std::cout << "size fv = " << fv.size() << ", FKv.NbDoF() = " << FKv.NbDoF() << " FKv.N = " << FKv.N << ", lastop = " << lastop << "\n";
+
+                // // LOOP OVER QUADRATURE IN SPACE
+                for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+
+                    typename QFB::QuadraturePoint ip(qfb[ipq]); // integration point
+                    const Rd mip     = gamma.mapToPhysicalFace(iface, (RdHatBord)ip);
+                    const Rd face_ip = K.mapToReferenceElement(mip);
+                    double Cint      = meas * ip.getWeight() * cst_time;
+
+                    // EVALUATE THE BASIS FUNCTIONS
+                    FKv.BF(Fop, face_ip, fv);
+                    if (!same)
+                        FKu.BF(Fop, face_ip, fu);
+
+                    Cint *= VF[l].evaluateFunctionOnBackgroundMesh(std::make_pair(kb, kb), std::make_pair(domu, domv), mip, 0.,
+                                                                normal);
+                    Cint *= coef * VF[l].c;
+                    
+                    // this->addToMatrix(VF[l], *In, FKu, FKv, fu, fv, Cint);
+                    // Loop over the spatial basis functions
+                    for (int i = FKv.dfcbegin(VF[l].cv); i < FKv.dfcend(VF[l].cv); ++i) {
+                        for (int j = FKu.dfcbegin(VF[l].cu); j < FKu.dfcend(VF[l].cu); ++j) {
+                            
+                            std::cout << "(i,j) = (" << i << "," << j << ")\n";
+                            // Add the contribution to the local matrix
+                            this->addToLocalContribution(FKv.loc2glb(i), FKu.loc2glb(j), 0) +=
+                                Cint * fv(i, VF[l].cv, VF[l].dv) * fu(j, VF[l].cu, VF[l].du);
+                        }
+                    }
+                
+                }
+                getchar();
+            }
+    
+        this->addLocalContribution();
+        }
+    }
+    bar.end();
+}
 
 template <typename M>
 void BaseFEM<M>::addBilinear(const itemVFlist_t &VF, const Interface<M> &gamma, const TimeSlab &In, int itq,
@@ -1568,7 +1769,7 @@ void BaseFEM<M>::addInterfaceContribution(const itemVFlist_t &VF, const Interfac
 
         // COMPUTE COEFFICIENT && NORMAL
         double coef = VF[l].computeCoefInterface(h, meas, measK, measCut, {domu, domv});
-        coef *= VF[l].computeCoefFromNormal(normal);
+        coef *= VF[l].computeCoefFromNormal(normal);    //? how does this work with abs?
 
         // // LOOP OVER QUADRATURE IN SPACE
         for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {

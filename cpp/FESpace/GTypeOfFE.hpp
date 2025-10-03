@@ -194,12 +194,14 @@ template <class Mesh> class GTypeOfFE : public dataTypeOfFE {
 };
 
 class TypeOfFE_NumberSpace2d;
+class TypeOfFE_NumberSpace2dQ;
 
 /*
  *   Structure that will contain the different FE
  */
 template <class mesh> struct DataFE {
     static TypeOfFE_NumberSpace2d &NumberSpace;
+    static TypeOfFE_NumberSpace2dQ &NumberSpaceQ;
     static GTypeOfFE<mesh> &P0;
     static GTypeOfFE<mesh> &P1;
     static GTypeOfFE<mesh> &P2;

@@ -42,7 +42,9 @@ template <typename M> class BoundaryDirichlet {
     BoundaryDirichlet(const space_t &Vh, std::vector<int> lab);
 
     void apply_inhomogeneous(std::map<std::pair<int, int>, double> &A);
-    void apply(std::span<double> b, const fct_t &f);
+    template <typename Fct>
+    void apply(std::span<double> b, const Fct &f);      // exact function f
+    void apply(std::span<double> b, const fct_t &f);    // fem function f
     void apply(std::span<double> b, double val);
 
     // void apply_inhomogeneous(std::map<std::pair<int, int>, double> &A, std::span<double> b);
@@ -320,6 +322,15 @@ template <typename M> void BoundaryDirichlet<M>::apply(std::span<double> b, cons
 
     for (auto &[df, dof_data] : boundary_dofs) {
         b[df] = f.evalOnBackMesh(dof_data.k, dof_data.domain, dof_data.P, dof_data.ci, op_id);
+    }
+}
+
+template <typename M> 
+template <typename Fct>
+void BoundaryDirichlet<M>::apply(std::span<double> b, const Fct &f) {
+
+    for (auto &[df, dof_data] : boundary_dofs) {
+        b[df] = f(dof_data.P, dof_data.ci);
     }
 }
 

@@ -357,3 +357,71 @@ template <> void BaseCutFEM<Mesh2>::addBilinearInnerBorder(const itemVFlist_t &V
     }
 
 }
+
+
+
+template <> void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(!VF.isRHS());
+#pragma omp parallel for num_threads(this->get_num_threads())
+
+    for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
+
+        // Loop only over cut elements for efficiency
+        if (!Th.is_macro_cut(km))
+            continue;
+
+        const auto& micro_elements = Th.active_macro_elements[km];
+
+        for (int k_micro : micro_elements) {
+            
+            for (int ifac = 0; ifac < Element::nea; ++ifac) {
+                int jfac = ifac;
+                int kn_micro = Th.ElementAdj(k_micro, jfac);
+
+                if ((kn_micro != -1) ||(Th.inverse_active_macro_map[k_micro] == Th.inverse_active_macro_map[kn_micro]))
+                    continue;
+                
+                // std::cout << "Integrating on edge between micro elements " << k_micro << " (macro element " << Th.inverse_active_macro_map[k_micro] << ") and " << kn_micro << " (macro element " << Th.inverse_active_macro_map[kn_micro] << ")\n";
+                BaseFEM<Mesh2>::addOuterBorderContribution(VF, k_micro, ifac, nullptr, 0, 1.);
+            
+            }
+        
+        }
+
+        // Find the face that neighbors an interior element
+        // for (int iface = 0; iface < Element::nea; ++iface) {
+        //     int kn_macro = Th.macro_adjacent(km, iface);
+            
+        //     if ((kn_macro == -1) || Th.is_macro_cut(kn_macro))
+        //         continue;
+            
+        //     std::cout << "Integrating on iface = " << iface << ", kn_macro = " << kn_macro << "\n";
+
+
+        //     for (int k_micro : micro_elements) 
+        //         BaseFEM<Mesh2>::addInnerBorderContribution(VF, k_micro, ifac, nullptr, 0, 1.);
+        // }
+    //     
+    //     if (!Th.isCut(k, 0)) {
+    //         continue;
+    //     } 
+        
+    //     // Find the face that neighbors an interior element
+    //     for (int ifac = 0; ifac < Element::nea; ++ifac) { 
+    //         int jfac = ifac;
+    //         int kn   = Th.ElementAdj(k, jfac);
+
+    //         // an neighboring element can be 1) outside of the domain, 2) another cut element or 3) inside of the domain 
+    //         if ((kn == -1) || Th.isCut(kn, 0))
+    //             continue;
+            
+    //         assert(!Th.isCut(kn, 0) && Th.isCut(k, 0));
+
+    //         BaseFEM<Mesh2>::addInnerBorderContribution(VF, k, ifac, nullptr, 0, 1.);
+            
+    //     }
+        
+    //     this->addLocalContribution();
+    }
+
+}

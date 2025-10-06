@@ -136,6 +136,7 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     void addLinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
     void addBilinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
     void addBilinearInnerBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+    void addBilinearOuterBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
 
     // Face stabilization
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &);

@@ -293,7 +293,7 @@ public:
     int get_macro_in_active_mesh(int k_bg) const;
 
     std::vector<std::array<int, 3>> active_macro_elements;
-    std::vector<int> inverse_active_macro_map;
+    std::vector<int> inverse_active_macro_map;              // inverse_active_macro_map[idx_micro] -> idx_macro (in active mesh)
     std::vector<int> macro_in_background_mesh;              // takes active index as argument
     std::unordered_map<int,int> macro_in_active_mesh;       // takes background index as argument
     int nb_active_macros;

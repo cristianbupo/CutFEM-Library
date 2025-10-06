@@ -287,6 +287,19 @@ template <typename Mesh> void BaseFEM<Mesh>::addBilinear(const itemVFlist_t &VF,
     }
 }
 
+
+template <typename Mesh> void BaseFEM<Mesh>::addLinear(const itemVFlist_t &VF, const CutMesh &Th) {
+    assert(VF.isRHS());
+    progress bar("Add Bilinear Mesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        bar += Th.next_element();
+        BaseFEM<Mesh>::addElementContribution(VF, k, nullptr, 0, 1.);
+
+    }
+    bar.end();
+}
+
 template <typename Mesh> void BaseFEM<Mesh>::addLinear(const itemVFlist_t &VF, const Mesh &Th) {
     assert(VF.isRHS());
     progress bar("Add Linear Mesh", Th.last_element(), globalVariable::verbose);
@@ -1161,6 +1174,86 @@ void BaseFEM<M>::addInnerBorderContribution(const itemVFlist_t &VF, const int k,
     double meas  = K.mesureBord(ifac);
     double h     = K.get_h();
     Rd normal    = -K.N(ifac);  // when calling this function, we are coming from a cut element into an interior element, but we want the normal to point outwards from the inner domain, so we change the sign!
+
+    // U and V HAS TO BE ON THE SAME MESH
+    int kb = Vh.idxElementInBackMesh(k);
+
+    // GET THE QUADRATURE RULE
+    const QFB &qfb(this->get_quadrature_formular_dK());
+    auto tq    = this->get_quadrature_time(itq);
+    double tid = (In) ? (double)In->map(tq) : 0.;
+
+    // LOOP OVER THE VARIATIONAL FORMULATION ITEMS
+    for (int l = 0; l < VF.size(); ++l) {
+        // if(!VF[l].on(domain)) continue;
+
+        // FINTE ELEMENT SPACES && ELEMENTS
+        const FESpace &Vhv(VF.get_spaceV(l));
+        const FESpace &Vhu(VF.get_spaceU(l));
+        assert(Vhv.get_nb_element() == Vhu.get_nb_element());
+        bool same = (VF.isRHS() || (&Vhu == &Vhv));
+
+        const FElement &FKu(Vhu[k]);
+        const FElement &FKv(Vhv[k]);
+        int domain = FKv.get_domain();
+        this->initIndex(FKu, FKv);
+
+        // BF MEMORY MANAGEMENT -
+        int lastop = getLastop(VF[l].du, VF[l].dv);
+        RNMK_ fv(this->databf_, FKv.NbDoF(), FKv.N, lastop);
+        RNMK_ fu(this->databf_ + (same ? 0 : FKv.NbDoF() * FKv.N * lastop), FKu.NbDoF(), FKu.N, lastop);
+        What_d Fop = Fwhatd(lastop);
+
+        // COMPUTE COEFFICIENT
+        double coef = VF[l].computeCoefElement(h, meas, measK, measK, domain);
+        coef *= VF[l].computeCoefFromNormal(normal);
+
+        // LOOP OVER QUADRATURE IN SPACE
+        for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+            typename QFB::QuadraturePoint ip(qfb[ipq]);
+            const Rd ip_edge = K.mapToReferenceElement((RdHatBord)ip, ifac);
+            const Rd mip     = K.mapToPhysicalElement(ip_edge);
+            
+            double Cint      = meas * ip.getWeight() * cst_time;
+
+            // EVALUATE THE BASIS FUNCTIONS
+            FKv.BF(Fop, ip_edge, fv);
+            if (!same)
+                FKu.BF(Fop, ip_edge, fu);
+
+            Cint *= VF[l].evaluateFunctionOnBackgroundMesh(kb, domain, mip, tid, normal);
+            Cint *= coef * VF[l].c;
+
+            if (In) {
+                if (VF.isRHS())
+                    this->addToRHS(VF[l], *In, FKv, fv, Cint);
+                else
+                    this->addToMatrix(VF[l], *In, FKu, FKv, fu, fv, Cint);
+            } else {
+                if (VF.isRHS())
+                    this->addToRHS(VF[l], FKv, fv, Cint);
+                else
+                    this->addToMatrix(VF[l], FKu, FKv, fu, fv, Cint);
+            }
+        }
+    }
+}
+
+template <typename M>
+void BaseFEM<M>::addOuterBorderContribution(const itemVFlist_t &VF, const int k, const int ifac,
+                                       const TimeSlab *In, int itq, double cst_time) {
+
+    typedef typename FElement::RdHatBord RdHatBord;
+
+    const FESpace &Vh(VF.get_spaceV(0));
+    const FElement &FK(Vh[k]);
+    const Element &K(FK.T);
+
+    // Compute parameter connected to the mesh.
+    double measK = K.measure();
+    double meas  = K.mesureBord(ifac);
+    double h     = K.get_h();
+    Rd normal    = K.N(ifac);  // when calling this function, we are coming from a cut element into an interior element, but we want the normal to point outwards from the inner domain, so we change the sign!
 
     // U and V HAS TO BE ON THE SAME MESH
     int kb = Vh.idxElementInBackMesh(k);

@@ -1912,7 +1912,7 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
         this->addLocalContribution();
     }
     bar.end();
-    std::cout << "Number of stabilized faces: " << num_stab_faces << "\n";
+    //std::cout << "Number of stabilized faces: " << num_stab_faces << "\n";
 }
 
 template <typename M> void BaseCutFEM<M>::addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th) {

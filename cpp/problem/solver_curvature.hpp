@@ -39,7 +39,7 @@ template <typename mesh_t> std::vector<double> solve(const CutFESpace<mesh_t> &V
         Id(i, i) = 1.;
 
     problem.addBilinear((H, v)
-                        // + (grad(H) * n, grad(v) * n) * 1e-2
+                        + (grad(H) * n, grad(v) * n) * 1e-2
                         ,
                         interface);
     problem.addLinear(-contractProduct(Id, gradS(v)), interface);

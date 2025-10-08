@@ -289,6 +289,19 @@ template <typename M> class FunFEM : public FunFEMVirtual {
     //     f.v.set(f.data_, f.Vh->NbDoF());
     // }
 
+    friend void swap(FunFEM& f, FunFEM& g) noexcept {
+        // Optional consistency checks (keep if these invariants are required)
+        assert(f.Vh && g.Vh);
+        assert(f.data_.size() == static_cast<size_t>(f.Vh->NbDoF()));
+        assert(g.data_.size() == static_cast<size_t>(g.Vh->NbDoF()));
+
+        std::swap(f.data_, g.data_);   // swap the owning buffers
+
+        // Rebind spans to the new underlying storage
+        f.v = std::span<double>(f.data_.data(), f.data_.size());
+        g.v = std::span<double>(g.data_.data(), g.data_.size());
+    }
+
     double &operator()(int i) { return v[i]; }
     double operator()(int i) const { return v[i]; }
     operator Rn() const { return Rn(v); }
@@ -314,6 +327,11 @@ template <typename M> class FunFEM : public FunFEMVirtual {
     std::vector<std::shared_ptr<ExpressionFunFEM<M>>> exprList(int n = -1) const;
     std::vector<std::shared_ptr<ExpressionFunFEM<M>>> exprList(int n, int i0) const;
 
+    FunFEM<M> &operator+=(const FunFEM<M> &other);
+    FunFEM<M> &operator-=(const FunFEM<M> &other);
+    FunFEM<M> &operator*=(const double c);
+    FunFEM<M> &operator/=(const double c);
+    
     ~FunFEM() {}
 
   private:
@@ -436,6 +454,7 @@ template <typename M> class ExpressionFunFEM : public ExpressionVirtual {
     R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
         return fun.evalOnBackMesh(k, dom, x, cu, op) * computeNormal(normal);
     }
+
     R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
         return fun.evalOnBackMesh(k, dom, x, t, cu, op, opt) * computeNormal(normal);
     }
@@ -511,6 +530,21 @@ template <typename M> std::shared_ptr<ExpressionFunFEM<M>> dz(const ExpressionFu
 template <typename M> std::shared_ptr<ExpressionFunFEM<M>> dt(const ExpressionFunFEM<M> &u) {
     return std::make_shared<ExpressionFunFEM<M>>(u.fun, u.cu, u.op, op_dx, u.domain);
 }
+
+template<typename M>
+std::shared_ptr<ExpressionVirtual> dot(
+    const std::vector<std::shared_ptr<ExpressionFunFEM<M>>>& u,
+    const std::vector<std::shared_ptr<ExpressionFunFEM<M>>>& v)
+{
+    assert(u.size() == v.size() && "Vectors must have the same size for scalar product.");
+
+    std::shared_ptr<ExpressionVirtual> result = u[0] * v[0];
+    for (std::size_t i = 1; i < u.size(); ++i) {
+        result = result + (u[i] * v[i]);
+    }
+    return result;
+}
+
 
 class ExpressionMultConst : public ExpressionVirtual {
     const std::shared_ptr<ExpressionVirtual> fun1;

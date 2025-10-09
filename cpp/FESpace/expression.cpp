@@ -112,6 +112,19 @@ std::vector<std::shared_ptr<ExpressionVirtual>> cross(const Normal &n, const Fun
 }
 
 
+// std::vector<std::shared_ptr<ExpressionVirtual>> cross(const std::vector<std::shared_ptr<ExpressionFunFEM<Mesh3>>> &a, const std::vector<std::shared_ptr<ExpressionFunFEM<Mesh3>>> &b) {
+//     assert(a.size() == b.size());
+//     assert(a.size() == 3);
+
+//     std::vector<std::shared_ptr<ExpressionVirtual>> res(3);
+//     res[0] = a[1]*b[2]-a[2]*b[1];
+//     res[1] = a[2]*b[0]-a[0]*b[2];
+//     res[2] = a[0]*b[1]-a[1]*b[0];
+    
+//     return res;    
+// }
+
+
 ExpressionBurgerFlux burgerFlux(const ExpressionVirtual &f1) { return ExpressionBurgerFlux(f1); }
 ExpressionNormalBurgerFlux burgerFlux(const ExpressionVirtual &f1, const Normal &n) {
     return ExpressionNormalBurgerFlux(f1);
@@ -122,7 +135,7 @@ std::vector<std::shared_ptr<ExpressionVirtual>> curl(const FunFEM<Mesh3>& uh) {
     return ExpressionCurl3D(uh)(); // Directly return the vector of components
 }
 
-std::shared_ptr<ExpressionDSx3> dxS(const FunFEM<Mesh3> &f1) { return std::make_shared<ExpressionDSx3>(f1); }
-std::shared_ptr<ExpressionDSy3> dyS(const FunFEM<Mesh3> &f1) { return std::make_shared<ExpressionDSy3>(f1); }
-std::shared_ptr<ExpressionDSz3> dzS(const FunFEM<Mesh3> &f1) { return std::make_shared<ExpressionDSz3>(f1); }
+std::shared_ptr<ExpressionDSx3> dxS(const FunFEM<Mesh3> &f1, int ci) { return std::make_shared<ExpressionDSx3>(f1, ci); }
+std::shared_ptr<ExpressionDSy3> dyS(const FunFEM<Mesh3> &f1, int ci) { return std::make_shared<ExpressionDSy3>(f1, ci); }
+std::shared_ptr<ExpressionDSz3> dzS(const FunFEM<Mesh3> &f1, int ci) { return std::make_shared<ExpressionDSz3>(f1, ci); }
 std::shared_ptr<ExpressionDivS3> divS(const FunFEM<Mesh3> &f1) { return std::make_shared<ExpressionDivS3>(f1); }

@@ -3240,7 +3240,6 @@ template <typename M> void BaseCutFEM<M>::initialSolution(std::span<double> u0) 
         // Get the FESpace object from the map
         const FESpace &Wh = *q->first;
 
-        // Get the second value from the map, which is n0
         const int n0 = q->second;
 
         // Get the active mesh object from the FESpace object
@@ -3295,6 +3294,66 @@ template <typename M> void BaseCutFEM<M>::initialSolution(std::span<double> u0) 
 
     // Clear the map of initial conditions.
     this->mapU0_.clear();
+}
+
+
+template <typename M> void BaseCutFEM<M>::saveSolutionBackMesh(std::span<double> sol, FunFEM<M>& f_back) {
+
+
+    std::span<double> u_back = f_back.array();
+    std::ranges::fill(u_back, 0.);
+
+    this->mapU0_.clear(); 
+
+    int id_domain_0 = 0;                       
+    int nbTime      = this->get_nb_dof_time(); 
+
+    // Iterate over the finite element spaces in the finite element system
+    for (typename std::map<const FESpace *, int>::const_iterator q = this->mapIdx0_.begin(); q != this->mapIdx0_.end();
+         ++q) {
+        const FESpace &Wh = *q->first;               // Get the finite element space.
+        const int n0      = q->second;               // Get the starting index of the finite element space.
+        const ActiveMesh<M> &Th(Wh.get_mesh());      // Get the mesh associated with the finite element space.
+        const FESpace &backVh = Wh.get_back_space(); // Get the back space of the finite element space.
+
+        assert(Th.get_nb_domain() == 1);
+        // Pointer to the vector of coefficients of size nbTime*N_{h,i}^n
+        // std::cout << "Wh.get_nb_dof() = " << Wh.get_nb_dof() << ", n0 = " << n0 << "\n";
+        const KN_<double> solS = sol.subspan(n0, Wh.get_nb_dof() * nbTime);
+
+        // Iterate over the elements in the current active mesh.
+        for (int k = 0; k < Th.get_nb_element(); ++k) {
+
+            const FElement &FK(Wh[k]); // Get the finite element associated with the current element in the mesh.
+            const int domain = Th.get_domain_element(k); // Get the domain of the current element.
+            int id_domain    = (domain == -1) ? id_domain_0 : id_domain_0 + domain; // Compute the domain ID.
+
+            int kb = Th.idxElementInBackMesh(k); // Get the index of the current element in the back mesh.
+            const FElement &FKback(backVh[kb]);  // Get the corresponding element in the back space.
+
+            // Loop over the components of the FE space (1 for scalar problems)
+            for (int ic = 0; ic < Wh.N; ++ic) {
+                // Iterate over the degrees of freedom in the finite element (e.g. nodes).
+                for (int i = FK.dfcbegin(ic); i < FK.dfcend(ic); ++i) {
+                    R val = 0.; // Initialize the coefficient value to 0.
+
+                    // Sum up the coefficients corresponding to the same space DOF in different time DOFs.
+                    for (int it = 0; it < nbTime; ++it) {
+                        val += solS[FK.loc2glb(i, it)];
+                    }
+
+                    // Store the coefficient value in the DOF in the background FE space, to be able to retreive it in
+                    // the next time slab
+                    this->mapU0_[std::make_pair(id_domain, FKback(i))] = val;
+
+                    u_back[FKback(i)] = val;
+                }
+            }
+        }
+
+        id_domain_0 += Th.get_nb_domain();
+    }
+
 }
 
 

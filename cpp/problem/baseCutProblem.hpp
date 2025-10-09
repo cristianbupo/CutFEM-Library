@@ -201,6 +201,9 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
 
     void initialSolution(std::span<double> u0);
 
+    void saveSolutionBackMesh(std::span<double> sol, FunFEM<Mesh>& f_back);
+
+
     int get_number_of_stabilized_edges() { return number_of_stabilized_edges; }
 };
 

@@ -492,7 +492,8 @@ void interpolateOnBackGroundMesh(FunFEM<Mesh> &uh, const FunFEM<Mesh> &fh, const
     const auto &cutTh  = Vh_cut.get_mesh();
     const auto &Vh     = *uh.Vh;
 
-    uh.v = 0.;
+    //uh.v = 0.;
+    std::fill(uh.v.begin(), uh.v.end(), 0.0);
     for (int k = 0; k < Vh.NbElement(); ++k) {
         const auto &FK(Vh[k]);
 

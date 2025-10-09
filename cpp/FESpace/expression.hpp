@@ -706,6 +706,7 @@ class ExpressionDivision : public ExpressionVirtual {
 
     R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
         double v = fun2->evalOnBackMesh(k, dom, x, normal);
+
         assert(fabs(v) > 1e-15);
         return fun1->evalOnBackMesh(k, dom, x, normal) / v;
     }
@@ -1257,9 +1258,9 @@ class ExpressionDSx3 : public ExpressionVirtual {
     ExpressionFunFEM<M> dxu1, dxu1nxnx, dyu1nxny, dzu1nxnz;
 
   public:
-    ExpressionDSx3(const FunFEM<M> &fh1)
-        : fun(fh1), dxu1(fh1, 0, op_dx, 0, 0), dxu1nxnx(fh1, 0, op_dx, 0, 0), dyu1nxny(fh1, 0, op_dy, 0, 0),
-          dzu1nxnz(fh1, 0, op_dz, 0, 0) {
+    ExpressionDSx3(const FunFEM<M> &fh1,int ci)
+        : fun(fh1), dxu1(fh1, ci, op_dx, 0, 0), dxu1nxnx(fh1, ci, op_dx, 0, 0), dyu1nxny(fh1, ci, op_dy, 0, 0),
+          dzu1nxnz(fh1, ci, op_dz, 0, 0) {
         dxu1nxnx.addNormal(0);
         dxu1nxnx.addNormal(0);
         dyu1nxny.addNormal(0);
@@ -1297,7 +1298,7 @@ class ExpressionDSx3 : public ExpressionVirtual {
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionDSx3() {}
 };
-std::shared_ptr<ExpressionDSx3> dxS(const FunFEM<Mesh3> &f1);
+std::shared_ptr<ExpressionDSx3> dxS(const FunFEM<Mesh3> &f1, int ci);
 
 class ExpressionDSy3 : public ExpressionVirtual {
     typedef Mesh3 M;
@@ -1305,9 +1306,11 @@ class ExpressionDSy3 : public ExpressionVirtual {
     ExpressionFunFEM<M> dxu2, dxu2nxny, dyu2nyny, dzu2nynz;
 
   public:
-    ExpressionDSy3(const FunFEM<M> &fh1)
-        : fun(fh1), dxu2(fh1, 1, op_dy, 0, 0), dxu2nxny(fh1, 1, op_dx, 0, 0), dyu2nyny(fh1, 1, op_dy, 0, 0),
-          dzu2nynz(fh1, 1, op_dz, 0, 0) {
+    ExpressionDSy3(const FunFEM<M> &fh1, int ci)
+        : fun(fh1), dxu2(fh1, ci, op_dy, 0, 0), dxu2nxny(fh1, ci, op_dx, 0, 0), dyu2nyny(fh1, ci, op_dy, 0, 0),
+          dzu2nynz(fh1, ci, op_dz, 0, 0) {
+
+
         dxu2nxny.addNormal(0);
         dxu2nxny.addNormal(1);
         dyu2nyny.addNormal(1);
@@ -1345,7 +1348,7 @@ class ExpressionDSy3 : public ExpressionVirtual {
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionDSy3() {}
 };
-std::shared_ptr<ExpressionDSy3> dyS(const FunFEM<Mesh3> &f1);
+std::shared_ptr<ExpressionDSy3> dyS(const FunFEM<Mesh3> &f1, int ci);
 
 class ExpressionDSz3 : public ExpressionVirtual {
     typedef Mesh3 M;
@@ -1353,9 +1356,9 @@ class ExpressionDSz3 : public ExpressionVirtual {
     ExpressionFunFEM<M> dxu3, dxu3nxnz, dyu3nynz, dzu3nznz;
 
   public:
-    ExpressionDSz3(const FunFEM<M> &fh1)
-        : fun(fh1), dxu3(fh1, 2, op_dz, 0, 0), dxu3nxnz(fh1, 2, op_dx, 0, 0), dyu3nynz(fh1, 2, op_dy, 0, 0),
-          dzu3nznz(fh1, 2, op_dz, 0, 0) {
+    ExpressionDSz3(const FunFEM<M> &fh1, int ci)
+        : fun(fh1), dxu3(fh1, ci, op_dz, 0, 0), dxu3nxnz(fh1, ci, op_dx, 0, 0), dyu3nynz(fh1, ci, op_dy, 0, 0),
+          dzu3nznz(fh1, ci, op_dz, 0, 0) {
         dxu3nxnz.addNormal(0);
         dxu3nxnz.addNormal(2);
         dyu3nynz.addNormal(1);
@@ -1393,7 +1396,7 @@ class ExpressionDSz3 : public ExpressionVirtual {
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionDSz3() {}
 };
-std::shared_ptr<ExpressionDSz3> dzS(const FunFEM<Mesh3> &f1);
+std::shared_ptr<ExpressionDSz3> dzS(const FunFEM<Mesh3> &f1, int ci);
 
 class ExpressionDivS3 : public ExpressionVirtual {
     typedef Mesh3 M;
@@ -1403,7 +1406,7 @@ class ExpressionDivS3 : public ExpressionVirtual {
     const std::shared_ptr<ExpressionDSz3> dz;
 
   public:
-    ExpressionDivS3(const FunFEM<M> &fh1) : fun(fh1), dx(dxS(fh1)), dy(dyS(fh1)), dz(dzS(fh1)) {}
+    ExpressionDivS3(const FunFEM<M> &fh1) : fun(fh1), dx(dxS(fh1,0)), dy(dyS(fh1,1)), dz(dzS(fh1,2)) {}
 
     R operator()(long i) const {
         assert(0);
@@ -1666,6 +1669,43 @@ template <typename M> class ExpressionNonLinearSurfaceTension : public Expressio
     }
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionNonLinearSurfaceTension() {}
+};
+
+template <typename M> class ExpressionF : public ExpressionVirtual {
+    const FunFEM<M> &fun;
+    const FunFEM<M> &fun0;
+    const double time;
+
+  public:
+    ExpressionF(const FunFEM<M> &ch, const FunFEM<M> &c0h, double time_)
+        : fun(ch), fun0(c0h), time(time_) {}
+
+    R operator()(long i) const { return fabs(fun(i)); }
+
+    R eval(const int k, const R *x, const R *normal) const {
+        assert(0);
+        return 0.;
+    }
+    R eval(const int k, const R *x, const R t, const R *normal) const {
+        assert(0);
+        return 0.;
+    }
+
+    R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
+        double c  = fun.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        double c0 = fun0.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        assert(fabs(c0) > 1e-15);
+        return 2.*c*c/(c0*c0 + c*c);
+    }
+    R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
+        double c = fun.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        double c0 = fun0.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        assert(fabs(c0) > 1e-15);
+
+        return 2.*c*c/(c0*c0 + c*c);
+    }
+    int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
+    ~ExpressionF() {}
 };
 
 #include "expression.tpp"

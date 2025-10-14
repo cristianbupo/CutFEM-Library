@@ -158,13 +158,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, int domain, con
     typedef typename FElement::Rd Rd;
     typedef typename QF::QuadraturePoint QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+
+        if (Th.isInactive(k, 0))    
             continue;
 
         const Cut_Part<Element> cutK(Th.get_cut_part(k, 0));
@@ -214,13 +217,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex, int 
     using v_t       = typename fe_t::Rd;
     using qp_t      = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+        
+        if (Th.isInactive(k, 0))
             continue;
 
         const Cut_Part<e_t> cutK(Th.get_cut_part(k, 0));
@@ -261,13 +267,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double *
     typedef typename QF::QuadraturePoint QuadraturePoint;
     typedef typename ActiveMesh<Mesh>::Element Element;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+        
+        if (Th.isInactive(k, 0))
             continue;
 
         const Cut_Part<Element> cutK(Th.get_cut_part(k, 0));
@@ -314,13 +323,16 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex,
     typedef typename QF::QuadraturePoint QuadraturePoint;
     typedef typename ActiveMesh<Mesh>::Element Element;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (domain != Th.get_domain_element(k))
+            continue;
+
+        if (Th.isInactive(k, 0))    //? What if we're computing at itq != 0?
             continue;
 
         const Cut_Part<Element> cutK(Th.get_cut_part(k, 0));
@@ -359,6 +371,185 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex,
 
 
 
+// Sebastian implemented the norms below until the surface norms
+/**
+ * @brief Compute L2-norm in a specific quadrature point in time
+ * 
+ * @tparam Mesh 
+ * @tparam fct_t 
+ * @param fh Numerical solution
+ * @param f  Exact solution
+ * @param Th Active mesh
+ * @param In Time slab
+ * @param qTime Quadrature rule on In
+ * @param itq Quadrature point in time in which to evaluate the error
+ * @param num_components Number of components of function
+ * @return ||u-uh||_{L^2(Omega(t_itq))}
+ */
+template <typename Mesh, typename fct_t>
+double L2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+                 const QuadratureFormular1d &qTime, const int itq, int num_components) {
+
+    using mesh_t    = Mesh;
+    using fespace_t = GFESpace<mesh_t>;
+    using FElement  = typename fespace_t::FElement;
+    using Rd        = typename FElement::Rd;
+    using Element   = typename mesh_t::Element;
+    using QF        = typename FElement::QF;
+    using QuadraturePoint = typename QF::QuadraturePoint;
+
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
+
+    double val = 0.;
+    const size_t op_t  = 0;  // corresponds to taking the value of the function in time, not a derivative
+    const size_t op_id = 0; // corresponds to taking the value of the function in space, not a derivative
+
+    // const int domain = 0; // do only for main domain
+    
+    int nb_dom = Th.get_nb_domain();
+
+    // Loop over number of subdomains   //! actually might not correctly sum up from all the subdomains
+    double L2_err = 0.;
+    for (int domain = 0; domain < nb_dom; ++domain) {
+
+            // Get quadrature points in time
+            GQuadraturePoint<R1> tq((qTime)[itq]);
+            const double t = In.mapToPhysicalElement(tq);
+
+            // Loop in space
+            for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+                if (domain != Th.get_domain_element(k))
+                    continue;
+
+                if (Th.isInactive(k, itq))
+                    continue;
+
+                const Cut_Part<Element> cutK(Th.get_cut_part(k, itq));
+                int kb = Th.idxElementInBackMesh(k);
+
+                int kk = k;
+                
+                double err_K = 0.;
+                for (auto it = cutK.element_begin(); it != cutK.element_end(); ++it) {
+
+                    const R meas = cutK.measure(it);
+
+                    double err_cut_K = 0.;
+                    for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+                        
+                        QuadraturePoint ip(qf[ipq]); // integration point
+                        Rd mip = cutK.mapToPhysicalElement(it, ip);
+                        double weight_q = meas * ip.getWeight();
+
+                        // Loop over number of components of functions
+                        for (int i = 0; i < num_components; ++i) {
+                            double err_q = fh.evalOnBackMesh(kb, domain, mip, t, i, op_id, op_t) - f(mip, i, domain, t);
+
+                            err_cut_K += weight_q * err_q * err_q;
+
+                        }
+                    }
+                    err_K += err_cut_K;
+                }
+                L2_err += err_K;
+            }
+    }
+    return std::sqrt(L2_err); 
+}
+
+
+/**
+ * @brief Compute H1-norm in a specific quadrature point in time
+ * 
+ * @tparam Mesh 
+ * @tparam fct_t 
+ * @param fh Numerical solution
+ * @param f  Exact solution
+ * @param grad_f grad(f) in R^{d x d} where [grad(f)]_ij = df_i/dx_j
+ * @param Th Active mesh
+ * @param In Time slab
+ * @param qTime Quadrature rule on In
+ * @param itq Quadrature point in time in which to evaluate the error
+ * @param num_components Number of components of function
+ * @return ||u-uh||_{H^1(Omega(t_itq))}
+ */
+template <typename Mesh, typename fct_t, typename grad_fct_t>
+double H1normCut(const FunFEM<Mesh> &fh, const fct_t &f, const grad_fct_t &grad_f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+                 const QuadratureFormular1d &qTime, const int itq, int num_components) {
+
+    using mesh_t    = Mesh;
+    using fespace_t = GFESpace<mesh_t>;
+    using FElement  = typename fespace_t::FElement;
+    using Rd        = typename FElement::Rd;
+    using Element   = typename mesh_t::Element;
+    using QF        = typename FElement::QF;
+    using QuadraturePoint = typename QF::QuadraturePoint;
+
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
+
+    double val = 0.;
+    const size_t op_t = 0;  // corresponds to taking the value of the function in time, not a derivative
+    const size_t op_id = 0; // corresponds to taking the value of the function in space, not a derivative
+
+    // const int domain = 0; // do only for main domain
+    
+    int nb_dom = Th.get_nb_domain();
+
+    // Loop over number of subdomains
+    double H1_err = 0.;
+    for (int domain = 0; domain < nb_dom; ++domain) {
+
+            // Get quadrature points in time
+            GQuadraturePoint<R1> tq((qTime)[itq]);
+            const double t = In.mapToPhysicalElement(tq);
+
+            // Loop in space
+            for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+                if (domain != Th.get_domain_element(k))
+                    continue;
+
+                if (Th.isInactive(k, itq))
+                    continue;
+
+                const Cut_Part<Element> cutK(Th.get_cut_part(k, itq));
+                int kb = Th.idxElementInBackMesh(k);
+
+                int kk = k;
+                
+                double err_K = 0.;
+                for (auto it = cutK.element_begin(); it != cutK.element_end(); ++it) {
+
+                    const R meas = cutK.measure(it);
+
+                    double err_cut_K = 0.;
+                    for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+                        
+                        QuadraturePoint ip(qf[ipq]); // integration point
+                        Rd mip = cutK.mapToPhysicalElement(it, ip);
+                        double weight_q = meas * ip.getWeight();
+
+                        // Loop over number of components of functions
+                        for (int i = 0; i < num_components; ++i) {
+                            double err_q = fh.evalOnBackMesh(kb, domain, mip, t, i, op_id, op_t) - f(mip, i, domain, t);
+
+                            err_cut_K += weight_q * err_q * err_q;
+
+                            for (int j = 0; j < Rd::d; ++j) {
+                                double grad_err_q = fh.evalOnBackMesh(kb, domain, mip, t, i, j+1, op_t) - grad_f(mip, i, j, domain, t);
+                                err_cut_K += weight_q * grad_err_q * grad_err_q;
+                            }
+                        }
+                    }
+                    err_K += err_cut_K;
+                }
+                H1_err += err_K;
+            }
+    }
+    return std::sqrt(H1_err); 
+}
+
 /**
  * @brief To get norm over [0, T], one needs to compute this and sum up for all
  * time-slabs In, and then take the square root after the last time-slab.
@@ -374,7 +565,212 @@ double L2normCut_2(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex,
  * @return int_{In} ||u-uh||^2_{L^2(Omega(t))} dt
  */
 template <typename Mesh, typename fct_t>
-double L2normCut_T(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+double L2L2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+                 const QuadratureFormular1d &qTime, int num_components) {
+
+    using mesh_t    = Mesh;
+    using fespace_t = GFESpace<mesh_t>;
+    using FElement  = typename fespace_t::FElement;
+    using QF        = typename FElement::QF;
+    using QuadraturePoint = typename QF::QuadraturePoint;
+
+    double val = 0.;
+
+    // Loop in time
+    for (int itq = 0; itq < qTime.n; ++itq) {
+
+        // Get quadrature points in time
+        GQuadraturePoint<R1> tq((qTime)[itq]);
+
+        double weight_time = In.T.measure() * tq.a;
+
+        double L2_error_itq = L2normCut(fh, f, Th, In, qTime, itq, num_components);
+        val += weight_time * L2_error_itq * L2_error_itq;
+    }
+
+    return val; // return \int_{I_n} ||u(t)-uh(t)||_{L^2(Omega(t))}^2 dt
+}
+
+
+// template <typename Mesh, typename fct_t>
+// double L2L2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+//                  const QuadratureFormular1d &qTime, int num_components) {
+
+//     using mesh_t    = Mesh;
+//     using fespace_t = GFESpace<mesh_t>;
+//     using FElement  = typename fespace_t::FElement;
+//     using Rd        = typename FElement::Rd;
+//     using Element   = typename mesh_t::Element;
+//     using QF        = typename FElement::QF;
+//     using QuadraturePoint = typename QF::QuadraturePoint;
+
+//     const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
+
+//     double val = 0.;
+//     const size_t op_t = 0;  // corresponds to taking the value of the function in time, not a derivative
+//     const size_t op_id = 0; // corresponds to taking the value of the function in space, not a derivative
+    
+//     int nb_dom = Th.get_nb_domain();
+
+//     // Loop over number of subdomains
+//     for (int domain = 0; domain < nb_dom; ++domain) {
+
+//         // Loop in time
+//         for (int itq = 0; itq < qTime.n; ++itq) {
+
+//             // Get quadrature points in time
+//             GQuadraturePoint<R1> tq((qTime)[itq]);
+//             const double t = In.mapToPhysicalElement(tq);
+
+//             double weight_time = In.T.measure() * tq.a;
+
+//             // Loop in space
+//             double err_space = 0.;
+//             for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+//                 if (domain != Th.get_domain_element(k))
+//                     continue;
+
+//                 if (Th.isInactive(k, itq))
+//                     continue;
+
+//                 const Cut_Part<Element> cutK(Th.get_cut_part(k, itq));
+//                 int kb = Th.idxElementInBackMesh(k);
+
+//                 int kk = k;
+                
+//                 double err_K = 0.;
+//                 for (auto it = cutK.element_begin(); it != cutK.element_end(); ++it) {
+
+//                     const R meas = cutK.measure(it);
+
+//                     double err_cut_K = 0.;
+//                     for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+                        
+//                         QuadraturePoint ip(qf[ipq]); // integration point
+//                         Rd mip = cutK.mapToPhysicalElement(it, ip);
+//                         double weight_q = meas * ip.getWeight();
+
+//                         // Loop over number of components of functions
+//                         for (int i = 0; i < num_components; ++i) {
+//                             double err_q = fh.evalOnBackMesh(kb, domain, mip, t, i, 0, 0) - f(mip, i, domain, t);
+
+//                             err_cut_K += weight_q * err_q * err_q;
+//                         }
+//                     }
+//                     err_K += err_cut_K;
+//                 }
+//                 err_space += err_K;
+//             }
+//             val += weight_time * err_space;
+//         }
+
+//     }
+
+//     return val; // return \int_{I_n} ||u(t)-uh(t)||_{L^2(Omega(t))}^2 dt
+// }
+
+// template <typename Mesh, typename fct_t>
+// double L2L2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+//                  const QuadratureFormular1d &qTime, int num_components) {
+
+//     using mesh_t    = Mesh;
+//     using fespace_t = GFESpace<mesh_t>;
+//     using FElement  = typename fespace_t::FElement;
+//     using Rd        = typename FElement::Rd;
+//     using Element   = typename mesh_t::Element;
+//     using QF        = typename FElement::QF;
+//     using QuadraturePoint = typename QF::QuadraturePoint;
+
+//     const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
+
+//     double val = 0.;
+
+//     const int domain = 0; // do only for main domain
+
+//     // Loop over number of components of functions
+//     for (int i = 0; i < num_components; ++i) {
+        
+//         int nb_dom = Th.get_nb_domain();
+
+//         // Loop over number of subdomains
+//         for (int domain = 0; domain < nb_dom; ++domain) {
+
+//             // Loop in time
+//             for (int itq = 0; itq < qTime.n; ++itq) {
+
+//                 // Get quadrature points in time
+//                 GQuadraturePoint<R1> tq((qTime)[itq]);
+//                 const double t = In.mapToPhysicalElement(tq);
+
+//                 double weight_time = In.T.measure() * tq.a;
+
+//                 // Loop in space
+//                 double weight_space = 0.;
+//                 for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+//                     if (domain != Th.get_domain_element(k))
+//                         continue;
+
+//                     if (Th.isInactive(k, itq))
+//                         continue;
+
+//                     const Cut_Part<Element> cutK(Th.get_cut_part(k, itq));
+//                     int kb = Th.idxElementInBackMesh(k);
+
+//                     int kk = k;
+                    
+//                     double weight_K = 0.;
+
+//                     for (auto it = cutK.element_begin(); it != cutK.element_end(); ++it) {
+
+//                         const R meas = cutK.measure(it);
+
+//                         for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+                            
+//                             QuadraturePoint ip(qf[ipq]); // integration point
+//                             Rd mip = cutK.mapToPhysicalElement(it, ip);
+//                             double weight = meas * ip.getWeight();
+//                             double err = fh.evalOnBackMesh(kb, domain, mip, t, i, 0, 0) - f(mip, i, domain, t);
+
+//                             weight_K += weight * err * err;
+//                         }
+//                     }
+//                     weight_space += weight_K;
+//                 }
+//                 val += weight_space * weight_time;
+//             }
+//         }
+
+        
+//     }
+
+
+
+//     return val; // return \int_{I_n} ||u(t)-uh(t)||_{L^2(Omega(t))}^2 dt
+// }
+
+
+
+
+
+/**
+ * @brief To get norm over [0, T], one needs to compute this and sum up for all
+ * time-slabs In, and then take the square root after the last time-slab.
+ * 
+ * @tparam Mesh 
+ * @tparam fct_t 
+ * @param fh Numerical solution
+ * @param f  Exact solution
+ * @param grad_f grad(f) in R^{d x d} where [grad(f)]_ij = df_i/dx_j
+ * @param Th Active mesh
+ * @param In Time slab
+ * @param qTime Quadrature rule on In
+ * @param num_components Number of components of function
+ * @return int_{In} ||u-uh||^2_{H^1(Omega(t))} dt
+ */
+template <typename Mesh, typename fct_t, typename grad_fct_t>
+double L2H1normCut(const FunFEM<Mesh> &fh, const fct_t &f, const grad_fct_t &grad_f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
                  const QuadratureFormular1d &qTime, int num_components) {
 
     using mesh_t    = Mesh;
@@ -385,91 +781,109 @@ double L2normCut_T(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh
     using QF        = typename FElement::QF;
     using QuadraturePoint = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
 
     double val = 0.;
 
-    const int domain = 0; // do only for main domain
+    // Loop in time
+    for (int itq = 0; itq < qTime.n; ++itq) {
 
-    // Loop over number of components of functions
-    for (int i = 0; i < num_components; ++i) {
-        
-        int nb_dom = Th.get_nb_domain();
+        // Get quadrature points in time
+        GQuadraturePoint<R1> tq((qTime)[itq]);
 
-        // Loop over number of subdomains
-        for (int domain = 0; domain < nb_dom; ++domain) {
+        double weight_time = In.T.measure() * tq.a;
 
-            // Loop in time
-            for (int itq = 0; itq < qTime.n; ++itq) {
+        // Loop in space
+        double H1_error_itq = H1normCut(fh, f, grad_f, Th, In, qTime, itq, num_components);
+        val += weight_time * H1_error_itq * H1_error_itq;
+    }
+    
+    return val; 
+}
 
-                // Get quadrature points in time
-                GQuadraturePoint<R1> tq((qTime)[itq]);
-                const double t = In.mapToPhysicalElement(tq);
+/**
+ * @brief Computes the maximal L2-error of all quadrature points in the time interval In
+ * 
+ * @tparam Mesh 
+ * @tparam fct_t 
+ * @param fh Numerical solution
+ * @param f Exact solution
+ * @param Th Active mesh
+ * @param In Time slab
+ * @param qTime Quadrature rule on In
+ * @param num_components Number of components of function
+ * @return  \max_{tq in I_n} ||u(tq)-uh(tq)||_{L^2(Omega(tq))}
+ */
+template <typename Mesh, typename fct_t>
+double LinfL2normCut(const FunFEM<Mesh> &fh, const fct_t &f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+                 const QuadratureFormular1d &qTime, int num_components) {
 
-                double weight_time = In.T.measure() * tq.a;
+    using mesh_t    = Mesh;
+    using fespace_t = GFESpace<mesh_t>;
+    using FElement  = typename fespace_t::FElement;
+    using QF        = typename FElement::QF;
+    using QuadraturePoint = typename QF::QuadraturePoint;
 
-                // Loop in space
-                double weight_space = 0.;
-                for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+    double max_val = 0.;
 
-                    if (domain != Th.get_domain_element(k))
-                        continue;
-
-                    if (Th.isInactive(k, itq))
-                        continue;
-
-                    const Cut_Part<Element> cutK(Th.get_cut_part(k, itq));
-                    int kb = Th.idxElementInBackMesh(k);
-
-                    int kk = k;
-                    
-                    double weight_K = 0.;
-
-                    for (auto it = cutK.element_begin(); it != cutK.element_end(); ++it) {
-
-                        const R meas = cutK.measure(it);
-
-                        for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
-                            
-                            QuadraturePoint ip(qf[ipq]); // integration point
-                            Rd mip = cutK.mapToPhysicalElement(it, ip);
-                            double weight = meas * ip.getWeight();
-                            double err = fh.evalOnBackMesh(kb, domain, mip, t, i, 0, 0) - f(mip, i, domain, t);
-
-                            weight_K += weight * err * err;
-                        }
-                    }
-                    weight_space += weight_K;
-                }
-                val += weight_space * weight_time;
-            }
-        }
-
-        
+    // Loop over all time quadrature points in In
+    for (int itq = 0; itq < qTime.n; ++itq) {
+        max_val = std::max(max_val, L2normCut(fh, f, Th, In, qTime, itq, num_components));
     }
 
-
-
-    return val; // return \int_{I_n} ||u(t)-uh(t)||_{L^2(Omega(t))}^2 dt
+    return max_val; 
 }
 
 
 
+/**
+ * @brief Computes the maximal H1-error for all quadrature points in the time interval In
+ * 
+ * @tparam Mesh 
+ * @tparam fct_t 
+ * @param fh Numerical solution
+ * @param f  Exact solution
+ * @param grad_f grad(f) in R^{d x d} where [grad(f)]_ij = df_i/dx_j
+ * @param Th Active mesh
+ * @param In Time slab
+ * @param qTime Quadrature rule on In
+ * @param num_components Number of components of function
+ * @return max_{t in In} ||u-uh||^2_{H^1(Omega(t))} dt
+ */
+template <typename Mesh, typename fct_t, typename grad_fct_t>
+double LinfH1normCut(const FunFEM<Mesh> &fh, const fct_t &f, const grad_fct_t &grad_f, const ActiveMesh<Mesh> &Th, const TimeSlab &In,
+                 const QuadratureFormular1d &qTime, int num_components) {
+
+    using mesh_t    = Mesh;
+    using fespace_t = GFESpace<mesh_t>;
+    using FElement  = typename fespace_t::FElement;
+    using QF        = typename FElement::QF;
+    using QuadraturePoint = typename QF::QuadraturePoint;
+
+    double max_val = 0.;
+
+    // Loop over all time quadrature points in In
+    for (int itq = 0; itq < qTime.n; ++itq) {
+        
+        max_val = std::max(max_val, H1normCut(fh, f, grad_f, Th, In, qTime, itq, num_components));
+    }
+
+    return max_val; 
+}
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
 template <typename Mesh, typename Fct>
 double L2normSurf_2(const std::shared_ptr<ExpressionVirtual> &fh, const Fct &fex, const Interface<Mesh> &interface) {
-    // double L2normSurf_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double *, int i),
-    //                     const Interface<Mesh> &interface) {
+
     typedef GFESpace<Mesh> FESpace;
     typedef typename FESpace::FElement FElement;
     typedef typename FElement::QFB QFB;
     typedef typename FElement::Rd Rd;
     typedef typename QFB::QuadraturePoint QuadraturePoint;
 
-    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(5));
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8));
     What_d Fop = Fwhatd(op_id);
 
     double val = 0.;
@@ -482,7 +896,7 @@ double L2normSurf_2(const std::shared_ptr<ExpressionVirtual> &fh, const Fct &fex
         for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
 
             QuadraturePoint ip(qfb[ipq]); // integration point
-            const Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip);
+            Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip);
             const R Cint = meas * ip.getWeight();
 
             double a = fh->evalOnBackMesh(kb, 0, mip) - fex(mip, fh->cu);
@@ -508,7 +922,7 @@ double L2normSurf_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double 
     // typedef GenericInterface<Mesh> Interface;
     typedef typename QFB::QuadraturePoint QuadraturePoint;
 
-    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(5));
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8));
     What_d Fop = Fwhatd(op_id);
 
     double val = 0.;
@@ -602,7 +1016,7 @@ double L2norm_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double *, i
     typedef typename FElement::Rd Rd;
     typedef typename QF::QuadraturePoint QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
     What_d Fop = Fwhatd(op_id);
     double val = 0.;
 
@@ -644,7 +1058,7 @@ template <typename M> double L2norm_2(const std::shared_ptr<ExpressionVirtual> &
     typedef typename FElement::Rd Rd;
     typedef typename QF::QuadraturePoint QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename FElement::RdHat>(5));
+    const QF &qf(*QF_Simplex<typename FElement::RdHat>(8));
     What_d Fop = Fwhatd(op_id);
     double val = 0.;
 
@@ -748,7 +1162,7 @@ double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(dou
     typedef typename FElement::Rd Rd;
     typedef typename QFB::QuadraturePoint QuadraturePoint;
 
-    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(5)); //? should it be 2 instead of 3 here?
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8)); //? should it be 2 instead of 3 here?
     What_d Fop = Fwhatd(op_id);
 
     double val = 0.;
@@ -763,6 +1177,44 @@ double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(dou
             Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
 
             val = std::max(val, fabs(fh->evalOnBackMesh(kb, 0, mip, tt) - fex(mip, fh->cu, tt)));
+        }
+    }
+    double val_receive = 0;
+#ifdef USE_MPI
+    MPIcf::AllReduce(val, val_receive, MPI_MAX);
+#else
+    val_receive = val;
+#endif
+
+    return val_receive;
+}
+
+template <typename Mesh>
+double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, const Interface<Mesh> &interface) {
+    typedef GFESpace<Mesh> FESpace;
+    typedef typename FESpace::FElement FElement;
+    typedef typename FElement::QFB QFB;
+    typedef typename FElement::Rd Rd;
+    typedef typename QFB::QuadraturePoint QuadraturePoint;
+
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8)); //? should it be 2 instead of 3 here?
+    What_d Fop = Fwhatd(op_id);
+
+    double val = 0.;
+
+    for (int iface = interface.first_element(); iface < interface.last_element(); iface += interface.next_element()) {
+
+        const int kb = interface.idxElementOfFace(iface); // idx on backMesh
+
+        const Rd normal(-interface.normal(iface));
+
+
+        for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+
+            QuadraturePoint ip(qfb[ipq]);                                                  // integration point
+            Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
+
+            val = std::max(val, std::fabs(fh->evalOnBackMesh(kb, 0, mip, normal)));
         }
     }
     double val_receive = 0;
@@ -794,8 +1246,8 @@ double maxNormCut(const std::shared_ptr<ExpressionVirtual> &fh, const ActiveMesh
     using v_t       = typename fe_t::Rd;
     using qp_t      = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(5));
-    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(5));
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
+    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(8));
 
     What_d Fop = Fwhatd(op_id);
     double val = 0.;
@@ -856,8 +1308,8 @@ double maxNormCut(const std::shared_ptr<ExpressionVirtual> &fh, fct_t fex, const
     using v_t       = typename fe_t::Rd;
     using qp_t      = typename QF::QuadraturePoint;
 
-    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(5));
-    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(5));
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
+    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(8));
 
     What_d Fop = Fwhatd(op_id);
     double val = 0.;

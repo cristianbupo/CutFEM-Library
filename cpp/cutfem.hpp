@@ -46,3 +46,5 @@
 #include "problem/solver_curvature.hpp"
 #include "problem/solver_stokes.hpp"
 #include "problem/time_scheme.hpp"
+#include "problem/AlgoimIntegration.hpp"
+#include "problem/levelSet.hpp"

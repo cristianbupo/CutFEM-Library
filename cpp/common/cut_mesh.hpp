@@ -136,7 +136,7 @@ template <typename Mesh> class ActiveMesh {
     int nb_quadrature_time_{1};
 
     // a list of the elements that are in the active mesh for some time quadrature point, but not for all
-    std::vector<std::vector<std::map<int, bool>>> in_active_mesh_; // [dom][itq][idx_element] -> true/false
+    std::vector<std::vector<std::map<int, bool>>> not_in_active_mesh_; // [dom][itq][idx_element] -> true/false
 
     // Constructors
   public:
@@ -156,7 +156,7 @@ template <typename Mesh> class ActiveMesh {
 
     ActiveMesh(const Mesh &th, const TimeInterface<Mesh> &interface);
 
-    void truncate(const Interface<Mesh> &interface, int sign_domain);
+    virtual void truncate(const Interface<Mesh> &interface, int sign_domain);
 
     /**
      * @brief Create active mesh for one time-dependent subdomain.
@@ -165,7 +165,9 @@ template <typename Mesh> class ActiveMesh {
      * @param interface Time-dependent interface.
      * @param sign_domain Sign of the signed distance function in the domain you want to remove.
      */
-    void truncate(const TimeInterface<Mesh> &interface, int sign_domain);
+    virtual void truncate(const TimeInterface<Mesh> &interface, int sign_domain);
+
+    virtual void truncate_global(const TimeInterface<Mesh> &interface, int sign_domain);
 
     /**
      * @brief I don't know what this does. //?
@@ -180,14 +182,14 @@ template <typename Mesh> class ActiveMesh {
      *
      * @param interface Interface<Mesh> object.
      */
-    void createSurfaceMesh(const Interface<Mesh> &interface);
+    virtual void createSurfaceMesh(const Interface<Mesh> &interface);
 
     /**
      * @brief Create an active mesh of a time-dependent surface.
      *
      * @param interface TimeInterface<Mesh> object.
      */
-    void createSurfaceMesh(const TimeInterface<Mesh> &interface);
+    virtual void createSurfaceMesh(const TimeInterface<Mesh> &interface);
 
     /**
      * @brief Dont know what this does. //?
@@ -220,6 +222,7 @@ template <typename Mesh> class ActiveMesh {
     bool isCut(int k, int t) const;
     bool isCutFace(int k, int ifac, int t) const;
     bool isStabilizeElement(int k) const;
+    bool isExterior(int k) const;
     bool isInactive(int k, int t) const;
 
     const Interface<Mesh> &get_interface(int k, int t) const;
@@ -264,6 +267,44 @@ template <typename Mesh> class ActiveMesh {
     Physical_Partition<Element> build_local_partition(const int k, int t = 0) const;
     Physical_Partition<Face> build_local_partition(Face &face, const int k, int ifac, int t = 0) const;
 };
+
+
+class BarycentricActiveMesh2 : public ActiveMesh<Mesh2> {
+public:
+
+    BarycentricActiveMesh2(const BarycentricMesh2 &th);
+
+    // ActiveMesh overrides
+    void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
+    void truncate(const TimeInterface<Mesh2> &interface, int sign_domain) override;
+    // void truncate_global(const TimeInterface<Mesh2> &interface, int sign_domain) override;
+    void createSurfaceMesh(const Interface<Mesh2> &interface) override;
+    void createSurfaceMesh(const TimeInterface<Mesh2> &interface) override;
+
+    // Queries (stationary: itq=0)
+    bool is_macro_cut(int kept_macro_id, int itq = 0) const;
+    bool is_macro_interior(int kept_macro_id, int itq = 0) const;
+    bool is_macro_inactive(int macro_k, int itq) const;
+    bool is_macro_exterior(int macro_k) const;
+    bool stabilize_macro(int macro_k) const;
+
+    int macro_adjacent(const int macro_k, const int iface_adj) const;
+    int get_macro_in_background_mesh(int k_active) const;
+    int get_macro_in_active_mesh(int k_bg) const;
+
+    std::vector<std::array<int, 3>> active_macro_elements;
+    std::vector<int> inverse_active_macro_map;              // inverse_active_macro_map[idx_micro] -> idx_macro (in active mesh)
+    std::vector<int> macro_in_background_mesh;              // takes active index as argument
+    std::unordered_map<int,int> macro_in_active_mesh;       // takes background index as argument
+    int nb_active_macros;
+// private:
+    
+
+    
+};
+
+    
+
 
 typedef ActiveMesh<Mesh2> ActiveMeshT2;
 typedef ActiveMesh<Mesh3> ActiveMeshT3;

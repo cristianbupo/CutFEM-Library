@@ -23,24 +23,24 @@ FunFEM<M>::FunFEM(const FESpace &vh, const ExpressionVirtual &fh) : FunFEMVirtua
 
     assert(Vh->N == 1);
 
-#ifdef USE_MPI
-    double dataSend[Vh->nbDoF];
-    Rn_ fhSend(dataSend, Vh->nbDoF);
-    fhSend = 1e+50;
-#else
+// #ifdef USE_MPI
+//     double dataSend[Vh->nbDoF];
+//     Rn_ fhSend(dataSend, Vh->nbDoF);
+//     fhSend = 1e+50;
+// #else
 
-#endif
+// #endif
 
     const int d   = Vh->N;
     const int nve = Vh->TFE(0)->NbPtforInterpolation;
     // KNM<R> Vpf(nve, d);                             // value of f at the interpolation points
 
-#pragma omp parallel
-    {
+// #pragma omp parallel
+//     {
         std::vector<std::vector<double>> Vpf(d, std::vector<double>(nve)); // value of f at the interpolation points
         std::vector<double> ggf(Vh->MaxNbDFPerElement); // stock the values of the dof of the interpolate
 
-#pragma omp for
+// #pragma omp for
         for (int k = Vh->first_element(); k < Vh->last_element(); k += Vh->next_element()) {
 
             const FElement &FK((*Vh)[k]);
@@ -56,23 +56,24 @@ FunFEM<M>::FunFEM(const FESpace &vh, const ExpressionVirtual &fh) : FunFEMVirtua
             }
             FK.Pi_h(Vpf, ggf);
 
-#ifdef USE_MPI
-            for (int df = 0; df < nbdf; df++) {
-                fhSend(FK.loc2glb(df)) = ggf[df];
-                // fh[K(df)] =  ggf[df] ;
-            }
-#else
-#pragma omp critical
+// #ifdef USE_MPI
+// #pragma omp critical
+//             for (int df = 0; df < nbdf; df++) {
+//                 fhSend(FK.loc2glb(df)) = ggf[df];
+//                 // fh[K(df)] =  ggf[df] ;
+//             }
+// #else
+// #pragma omp critical
             for (int df = 0; df < nbdf; df++) {
                 v[FK.loc2glb(df)] = ggf[df];
             }
-#endif
+// #endif
         }
-    }
+    // }
 
-#ifdef USE_MPI
-    MPIcf::AllReduce(dataSend, v, fhSend.size(), MPI_MIN);
-#endif
+// #ifdef USE_MPI
+//     MPIcf::AllReduce(dataSend, v.data(), fhSend.size(), MPI_MIN);
+// #endif
 }
 
 template <typename M>
@@ -184,6 +185,7 @@ template <typename M> void FunFEM<M>::eval(R *u, const int k) const {
 
 template <typename M> double FunFEM<M>::evalOnBackMesh(const int kb, int dom, const R *x, int cu, int op) const {
     int k = Vh->idxElementFromBackMesh(kb, dom);
+
     return eval(k, x, cu, op);
 }
 
@@ -218,4 +220,39 @@ template <typename M> std::vector<std::shared_ptr<ExpressionFunFEM<M>>> FunFEM<M
         l.push_back(std::make_shared<ExpressionFunFEM<Mesh>>(*this, i + i0, op_id));
     }
     return l;
+}
+
+template<typename M>
+FunFEM<M>& FunFEM<M>::operator+=(const FunFEM<M>& other) {
+    assert(v.size() == other.v.size() && "Size mismatch in operator+=");
+    for (std::size_t i = 0; i < v.size(); ++i) {
+        v[i] += other.v[i];
+    }
+    return *this;
+}
+
+template<typename M>
+FunFEM<M>& FunFEM<M>::operator-=(const FunFEM<M>& other) {
+    assert(v.size() == other.v.size() && "Size mismatch in operator+=");
+    for (std::size_t i = 0; i < v.size(); ++i) {
+        v[i] -= other.v[i];
+    }
+    return *this;
+}
+
+template<typename M>
+FunFEM<M>& FunFEM<M>::operator*=(const double c) {
+    for (std::size_t i = 0; i < v.size(); ++i) {
+        v[i] *= c;
+    }
+    return *this;
+}
+
+template<typename M>
+FunFEM<M>& FunFEM<M>::operator/=(const double c) {
+    assert(c != 0.);
+    for (std::size_t i = 0; i < v.size(); ++i) {
+        v[i] /= c;
+    }
+    return *this;
 }

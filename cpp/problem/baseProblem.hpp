@@ -42,6 +42,35 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     long offset_bf_time  = 0;
 
   public:
+    ~BaseFEM() {
+        delete[] databf_;
+        delete[] databf_time_;
+    }
+    BaseFEM(const BaseFEM&)            = delete;              // or implement deep copy
+    BaseFEM& operator=(const BaseFEM&) = delete;              // or implement deep copy
+    BaseFEM(BaseFEM&& other) noexcept
+        : N_component_max_(other.N_component_max_), df_loc_max_(other.df_loc_max_),
+        databf_(other.databf_), databf_time_(other.databf_time_),
+        offset_bf_(other.offset_bf_), offset_bf_time(other.offset_bf_time) {
+        other.databf_ = nullptr;
+        other.databf_time_ = nullptr;
+    }
+    BaseFEM& operator=(BaseFEM&& other) noexcept {
+        if (this != &other) {
+            delete[] databf_;
+            delete[] databf_time_;
+            N_component_max_ = other.N_component_max_;
+            df_loc_max_      = other.df_loc_max_;
+            databf_          = other.databf_;
+            databf_time_     = other.databf_time_;
+            offset_bf_       = other.offset_bf_;
+            offset_bf_time   = other.offset_bf_time;
+            other.databf_ = nullptr;
+            other.databf_time_ = nullptr;
+        }
+        return *this;
+    }
+
     BaseFEM(const ProblemOption &option) : ShapeOfProblem<Mesh>(), QuadratureOfProblem<Mesh>(option) {}
     BaseFEM(const QuadratureFormular1d &qt, const ProblemOption &option)
         : ShapeOfProblem<Mesh>(), QuadratureOfProblem<Mesh>(qt, option) {}
@@ -60,78 +89,73 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
 
     void initSpace(const FESpace &Vh, const TimeSlab &In) {
 
-        // Clear the mapIdx0_ map
         this->mapIdx0_.clear();
+        this->mapIdx0_[&Vh] = 0;
 
-        // 2. Initialize the mapIdx0_ map
-        this->mapIdx0_[&Vh] = 0; // set the index of the first component of the FESpace Vh to 0
-
-        // 3. Set the size of the operator to the product of the number of degrees of freedom in Vh and In
         this->init(Vh.NbDoF() * In.NbDoF(), In.NbDoF());
 
-        // 4. Set the maximum number of components to the number of components in Vh
         N_component_max_ = Vh.N;
+        df_loc_max_      = Vh[0].NbDoF();
 
-        // 5. Set the maximum number of degrees of freedom to the number of degrees of freedom in the first component of
-        // Vh
-        df_loc_max_ = Vh[0].NbDoF();
+        // free old space buffers (array delete)    
+        delete[] databf_;
 
-        // 6. If the databf_ pointer is not NULL, delete the object
-        if (this->databf_)
-            delete this->databf_;
-
-        // 7. Set the offset to the size of the databf_ array
         offset_bf_        = 5 * df_loc_max_ * N_component_max_ * op_DDall;
-        // 8. Set the size of the databf_ array to the number of threads times the offset
         long size_data_bf = this->thread_count_max_ * offset_bf_;
-        // 9. Allocate the databf_ array
-        this->databf_     = new double[size_data_bf];
+        databf_     = new double[size_data_bf];
 
-        // 10. If the databf_time_ pointer is not NULL, delete the object
-        if (this->databf_time_)
-            delete this->databf_time_;
+        // free old time buffers (array delete)
+        delete[] databf_time_;
 
-        // 11. Set the offset to the size of the databf_time_ array
         offset_bf_time     = In.NbDoF() * op_DDall;
-        // 12. Set the size of the databf_time_ array to the number of threads times the offset
         size_data_bf       = this->thread_count_max_ * offset_bf_time;
-        // 13. Allocate the databf_time_ array
-        this->databf_time_ = new double[size_data_bf];
+        databf_time_ = new double[size_data_bf];
     }
 
     void initSpace(const FESpace &Vh) {
         this->mapIdx0_.clear();
         this->mapIdx0_[&Vh] = 0;
+
         this->init(Vh.NbDoF());
 
         N_component_max_ = Vh.N;
         df_loc_max_      = Vh[0].NbDoF();
 
-        if (this->databf_)
-            delete this->databf_;
+        delete[] databf_;
+
         offset_bf_        = 5 * df_loc_max_ * N_component_max_ * op_DDall;
         long size_data_bf = this->thread_count_max_ * offset_bf_;
-        this->databf_     = new double[size_data_bf];
+        databf_     = new double[size_data_bf];
     }
+
     void add(const FESpace &Qh) {
         this->mapIdx0_[&Qh] = this->get_nb_dof();
         int ndf             = this->get_nb_dof() + Qh.NbDoF();
         this->init(ndf);
+
         N_component_max_ = std::max(N_component_max_, Qh.N);
         df_loc_max_      = std::max(df_loc_max_, Qh[0].NbDoF());
-        delete databf_;
+
+        // was: delete databf_;  -> must be array delete
+        delete[] databf_;
+
         offset_bf_        = 5 * df_loc_max_ * N_component_max_ * op_DDall;
         long size_data_bf = this->thread_count_max_ * offset_bf_;
         databf_           = new double[size_data_bf];
     }
     void add(const FESpace &Vh, const TimeSlab &In) {
         assert(this->nb_dof_time_ == In.NbDoF());
+
         this->mapIdx0_[&Vh] = this->get_nb_dof();
         int ndf             = this->get_nb_dof() + (Vh.NbDoF() * In.NbDoF());
         this->init(ndf);
+
         N_component_max_ = std::max(N_component_max_, Vh.N);
         df_loc_max_      = std::max(df_loc_max_, Vh[0].NbDoF());
-        delete databf_;
+
+        // was: delete databf_;  -> must be array delete
+        delete[] databf_;
+
         offset_bf_        = 5 * df_loc_max_ * N_component_max_ * op_DDall;
         long size_data_bf = this->thread_count_max_ * offset_bf_;
         databf_           = new double[size_data_bf];
@@ -164,6 +188,8 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     // Integral on K
     void addBilinear(const itemVFlist_t &VF, const Mesh &);
     void addBilinear(const itemVFlist_t &VF, const CutMesh &);
+    void addBilinear(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &);
+    void addLinear(const itemVFlist_t &VF, const CutMesh &);
     void addLinear(const itemVFlist_t &VF, const Mesh &);
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const Mesh &);
@@ -194,6 +220,13 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     void addBorderContribution(const itemVFlist_t &VF, const Element &K, const BorderElement &BE, int ifac,
                                const TimeSlab *In, int itq, double cst_time);
 
+    // integral on active mesh boundary
+    void addInnerBorderContribution(const itemVFlist_t &VF, const int k, const int ifac,
+                                    const TimeSlab *In, int itq, double cst_time);
+    void addOuterBorderContribution(const itemVFlist_t &VF, const int k, const int ifac,
+                                    const TimeSlab *In, int itq, double cst_time);
+                                    
+
     void setDirichlet(const FunFEM<Mesh> &, const Mesh &, std::list<int> label = {});
     void setDirichletHone(const FunFEM<Mesh> &gh, const Mesh &Th, std::list<int> label = {});
 
@@ -201,16 +234,18 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     void addBilinear(const itemVFlist_t &VF, const Interface<Mesh> &gamma, std::list<int> label = {});
     void addBilinear(const itemVFlist_t &VF, const Interface<Mesh> &gamma, const TimeSlab &In, int itq,
                      std::list<int> label = {});
+
+    void addBilinearAbsTest(const itemVFlist_t &VF, const Interface<Mesh> &gamma, std::list<int> label = {});
     void addBilinear(const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In,
                      std::list<int> label = {});
     void addBilinear(const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In, int itq,
                      std::list<int> label = {});
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In,
-                   std::list<int> label);
+                   std::list<int> label = {});
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const TimeInterface<Mesh> &gamma, const TimeSlab &In, int itq,
-                   std::list<int> label);
+                   std::list<int> label = {});
     template <typename Fct>
     void addInterfaceContribution(const Fct &f, const itemVFlist_t &VF, const Interface<Mesh> &gamma, int ifac,
                                   double tid, const TimeSlab *In, double cst_time, int itq);
@@ -247,6 +282,10 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
                                        const TimeSlab *In, int itq, double cst_time);
 
     void addLagrangeVecToRowAndCol(const std::span<double> vecRow, const std::span<double> vecCol, const R val_rhs);
+
+    // integral for global face stabilization
+    void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
+    void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
 };
 
 template <typename Mesh> class FEM : public BaseFEM<Mesh>, public Solver {

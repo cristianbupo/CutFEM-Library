@@ -112,6 +112,14 @@ class FunFEMVirtual {
     };
 
     std::span<double> array() const { return v; }
+
+    // FunFEMVirtual& operator+=(const FunFEMVirtual &other) {
+    //     std::vector<double> u_dof_n(data_uh.begin() + n * Wh.get_nb_dof(),
+    //     data_uh.begin() + (n + 1) * Wh.get_nb_dof());
+    //     std::transform(sol.begin(), sol.end(), u_dof_n.begin(), sol.begin(),
+    //     std::plus<double>()); // sum up all dofs
+
+    // }
 };
 
 /**
@@ -281,6 +289,19 @@ template <typename M> class FunFEM : public FunFEMVirtual {
     //     f.v.set(f.data_, f.Vh->NbDoF());
     // }
 
+    friend void swap(FunFEM& f, FunFEM& g) noexcept {
+        // Optional consistency checks (keep if these invariants are required)
+        assert(f.Vh && g.Vh);
+        assert(f.data_.size() == static_cast<size_t>(f.Vh->NbDoF()));
+        assert(g.data_.size() == static_cast<size_t>(g.Vh->NbDoF()));
+
+        std::swap(f.data_, g.data_);   // swap the owning buffers
+
+        // Rebind spans to the new underlying storage
+        f.v = std::span<double>(f.data_.data(), f.data_.size());
+        g.v = std::span<double>(g.data_.data(), g.data_.size());
+    }
+
     double &operator()(int i) { return v[i]; }
     double operator()(int i) const { return v[i]; }
     operator Rn() const { return Rn(v); }
@@ -306,6 +327,11 @@ template <typename M> class FunFEM : public FunFEMVirtual {
     std::vector<std::shared_ptr<ExpressionFunFEM<M>>> exprList(int n = -1) const;
     std::vector<std::shared_ptr<ExpressionFunFEM<M>>> exprList(int n, int i0) const;
 
+    FunFEM<M> &operator+=(const FunFEM<M> &other);
+    FunFEM<M> &operator-=(const FunFEM<M> &other);
+    FunFEM<M> &operator*=(const double c);
+    FunFEM<M> &operator/=(const double c);
+    
     ~FunFEM() {}
 
   private:
@@ -428,6 +454,7 @@ template <typename M> class ExpressionFunFEM : public ExpressionVirtual {
     R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
         return fun.evalOnBackMesh(k, dom, x, cu, op) * computeNormal(normal);
     }
+
     R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
         return fun.evalOnBackMesh(k, dom, x, t, cu, op, opt) * computeNormal(normal);
     }
@@ -503,6 +530,21 @@ template <typename M> std::shared_ptr<ExpressionFunFEM<M>> dz(const ExpressionFu
 template <typename M> std::shared_ptr<ExpressionFunFEM<M>> dt(const ExpressionFunFEM<M> &u) {
     return std::make_shared<ExpressionFunFEM<M>>(u.fun, u.cu, u.op, op_dx, u.domain);
 }
+
+template<typename M>
+std::shared_ptr<ExpressionVirtual> dot(
+    const std::vector<std::shared_ptr<ExpressionFunFEM<M>>>& u,
+    const std::vector<std::shared_ptr<ExpressionFunFEM<M>>>& v)
+{
+    assert(u.size() == v.size() && "Vectors must have the same size for scalar product.");
+
+    std::shared_ptr<ExpressionVirtual> result = u[0] * v[0];
+    for (std::size_t i = 1; i < u.size(); ++i) {
+        result = result + (u[i] * v[i]);
+    }
+    return result;
+}
+
 
 class ExpressionMultConst : public ExpressionVirtual {
     const std::shared_ptr<ExpressionVirtual> fun1;
@@ -664,6 +706,7 @@ class ExpressionDivision : public ExpressionVirtual {
 
     R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
         double v = fun2->evalOnBackMesh(k, dom, x, normal);
+
         assert(fabs(v) > 1e-15);
         return fun1->evalOnBackMesh(k, dom, x, normal) / v;
     }
@@ -1215,9 +1258,9 @@ class ExpressionDSx3 : public ExpressionVirtual {
     ExpressionFunFEM<M> dxu1, dxu1nxnx, dyu1nxny, dzu1nxnz;
 
   public:
-    ExpressionDSx3(const FunFEM<M> &fh1)
-        : fun(fh1), dxu1(fh1, 0, op_dx, 0, 0), dxu1nxnx(fh1, 0, op_dx, 0, 0), dyu1nxny(fh1, 0, op_dy, 0, 0),
-          dzu1nxnz(fh1, 0, op_dz, 0, 0) {
+    ExpressionDSx3(const FunFEM<M> &fh1,int ci)
+        : fun(fh1), dxu1(fh1, ci, op_dx, 0, 0), dxu1nxnx(fh1, ci, op_dx, 0, 0), dyu1nxny(fh1, ci, op_dy, 0, 0),
+          dzu1nxnz(fh1, ci, op_dz, 0, 0) {
         dxu1nxnx.addNormal(0);
         dxu1nxnx.addNormal(0);
         dyu1nxny.addNormal(0);
@@ -1255,7 +1298,7 @@ class ExpressionDSx3 : public ExpressionVirtual {
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionDSx3() {}
 };
-std::shared_ptr<ExpressionDSx3> dxS(const FunFEM<Mesh3> &f1);
+std::shared_ptr<ExpressionDSx3> dxS(const FunFEM<Mesh3> &f1, int ci);
 
 class ExpressionDSy3 : public ExpressionVirtual {
     typedef Mesh3 M;
@@ -1263,9 +1306,11 @@ class ExpressionDSy3 : public ExpressionVirtual {
     ExpressionFunFEM<M> dxu2, dxu2nxny, dyu2nyny, dzu2nynz;
 
   public:
-    ExpressionDSy3(const FunFEM<M> &fh1)
-        : fun(fh1), dxu2(fh1, 1, op_dy, 0, 0), dxu2nxny(fh1, 1, op_dx, 0, 0), dyu2nyny(fh1, 1, op_dy, 0, 0),
-          dzu2nynz(fh1, 1, op_dz, 0, 0) {
+    ExpressionDSy3(const FunFEM<M> &fh1, int ci)
+        : fun(fh1), dxu2(fh1, ci, op_dy, 0, 0), dxu2nxny(fh1, ci, op_dx, 0, 0), dyu2nyny(fh1, ci, op_dy, 0, 0),
+          dzu2nynz(fh1, ci, op_dz, 0, 0) {
+
+
         dxu2nxny.addNormal(0);
         dxu2nxny.addNormal(1);
         dyu2nyny.addNormal(1);
@@ -1303,7 +1348,7 @@ class ExpressionDSy3 : public ExpressionVirtual {
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionDSy3() {}
 };
-std::shared_ptr<ExpressionDSy3> dyS(const FunFEM<Mesh3> &f1);
+std::shared_ptr<ExpressionDSy3> dyS(const FunFEM<Mesh3> &f1, int ci);
 
 class ExpressionDSz3 : public ExpressionVirtual {
     typedef Mesh3 M;
@@ -1311,9 +1356,9 @@ class ExpressionDSz3 : public ExpressionVirtual {
     ExpressionFunFEM<M> dxu3, dxu3nxnz, dyu3nynz, dzu3nznz;
 
   public:
-    ExpressionDSz3(const FunFEM<M> &fh1)
-        : fun(fh1), dxu3(fh1, 2, op_dz, 0, 0), dxu3nxnz(fh1, 2, op_dx, 0, 0), dyu3nynz(fh1, 2, op_dy, 0, 0),
-          dzu3nznz(fh1, 2, op_dz, 0, 0) {
+    ExpressionDSz3(const FunFEM<M> &fh1, int ci)
+        : fun(fh1), dxu3(fh1, ci, op_dz, 0, 0), dxu3nxnz(fh1, ci, op_dx, 0, 0), dyu3nynz(fh1, ci, op_dy, 0, 0),
+          dzu3nznz(fh1, ci, op_dz, 0, 0) {
         dxu3nxnz.addNormal(0);
         dxu3nxnz.addNormal(2);
         dyu3nynz.addNormal(1);
@@ -1351,7 +1396,7 @@ class ExpressionDSz3 : public ExpressionVirtual {
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionDSz3() {}
 };
-std::shared_ptr<ExpressionDSz3> dzS(const FunFEM<Mesh3> &f1);
+std::shared_ptr<ExpressionDSz3> dzS(const FunFEM<Mesh3> &f1, int ci);
 
 class ExpressionDivS3 : public ExpressionVirtual {
     typedef Mesh3 M;
@@ -1361,7 +1406,7 @@ class ExpressionDivS3 : public ExpressionVirtual {
     const std::shared_ptr<ExpressionDSz3> dz;
 
   public:
-    ExpressionDivS3(const FunFEM<M> &fh1) : fun(fh1), dx(dxS(fh1)), dy(dyS(fh1)), dz(dzS(fh1)) {}
+    ExpressionDivS3(const FunFEM<M> &fh1) : fun(fh1), dx(dxS(fh1,0)), dy(dyS(fh1,1)), dz(dzS(fh1,2)) {}
 
     R operator()(long i) const {
         assert(0);
@@ -1396,43 +1441,82 @@ class ExpressionDivS3 : public ExpressionVirtual {
 std::shared_ptr<ExpressionDivS3> divS(const FunFEM<Mesh3> &f1);
 
 // template<typename M>
-class ExpressionAverage { //}: public ExpressionVirtual{
-  public:
-    // const ExpressionFunFEM<M> fun1;
-    // const ExpressionVirtual &fun1;
-    std::shared_ptr<ExpressionVirtual> fun1;
-    const R k1, k2;
+// class ExpressionAverage { //}: public ExpressionVirtual{
+//   public:
+//     // const ExpressionFunFEM<M> fun1;
+//     // const ExpressionVirtual &fun1;
+//     std::shared_ptr<ExpressionVirtual> fun1;
+//     const R k1, k2;
 
-    // ExpressionAverage(const ExpressionFunFEM<M>& fh, double kk1, double kk2)
-    // : fun1(fh.fun,fh.cu, fh.op, fh.opt, -1), k1(kk1), k2(kk2){
-    // }
-    ExpressionAverage(const std::shared_ptr<ExpressionVirtual> &fh1, double kk1, double kk2)
-        : fun1(fh1), k1(kk1), k2(kk2) {}
+//     // ExpressionAverage(const ExpressionFunFEM<M>& fh, double kk1, double kk2)
+//     // : fun1(fh.fun,fh.cu, fh.op, fh.opt, -1), k1(kk1), k2(kk2){
+//     // }
+//     ExpressionAverage(const std::shared_ptr<ExpressionVirtual> &fh1, double kk1, double kk2)
+//         : fun1(fh1), k1(kk1), k2(kk2) {}
 
-    R operator()(long i) const {
-        assert(0 && " cannot use this ");
-        return k1 * (*fun1)(i);
-    }
+//     R operator()(long i) const {
+//         assert(0 && " cannot use this ");
+//         return k1 * (*fun1)(i);
+//     }
 
-    R eval(const int k, const R *x, const R *normal) const {
-        assert(0 && " need to be evaluated on backmesh");
-        return fun1->eval(k, x, normal) + fun1->eval(k, x, normal);
-    }
-    R eval(const int k, const R *x, const R t, const R *normal) const {
-        assert(0 && " need to be evaluated on backmesh");
-        return fun1->eval(k, x, t, normal) + fun1->eval(k, x, t, normal);
-    }
+//     R eval(const int k, const R *x, const R *normal) const {
+//         assert(0 && " need to be evaluated on backmesh");
+//         return fun1->eval(k, x, normal) + fun1->eval(k, x, normal);
+//     }
+//     R eval(const int k, const R *x, const R t, const R *normal) const {
+//         assert(0 && " need to be evaluated on backmesh");
+//         return fun1->eval(k, x, t, normal) + fun1->eval(k, x, t, normal);
+//     }
 
-    R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
-        return k1 * fun1->evalOnBackMesh(k, 0, x, normal) + k2 * fun1->evalOnBackMesh(k, 1, x, normal);
-    }
-    R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
-        return k1 * fun1->evalOnBackMesh(k, 0, x, t, normal) + k2 * fun1->evalOnBackMesh(k, 1, x, t, normal);
-    }
-    int idxElementFromBackMesh(int kb, int dd = 0) const { return fun1->idxElementFromBackMesh(kb, dd); }
+//     R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
+//         return k1 * fun1->evalOnBackMesh(k, 0, x, normal) + k2 * fun1->evalOnBackMesh(k, 1, x, normal);
+//     }
+//     R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
+//         return k1 * fun1->evalOnBackMesh(k, 0, x, t, normal) + k2 * fun1->evalOnBackMesh(k, 1, x, t, normal);
+//     }
+//     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun1->idxElementFromBackMesh(kb, dd); }
 
-    ~ExpressionAverage() {}
-};
+//     ~ExpressionAverage() {}
+// };
+class ExpressionAverage : public ExpressionVirtual {
+    public:
+      // const ExpressionFunFEM<M> fun1;
+      // const ExpressionVirtual &fun1;
+      std::shared_ptr<ExpressionVirtual>  fun1;
+      const R k1, k2;
+  
+      // ExpressionAverage(const ExpressionFunFEM<M>& fh, double kk1, double kk2)
+      // : fun1(fh.fun,fh.cu, fh.op, fh.opt, -1), k1(kk1), k2(kk2){
+      // }
+      ExpressionAverage(const std::shared_ptr<ExpressionVirtual> &fh1, double kk1, double kk2)
+          : fun1(fh1), k1(kk1), k2(kk2) {}
+  
+      R operator()(long i) const {
+          assert(0 && " cannot use this ");
+          return k1 * (*fun1)(i);
+      }
+  
+      R eval(const int k, const R *x, const R *normal) const {
+          assert(0 && " need to be evaluated on backmesh");
+          return fun1->eval(k, x, normal) + fun1->eval(k, x, normal);
+      }
+      R eval(const int k, const R *x, const R t, const R *normal) const {
+          assert(0 && " need to be evaluated on backmesh");
+          return fun1->eval(k, x, t, normal) + fun1->eval(k, x, t, normal);
+      }
+  
+      R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
+        assert(fun1.get());
+            
+          return k1 * fun1->evalOnBackMesh(k, 0, x, normal) + k2 * fun1->evalOnBackMesh(k, 1, x, normal);
+      }
+      R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
+          return k1 * fun1->evalOnBackMesh(k, 0, x, t, normal) + k2 * fun1->evalOnBackMesh(k, 1, x, t, normal);
+      }
+      int idxElementFromBackMesh(int kb, int dd = 0) const { return fun1->idxElementFromBackMesh(kb, dd); }
+  
+      ~ExpressionAverage() {}
+  };
 std::shared_ptr<ExpressionAverage> average(const std::shared_ptr<ExpressionVirtual> &fh1, const double kk1 = 0.5,
                                            const double kk2 = 0.5);
 std::shared_ptr<ExpressionAverage> jump(const std::shared_ptr<ExpressionVirtual> &fh1, const double kk1 = 1,
@@ -1585,6 +1669,43 @@ template <typename M> class ExpressionNonLinearSurfaceTension : public Expressio
     }
     int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
     ~ExpressionNonLinearSurfaceTension() {}
+};
+
+template <typename M> class ExpressionF : public ExpressionVirtual {
+    const FunFEM<M> &fun;
+    const FunFEM<M> &fun0;
+    const double time;
+
+  public:
+    ExpressionF(const FunFEM<M> &ch, const FunFEM<M> &c0h, double time_)
+        : fun(ch), fun0(c0h), time(time_) {}
+
+    R operator()(long i) const { return fabs(fun(i)); }
+
+    R eval(const int k, const R *x, const R *normal) const {
+        assert(0);
+        return 0.;
+    }
+    R eval(const int k, const R *x, const R t, const R *normal) const {
+        assert(0);
+        return 0.;
+    }
+
+    R evalOnBackMesh(const int k, const int dom, const R *x, const R *normal) const {
+        double c  = fun.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        double c0 = fun0.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        assert(fabs(c0) > 1e-15);
+        return 2.*c*c/(c0*c0 + c*c);
+    }
+    R evalOnBackMesh(const int k, const int dom, const R *x, const R t, const R *normal) const {
+        double c = fun.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        double c0 = fun0.evalOnBackMesh(k, dom, x, time, 0, op_id, op_id);
+        assert(fabs(c0) > 1e-15);
+
+        return 2.*c*c/(c0*c0 + c*c);
+    }
+    int idxElementFromBackMesh(int kb, int dd = 0) const { return fun.idxElementFromBackMesh(kb, dd); }
+    ~ExpressionF() {}
 };
 
 #include "expression.tpp"

@@ -1423,8 +1423,8 @@ AlgoimMacro<Mesh, L>::AlgoimMacro(const ActiveMesh<Mesh> &Th_, const double C_, 
 template <typename Mesh, typename L>
 void AlgoimMacro<Mesh, L>::findSmallElement() {
 
-    std::cout << "Tolerance: \t" << tol << std::endl;
-    std::cout << "|K|: \t" << measure_K << std::endl;
+    // std::cout << "Tolerance: \t" << tol << std::endl;
+    // std::cout << "|K|: \t" << measure_K << std::endl;
 
     // Iterate over all elements in the active mesh (over the whole time-slab)
     for (int k = 0; k < Th.get_nb_element(); k += 1) {
@@ -1512,8 +1512,8 @@ void AlgoimMacro<Mesh, L>::findSmallElement() {
         }
     }
 
-    std::cout << nb_element_0 << " \t in Omega 1 " << std::endl;
-    std::cout << nb_element_1 << " \t in Omega 2 " << std::endl;
+    // std::cout << nb_element_0 << " \t in Omega 1 " << std::endl;
+    // std::cout << nb_element_1 << " \t in Omega 2 " << std::endl;
 }
 
 template <typename Mesh, typename L> void AlgoimMacro<Mesh, L>::createMacroElement() {
@@ -1617,7 +1617,7 @@ template <typename Mesh, typename L> void AlgoimMacro<Mesh, L>::setInnerEdges() 
             }
         }
     }
-    std::cout << "Number of stabilized edges: " << number_of_stabilized_edges << "\n";
+    // std::cout << "Number of stabilized edges: " << number_of_stabilized_edges << "\n";
 }
 
 

@@ -54,7 +54,7 @@ template <int N> struct Levelset {
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
         R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
-        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17);
+        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17 - 1e-14);
     }
 
     // gradient of level set function
@@ -2848,7 +2848,7 @@ template <int N> struct Levelset {
 
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
-        return P[0] * P[0] + (P[1] - (1 - P[0] * P[0]) * t) * (P[1] - (1 - P[0] * P[0]) * t) - R0 * R0;
+        return P[0] * P[0] + (P[1] - (1 - P[0] * P[0]) * t) * (P[1] - (1 - P[0] * P[0]) * t) - R0 * R0 - 1e-14;
     }
 
     // gradient of level set function
@@ -5873,10 +5873,11 @@ int main(int argc, char **argv) {
     Levelset<2> phi;
     const std::string solver_name = "mumps";
     ProblemOption option;
-    const int quadrature_order_space =
-        5; // in each space dimension -> quadrature_order_space^2 quadrature points per element
+    const int quadrature_order_space = 5; // in each space dimension -> quadrature_order_space^2 quadrature points per element
     option.order_space_element_quadrature_ = quadrature_order_space;
     AlgoimCutFEM<mesh_t, Levelset<2>> convdiff(qTime, phi, option);
+
+    const size_t deg_interpolation_vel = 2;
 
     // Method parameters
     const double tau_F_bulk = 1.; // face stabilization
@@ -5958,7 +5959,7 @@ int main(int argc, char **argv) {
         const Uint ndf_time_slab = Ih[0].NbDoF();
 
         // Velocity field
-        LagrangeQuad2 FEvelocity(2);
+        LagrangeQuad2 FEvelocity(deg_interpolation_vel);
         fespace_t VelVh(Th, FEvelocity);
         fct_t vel(VelVh, fun_velocity);
 

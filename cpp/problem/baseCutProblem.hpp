@@ -53,6 +53,8 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     template <typename Fct> void addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &);
     template <typename Fct>
     void addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, int itq, const TimeSlab &In);
+    template <typename Fct>
+    void addLinear(const Fct &f, const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In);
 
     void addLinear(const itemVFlist_t &VF, const CutMesh &, int itq, const TimeSlab &In);
     void addLinear(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In);
@@ -93,6 +95,12 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     virtual void addBorderContribution(const itemVFlist_t &VF, const Element &K, const BorderElement &BE, int ifac,
                                        const TimeSlab *In, int itq, double cst_time);
 
+    // integral on fitted part of the boundary of a cut element
+    void addBilinearIntersection(const itemVFlist_t &VF, const CutMesh &, const CutMesh &, const CBorder &b, std::list<int> label = {});
+    void addLinearIntersection(const itemVFlist_t &VF, const CutMesh &, const CutMesh &, const CBorder &b, std::list<int> label = {});
+    void addIntersectedBorderContribution(const itemVFlist_t &VF, const CutMesh &, const Element &K, const BorderElement &BE, int ifac,
+                               const TimeSlab *In, int itq, double cst_time);
+
     void setDirichlet(const FunFEM<Mesh> &gh, const CutMesh &Th, std::list<int> label = {});
     void setDirichlet(const FunFEM<Mesh> &gh, const CutMesh &Th, const TimeSlab &In, std::list<int> label = {});
     void setDirichletHcurl(const FunFEM<Mesh> &gh, const CutMesh &Th, std::list<int> label = {});
@@ -121,6 +129,15 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     void addInterfaceRidgeContribution(const itemVFlist_t &VF, const Interface<Mesh> &interface, int ifac,
                                        const TimeSlab *In, int itq, double cst_time);
 
+    // Integration on border of inner active mesh
+    void addLinearInner(const itemVFlist_t &VF, const CutMesh &Th);
+    void addBilinearInner(const itemVFlist_t &VF, const CutMesh &Th);
+    void addBilinearInnerBorder(const itemVFlist_t &VF, const CutMesh &Th);
+    void addLinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+    void addBilinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+    void addBilinearInnerBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+    void addBilinearOuterBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
+
     // Face stabilization
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &);
     void addFaceStabilizationMixed(const itemVFlist_t &VF, const CutMesh &);
@@ -148,8 +165,13 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In,
                                const MacroElementPartition<Mesh> &);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &);
+    void addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const MacroElement<Mesh> &);
+    void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const MacroElementSurface<Mesh> &);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
+    void addPatchStabilizationExterior(const itemVFlist_t &VF, const CutMesh &Th, const TimeSlab &In);
+    // void addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &, const TimeSlab &In);
+    // void addPatchStabilizationExterior(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In, const int itq);
     void addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th);
 
@@ -178,6 +200,9 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     void saveSolution(std::span<double> u0);
 
     void initialSolution(std::span<double> u0);
+
+    void saveSolutionBackMesh(std::span<double> sol, FunFEM<Mesh>& f_back);
+
 
     int get_number_of_stabilized_edges() { return number_of_stabilized_edges; }
 };

@@ -39,9 +39,7 @@ template <typeMesh M, typename L> void AlgoimInterface<M, L>::make_algoim_patch(
         if (q.nodes.size() == 0) {
             // K is not cut
             continue;
-        }
-
-        else {
+        } else {
             // K is cut
             this->element_of_face_.push_back(k);    // add element to list of cut elements
             cut_elements.insert({k, q});

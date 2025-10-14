@@ -19,6 +19,7 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #include <algorithm>
 #include <vector>
 #include <span>
+#include <iostream>
 
 class R0 {
   public:

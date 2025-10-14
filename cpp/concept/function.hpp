@@ -35,9 +35,11 @@ class Mesh2;
 class Mesh3;
 class MeshQuad2;
 class MeshHexa;
+class BarycentricMesh2;
+
 template <typename C>
 concept typeMesh = std::is_same_v<Mesh1, C> || std::is_same_v<Mesh2, C> || std::is_same_v<Mesh3, C> ||
-                   std::is_same_v<MeshHexa, C> || std::is_same_v<MeshQuad2, C>;
+                   std::is_same_v<MeshHexa, C> || std::is_same_v<MeshQuad2, C>|| std::is_same_v<BarycentricMesh2, C>;
 
 template <typename C>
 concept meshQuadrilateral = std::is_same_v<MeshQuad2, C> || std::is_same_v<MeshHexa, C>;
@@ -80,7 +82,7 @@ using fct_R3_int  = std::add_pointer_t<double(R3, int)>;
 template <typename fct_t>
 concept FunctionLevelSet =
     std::is_same_v<fct_t, fct_ptr_int> || std::is_same_v<fct_t, fct_R2_int> || std::is_same_v<fct_t, fct_R3_int> ||
-    std::is_convertible_v<fct_t, std::function<double(std::span<double>, int)>>;
+    std::is_convertible_v<fct_t, std::function<double(std::span<double>, int)>> || std::is_convertible_v<fct_t, std::function<double(double*, int)>>;
 
 using fct_ptr_int_double = std::add_pointer_t<double(double *, int, const double)>;
 using fct_R2_int_double  = std::add_pointer_t<double(R2, int, const double)>;
@@ -88,7 +90,7 @@ using fct_R3_int_double  = std::add_pointer_t<double(R3, int, double)>;
 
 template <typename fct_t>
 concept FunctionLevelSetTime = std::is_same_v<fct_t, fct_ptr_int_double> || std::is_same_v<fct_t, fct_R2_int_double> ||
-                               std::is_same_v<fct_t, fct_R3_int_double>;
+                               std::is_same_v<fct_t, fct_R3_int_double>  || std::is_convertible_v<fct_t, std::function<double(double*, int, double)>>;
 
 using fct_ptr_int_int = std::add_pointer_t<double(double *, int, int)>;
 using fct_R2_int_int  = std::add_pointer_t<double(R2, int, int)>;

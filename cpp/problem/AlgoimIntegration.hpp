@@ -42,7 +42,7 @@ double L2_norm_surface_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(co
 
         // assert((q.nodes.size() == 1 * quadrature_order_integration) ||
         //    (q.nodes.size() == 2 * quadrature_order_integration));
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         assert((order_space <= q.nodes.size()) || (q.nodes.size() <= 2 * order_space));
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
@@ -155,7 +155,7 @@ double L2_norm_surface_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(do
         algoim::QuadratureRule<2> q =
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, order_space);
 
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -255,7 +255,7 @@ double L2L2_norm_surf(const FunFEM<MeshQuad2> &fh, const fct_t &f, const TimeInt
                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, order_space);
 
             // Loop over quadrature in space
-            assert(q.nodes.size() != 0);
+            //assert(q.nodes.size() != 0);
 
             double weight_K = 0.;
             for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
@@ -328,7 +328,7 @@ double L2L2_norm(const FunFEM<MeshQuad2> &fh, const fct_t &f, const ActiveMesh<M
                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), -1, -1, order_space);
 
             // Loop over quadrature in space
-            assert(q.nodes.size() != 0);
+            //assert(q.nodes.size() != 0);
 
             double weight_K = 0.;
             for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
@@ -404,7 +404,7 @@ double L2H1_norm(const FunFEM<MeshQuad2> &fh, const FunFEM<MeshQuad2> &f, const 
                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), -1, -1, order_space);
 
             // Loop over quadrature in space
-            assert(q.nodes.size() != 0);
+            //assert(q.nodes.size() != 0);
 
             double weight_K = 0.;
             for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
@@ -504,7 +504,7 @@ double L2_norm_cut_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double
         // std::cout << phi(xymin) << "\n";
 
         // Loop over quadrature in space
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -586,7 +586,7 @@ double L2_norm_cut_2(const std::shared_ptr<ExpressionVirtual> &fh, R(fex)(double
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), -1, -1, order_space);
 
         // Loop over quadrature in space
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -636,7 +636,7 @@ double integral_algoim(fct_t &fh, const Interface<MeshQuad2> &interface, int cu,
         algoim::QuadratureRule<2> q =
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, order_space);
 
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -692,7 +692,7 @@ double integral_algoim(fct_t &fh, const Interface<MeshQuad2> &interface, int cu,
         algoim::QuadratureRule<2> q =
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, order_space);
 
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -751,7 +751,7 @@ double integral_algoim(fct_t &fh, const Interface<MeshQuad2> &interface, int cu,
         algoim::QuadratureRule<2> q =
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, order_space);
 
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -837,7 +837,7 @@ double integral_algoim(fct_t &fh, const ActiveMesh<MeshQuad2> &Th, L &phi, int c
         //     }
         // }
         // Loop over quadrature in space
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -919,7 +919,7 @@ double integral_algoim(fct_t &fh, const int cu, const ActiveMesh<MeshQuad2> &Th,
                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), -1, -1, order_space);
 
             // Loop over quadrature in space
-            //assert(q.nodes.size() != 0);
+            ////assert(q.nodes.size() != 0);
             if (q.nodes.size()==0)
                 continue;
 
@@ -1024,7 +1024,7 @@ double integral_algoim(const fct_t &fh, const ActiveMesh<MeshQuad2> &Th, const i
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), -1, -1, order_space);
 
         // Loop over quadrature in space
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -1100,7 +1100,7 @@ double integral_algoim(const fct_t &fh, const ActiveMesh<MeshQuad2> &Th, const i
 //             algoim::QuadratureRule<2> q =
 //                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, quadrature_order_integration);
 
-//             assert(q.nodes.size() != 0);
+//             //assert(q.nodes.size() != 0);
 //             for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
 //                 Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -1157,7 +1157,7 @@ double integral_algoim(fct_t &fh, const TimeSlab &In, const TimeInterface<MeshQu
             algoim::QuadratureRule<2> q =
                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, order_space);
 
-            assert(q.nodes.size() != 0);
+            //assert(q.nodes.size() != 0);
             for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
                 Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -1186,5 +1186,143 @@ double integral_algoim(fct_t &fh, const TimeSlab &In, const TimeInterface<MeshQu
 
     return val_receive;
 }
+
+
+
+
+
+
+
+// integrals over faceas
+template <typename L, typename fct_t>
+double integral_algoim(fct_t &fh, const ActiveMesh<MeshQuad2> &Th, L &phi, const CFacet &b) {
+    
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        
+        int kb  = Th.idxElementInBackMesh(k, 0);    // element index in background mesh
+
+        for (int ifac = 0; ifac < MeshQuad2::Element::nea; ++ifac) { // loop over the edges / faces
+
+            int jfac = ifac;
+            
+            int kn  = Th.ElementAdj(k, jfac);
+            int kbn = Th.idxElementInBackMesh(kn, 0);   // element index of neighbor in background mesh
+
+
+            // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
+            if (kbn == -1 || kbn < kb) 
+                continue;
+            
+            std::cout << "\n";
+            std::cout << "k = " << k << ", kn = " << kn << "\n";
+            std::cout << "kb = " << kb << ", kbn = " << kbn << "\n";
+            std::cout << "ifac = " << ifac << ", jfac = " << jfac << "\n";
+            
+
+            // // std::pair<int, int> e1 = std::make_pair(kb, ifac);
+            // // std::pair<int, int> e2 = std::make_pair(kbn, jfac);
+            
+            // // int kbi = e1.first, ifac = e1.second;
+            // // int kbj = e2.first, jfac = e2.second;
+            
+            // // int ki = Th.idxElementFromBackMesh(kbi);
+            // // int kj = Th.idxElementFromBackMesh(kbj);
+
+            const MeshQuad2::Element &K(Th[k]);
+            const MeshQuad2::Element &Kn(Th[kn]);
+
+
+
+            // Get coordinates of current quadrilateral
+            const auto &V0(K[0]); // vertex 0
+            const auto &V2(K[2]); // vertex 2 (diagonally opposed)
+
+            algoim::uvector<double, 2> xymin{V0[0], V0[1]}; // min x and y
+            algoim::uvector<double, 2> xymax{V2[0], V2[1]}; // max x and y
+
+
+            // print coordinates of the quadrilateral
+            std::cout << "V0 = " << V0[0] << ", " << V0[1] << "\n";
+            std::cout << "V2 = " << V2[0] << ", " << V2[1] << "\n\n";
+
+            //getchar();
+            int dim = -1, side = -1;
+            
+            if (ifac % 2 == 0) {
+                dim = 1;
+                side = 1;    // vertical direction, top face
+            }
+            else {
+                dim = 0;
+                side = 1;    // horizontal direction, right face 
+            }
+
+            assert(dim != -1 || side != -1);
+
+            std::cout << "dim = " << dim << ", side = " << side << "\n";
+            algoim::QuadratureRule<2> q =
+                    algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), dim, side, 5);
+
+            for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
+                R2 mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
+                std::cout << "mip = " << mip[0] << ", " << mip[1] << "\n";
+            }
+
+            getchar();
+
+            // const Cut_Part<Element> cutKi(Th.get_cut_part(ki, itq));
+            // const Cut_Part<Element> cutKj(Th.get_cut_part(kj, itq));
+            // typename Element::Face face;
+            // const Cut_Part<typename Element::Face> cutFace(Th.get_cut_face(face, ki, ifac, itq));
+
+            // double measK = cutKi.measure() + cutKj.measure();
+            // double measF = Ki.mesureBord(ifac);
+            // double h     = 0.5 * (Ki.get_h() + Kj.get_h());
+            // int domain   = FKi.get_domain();
+            // Rd normal    = Ki.N(ifac);
+
+            // int kbi = Vh.idxElementInBackMesh(ki);
+            // int kbj = Vh.idxElementInBackMesh(kj);
+            
+
+            // // LOOP OVER ELEMENTS IN THE CUT
+            // for (auto it = cutFace.element_begin(); it != cutFace.element_end(); ++it) {
+
+            //     for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+            //         typename QFB::QuadraturePoint ip(qfb[ipq]);
+            //         const Rd mip = cutFace.mapToPhysicalElement(it, (RdHatBord)ip);
+            //         double Cint  = meas * ip.getWeight() * cst_time;
+
+            //         // EVALUATE THE BASIS FUNCTIONS
+            //         FKv.BF(Fop, FKv.T.mapToReferenceElement(mip), fv);
+            //         if (!same)
+            //             FKu.BF(Fop, FKu.T.mapToReferenceElement(mip), fu);
+            //         //   VF[l].applyFunNL(fu,fv);
+
+            //         Cint *= VF[l].evaluateFunctionOnBackgroundMesh(std::make_pair(kbu, kbv), std::make_pair(domain, domain),
+            //                                                     mip, tid, normal);
+            //         Cint *= coef * VF[l].c;
+            //         if (In) {
+            //             if (VF.isRHS())
+            //                 this->addToRHS(VF[l], *In, FKv, fv, Cint);
+            //             else
+            //                 this->addToMatrix(VF[l], *In, FKu, FKv, fu, fv, Cint);
+            //         } else {
+            //             if (VF.isRHS())
+            //                 this->addToRHS(VF[l], FKv, fv, Cint);
+            //             else
+            //                 this->addToMatrix(VF[l], FKu, FKv, fu, fv, Cint);
+            //         }
+            //     }
+            
+            // }
+                
+        }
+        
+    }
+
+    return 0;
+}
+
 
 #endif

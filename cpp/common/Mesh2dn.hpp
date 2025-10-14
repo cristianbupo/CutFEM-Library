@@ -59,6 +59,34 @@ class Mesh2 : public GenericMesh<Triangle2, BoundaryEdge2, Vertex2> {
     friend Mesh2 refine_barycentric(const Mesh2 &Th);
 };
 
+class BarycentricMesh2 : public Mesh2 {
+    public:
+        BarycentricMesh2(int nx, int ny, R orx, R ory, R lx, R ly);  
+        
+        int get_macro_element(int i) const {
+            assert(0 <= i && i < this->nt);  
+            return inverse_macro_map[i];
+        }
+
+        int get_local_subelement(int i) const {
+            assert(0 <= i && i < this->nt);
+            return local_subelement_map[i];
+        }
+
+        int element_adj(int k_macro, int iface_adj) const;
+
+        // Maps each base mesh triangle to its 3 refined children
+        std::vector<std::array<int, 3>> macro_elements;
+    private:
+
+        // Maps each refined triangle to its parent macro triangle
+        std::vector<int> inverse_macro_map;
+
+        // Optionally, which local subtriangle (0, 1, or 2) each refined element is
+        std::vector<int> local_subelement_map;
+
+};
+
 class MeshQuad2 : public GenericMesh<Quad2, BoundaryEdge2, Vertex2> {
   public:
     static const int D = 2;

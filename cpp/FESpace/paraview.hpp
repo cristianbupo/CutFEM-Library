@@ -126,6 +126,7 @@ template <class M> class Paraview {
             }
         }
         void build(const ActiveMesh<Mesh> &cutTh);
+        void build(const ActiveMesh<Mesh> &cutTh, int itq);
         void buildCut(const ActiveMesh<Mesh> &cutTh) {
 
             ntCut_    = 0;
@@ -133,7 +134,7 @@ template <class M> class Paraview {
             nv_       = 0;
             // std::vector<Rd> list_node;
             int kk    = 0;
-            int size0 = 1.5 * cutTh.NbElement();
+            int size0 = 5 * cutTh.NbElement();
             clearAndResize(size0);
             double area = 0.;
             for (int k = 0; k < cutTh.NbElement(); ++k) {
@@ -166,6 +167,7 @@ template <class M> class Paraview {
 
                 } else {
                     // not cut
+
                     idx_in_Vh[kk] = std::make_pair(kb, domain);
                     num_cell[kk]  = std::make_pair(nvCell_, numCell_);
                     for (int i = 0; i < nvCell_; ++i) {
@@ -191,14 +193,41 @@ template <class M> class Paraview {
             for (int k = 0; k < cutTh.NbElement(); ++k) {
                 int domain = cutTh.get_domain_element(k);
                 int kb     = cutTh.idxElementInBackMesh(k);
+             
+                    check_and_resize_array(kk);
+
+                    idx_in_Vh[kk] = std::make_pair(kb, domain);
+                    num_cell[kk]  = std::make_pair(nvCell_, numCell_);
+                    for (int i = 0; i < nvCell_; ++i) {
+                        mesh_node[kk].push_back(cutTh[k][i]);
+                    }
+                    nv_ += nvCell_;
+                    ntNotcut_++;
+                    kk++;
+                
+            }
+            shrinkToFit(kk + 1);
+        }
+        void buildNoCut(const ActiveMesh<Mesh> &cutTh, int itq) {
+
+            ntCut_    = 0;
+            ntNotcut_ = 0;
+            nv_       = 0;
+            int size0 = 1.5 * cutTh.NbElement();
+            clearAndResize(size0);
+
+            std::vector<Rd> list_node;
+            int kk = 0;
+            for (int k = 0; k < cutTh.NbElement(); ++k) {
+                int domain = cutTh.get_domain_element(k);
+                int kb     = cutTh.idxElementInBackMesh(k);
                 // Sometimes the following three lines should be outcommented, to view the solution in all quadrature
                 // points
-                if (cutTh.isInactive(k, 0)) {
+                if (cutTh.isInactive(k, itq)) {
                     continue;
                 }
-                if (cutTh.isCut(k, 0)) {
-
-                    const Cut_Part<Element> cutK(cutTh.get_cut_part(k, 0));
+                if (cutTh.isCut(k, itq)) {
+                    const Cut_Part<Element> cutK(cutTh.get_cut_part(k, itq));
 
                     if (cutK.multi_interface()) {
                         assert(0);
@@ -231,6 +260,7 @@ template <class M> class Paraview {
                         kk++;
                     }
                 } else {
+
                     check_and_resize_array(kk);
 
                     idx_in_Vh[kk] = std::make_pair(kb, domain);
@@ -245,6 +275,9 @@ template <class M> class Paraview {
             }
             shrinkToFit(kk + 1);
         }
+        
+        
+        
         void build_active_mesh(const ActiveMesh<Mesh> &cutTh) {
 
             ntCut_    = 0;
@@ -270,7 +303,7 @@ template <class M> class Paraview {
             }
             shrinkToFit(kk + 1);
         }
-        void build_face_stab(const ActiveMesh<Mesh> &cutTh, int domain) {
+                void build_face_stab(const ActiveMesh<Mesh> &cutTh, int domain) {
 
             ntCut_    = 0;
             ntNotcut_ = 0;
@@ -283,6 +316,46 @@ template <class M> class Paraview {
             for (int k = 0; k < cutTh.NbElement(); ++k) {
                 int kb = cutTh.idxElementInBackMesh(k);
                 if ((cutTh.isStabilizeElement(k) && cutTh.get_domain_element(k) == domain) || domain == -1) {
+                    const Element &K(cutTh[k]);
+                    for (int e = 0; e < Element::nea; ++e) {
+                        check_and_resize_array(kk);
+
+                        int je = e;
+                        int kn = cutTh.ElementAdj(k, je);
+
+                        if (kn == -1)
+                            continue;
+
+                        int nv_loc    = Element::nva;
+                        num_cell[kk]  = std::make_pair(nv_loc, 3);
+                        idx_in_Vh[kk] = std::make_pair(kb, domain);
+                        nv_ += nv_loc;
+                        for (int i = 0; i < nv_loc; ++i) {
+                            mesh_node[kk].push_back(K[Element::nvedge[e][i]]);
+                        }
+                        ntCut_++;
+                        kk++;
+                    }
+                }
+            }
+            shrinkToFit(kk + 1);
+        }
+
+        void build_face_stab(const BarycentricActiveMesh2 &cutTh, int domain) {
+
+            ntCut_    = 0;
+            ntNotcut_ = 0;
+            nv_       = 0;
+            int size0 = cutTh.NbElement();
+            clearAndResize(size0);
+
+            std::vector<Rd> list_node;
+            int kk = 0;
+            for (int k = 0; k < cutTh.NbElement(); ++k) {
+                int k_macro = cutTh.inverse_active_macro_map[k];
+                int kb = cutTh.idxElementInBackMesh(k);
+                
+                if (cutTh.stabilize_macro(k_macro)) {
                     const Element &K(cutTh[k]);
                     for (int e = 0; e < Element::nea; ++e) {
                         check_and_resize_array(kk);
@@ -660,7 +733,49 @@ template <class M> class Paraview {
                 kk++;
             }
         }
+        void buildSmallElements(const MacroElementSurface<M> &macro) {
+            assert(macro.Th_active);
+            auto &cutTh(*(macro.Th_active));
+            auto &intf(macro.interface);
+            auto &Th(*intf.backMesh);
+            ntCut_    = 0;
+            ntNotcut_ = 0;
+            nv_       = 0;
+            int size0 = cutTh.NbElement();
+            clearAndResize(size0);
 
+            int domain = 0;
+
+            std::vector<Rd> list_node;
+            int kk = 0;
+            // for (int k = 0; k < cutTh.NbElement(); ++k) {
+            for (int iface = intf.first_element(); iface < intf.last_element(); iface += intf.next_element()) {
+
+                // int domain = cutTh.get_domain_element(k);
+                // int kb     = cutTh.idxElementInBackMesh(k);
+                const int kb = intf.idxElementOfFace(iface);
+
+                // if (domain != dom) {
+                //     assert(0);
+                //     continue;
+                // }
+
+                // std::cout << "kb = " << kb << ", macro.isSmall(kb) = " <<macro.isSmall(kb) << "\n";
+                if (!macro.isSmall(iface))
+                    continue;
+                check_and_resize_array(kk);
+
+                idx_in_Vh[kk] = std::make_pair(kb, domain);
+                num_cell[kk]  = std::make_pair(nvCell_, numCell_);
+                for (int i = 0; i < nvCell_; ++i) {
+                    mesh_node[kk].push_back(Th[kb][i]);
+                }
+                nv_ += nvCell_;
+                ntNotcut_++;
+                kk++;
+            }
+        }
+        
         void build_macro_element(const TimeMacroElement<M> &macro, int dom) {
 
             const ActiveMesh<Mesh> &cutTh(macro.Th);
@@ -1283,42 +1398,6 @@ template <class M> class Paraview {
             }
         }
 
-        void buildSmallElements(const MacroElementSurface<M> &macro) {
-            assert(macro.Th_active);
-            const ActiveMesh<Mesh> &cutTh(*(macro.Th_active));
-            ntCut_    = 0;
-            ntNotcut_ = 0;
-            nv_       = 0;
-            int size0 = cutTh.NbElement();
-            clearAndResize(size0);
-
-            int dom = 0;
-
-            std::vector<Rd> list_node;
-            int kk = 0;
-            for (int k = 0; k < cutTh.NbElement(); ++k) {
-                int domain = cutTh.get_domain_element(k);
-                int kb     = cutTh.idxElementInBackMesh(k);
-
-                if (domain != dom) {
-                    assert(0);
-                    continue;
-                }
-                if (!macro.isSmall(k))
-                    continue;
-                check_and_resize_array(kk);
-
-                idx_in_Vh[kk] = std::make_pair(kb, domain);
-                num_cell[kk]  = std::make_pair(nvCell_, numCell_);
-                for (int i = 0; i < nvCell_; ++i) {
-                    mesh_node[kk].push_back(cutTh[k][i]);
-                }
-                nv_ += nvCell_;
-                ntNotcut_++;
-                kk++;
-            }
-        }
-
         template <typename L> void buildMacroInnerEdge(const AlgoimMacro<M, L> &macro, int dom) {
 
             const ActiveMesh<Mesh> &cutTh(macro.Th);
@@ -1726,6 +1805,12 @@ template <class M> class Paraview {
         this->writeFileMesh();
         this->writeFileCell();
     }
+        Paraview(const ActiveMesh<Mesh> &cutTh, int itq, std::string name) {
+        outFile_ = name;
+        mesh_data.build(cutTh, itq);
+        this->writeFileMesh();
+        this->writeFileCell();
+    }
     Paraview(const Mesh &Th, std::string name) {
         outFile_ = name;
         mesh_data.build(Th);
@@ -1735,6 +1820,12 @@ template <class M> class Paraview {
 
     int get_nb_stab_elems(const ActiveMesh<Mesh> &cutTh, int domain) { return mesh_data.num_stab_elems(cutTh, domain); }
     void writeFaceStab(const ActiveMesh<Mesh> &cutTh, int domain, std::string name) {
+        outFile_ = name;
+        mesh_data.build_face_stab(cutTh, domain);
+        this->writeFileMesh();
+        this->writeFileCell();
+    }
+    void writeFaceStab(const BarycentricActiveMesh2 &cutTh, int domain, std::string name) {
         outFile_ = name;
         mesh_data.build_face_stab(cutTh, domain);
         this->writeFileMesh();

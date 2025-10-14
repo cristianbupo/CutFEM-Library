@@ -270,7 +270,7 @@ void save(const ActiveMesh<Mesh> &Th, const Interface<Mesh> &Gh, L &phi, double 
 
             algoim::QuadratureRule<2> q =
                 algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), 2, -1, integration_order);
-            assert(q.nodes.size() != 0);
+            //assert(q.nodes.size() != 0);
             for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
                 Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));
@@ -294,7 +294,7 @@ void save(const ActiveMesh<Mesh> &Th, const Interface<Mesh> &Gh, L &phi, double 
 
         algoim::QuadratureRule<2> q =
             algoim::quadGen<2>(phi, algoim::HyperRectangle<double, 2>(xymin, xymax), -1, -1, integration_order);
-        assert(q.nodes.size() != 0);
+        //assert(q.nodes.size() != 0);
         for (int ipq = 0; ipq < q.nodes.size(); ++ipq) {
 
             Rd mip(q.nodes.at(ipq).x(0), q.nodes.at(ipq).x(1));

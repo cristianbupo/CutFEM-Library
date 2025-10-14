@@ -74,7 +74,7 @@ template <int N> struct Levelset {
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
         R xc = 0.5 + 0.28 * sin(M_PI * t), yc = 0.5 - 0.28 * cos(M_PI * t);
-        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17);
+        return ((P[0] - xc) * (P[0] - xc) + (P[1] - yc) * (P[1] - yc) - 0.17 * 0.17 - 1e-14);
     }
 
     // gradient of level set function
@@ -219,7 +219,7 @@ template <int N> struct Levelset {
 
     // level set function
     template <typename V> typename V::value_type operator()(const V &P) const {
-        return (P[0] - (W - C * P[1] * P[1]) * t) * (P[0] - (W - C * P[1] * P[1]) * t) + P[1] * P[1] - R0 * R0;
+        return (P[0] - (W - C * P[1] * P[1]) * t) * (P[0] - (W - C * P[1] * P[1]) * t) + P[1] * P[1] - R0 * R0 - 1e-14;
     }
 
     // gradient of level set function
@@ -345,9 +345,9 @@ std::vector<const GTypeOfFE<Mesh1> *> FE_time   = {&DataFE<Mesh1>::P0Poly, &Data
 
 // Define example, method and stabilization, and polynomial order in time and space
 
-#define circle         // example (circle/kite)
+#define kite         // example (circle/kite)
 #define conservative // method (conservative/non_conservative)
-#define macro        // stabilization (fullstab/macro)
+#define fullstab        // stabilization (fullstab/macro)
 #define K 2          // polynomial order in time (0/1/2/3)
 #define M 2          // polynomial order in space (1/2/3)
 
@@ -383,22 +383,20 @@ int main(int argc, char **argv) {
 #error "No stabilization defined"
 #endif
 
-    //MPIcf cfMPI(argc, argv);
-
     const int k = K;
     const int m = M;
 
     assert(k >= 0 && k <= 3);
     assert(m >= 1 && m <= 3);
 
-    const size_t iterations = 3;   // number of mesh refinements
+    const size_t iterations = 5;   // number of mesh refinements
     double h                = 0.1; // starting mesh size
     int nx, ny;
 
-    const double cfl_number = 1./3;
+    const double cfl_number = 1./4;
     int total_number_iteration;
     double dT       = 0.1;
-    const double t0 = 0., tfinal = .1;
+    const double t0 = 0., tfinal = 1.;
 
     // Time integration quadrature
     const size_t quadrature_order_time = 5;
@@ -410,6 +408,7 @@ int main(int argc, char **argv) {
     Levelset<2> phi;
     ProblemOption option;
 #ifdef USE_MPI
+    MPIcf cfMPI(argc, argv);
     option.solver_name_ = "mumps";
 #else
     //option.solver_name_ = "umfpack";
@@ -427,6 +426,7 @@ int main(int argc, char **argv) {
     assert(delta > 0. && delta <= 1.);
     
     // Data file to hold problem data
+    std::string path_output_figures("./");
     std::ofstream output_data("../cpp/example/convection_diffusion/output_bulk.dat", std::ofstream::out);
     output_data << "Example: " << example << "\n";
     output_data << "Method: " << method << "\n";
@@ -707,6 +707,40 @@ int main(int argc, char **argv) {
 
             global_conservation_errors[j] = std::fabs(global_conservation_error);
             global_conservation_errors_t.push_back(std::fabs(global_conservation_error));
+
+
+            if ((iterations == 1) && (h >= 0.01)) {
+                
+                Paraview<mesh_t> writerTh(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
+                writerTh.add(ls[0], "levelSet0", 0, 1);
+                writerTh.add(ls[1], "levelSet1", 0, 1);
+                writerTh.add(ls[2], "levelSet2", 0, 1);
+                
+                Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_" + std::to_string(iter + 1) + ".vtk");
+                // writer.add(b0h, "bulk", 0, 1);
+                // writer.add(sol_h, "bulk_end", 0, 1);
+
+                writer.add(funuh, "bulk", 0, 1);
+
+                fct_t uBex(Wh, fun_uBulk, current_time);
+                fct_t fB(Wh, fun_rhsBulk, current_time);
+                
+
+                writer.add(uBex, "bulk_exact", 0, 1);
+                writer.add(fB, "bulk_rhs", 0, 1);
+
+                //writer.add(fabs(b0h.expr() - uBex.expr()), "bulk_error");
+                writer.add(fabs(funuh.expr() - uBex.expr()), "bulk_error");
+                                
+                writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
+                writer.writeFaceStab(Thi, 0, path_output_figures + "Edges" + std::to_string(iter + 1) + ".vtk");
+                
+                const int algoim_domain = -1;   // get neg part of levelset
+                const int side = 0;             // not used for algoim_domain = -1
+                writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 0, algoim_domain, side, path_output_figures + "AlgoimQuadrature_0_" + std::to_string(iter + 1) + ".vtk");
+                writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 1, algoim_domain, side, path_output_figures + "AlgoimQuadrature_1_" + std::to_string(iter + 1) + ".vtk");
+                writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 2, algoim_domain, side, path_output_figures + "AlgoimQuadrature_2_" + std::to_string(iter + 1) + ".vtk");
+            }
 
             iter++;
         }

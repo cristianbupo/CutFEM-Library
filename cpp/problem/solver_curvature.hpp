@@ -38,12 +38,9 @@ template <typename mesh_t> std::vector<double> solve(const CutFESpace<mesh_t> &V
     for (int i = 0; i < D; ++i)
         Id(i, i) = 1.;
 
-    problem.addBilinear((H, v)
-                        // + (grad(H) * n, grad(v) * n) * 1e-2
-                        ,
-                        interface);
+    problem.addBilinear((H, v) + (grad(H) * n, grad(v) * n) * 1e-2, interface);
     problem.addLinear(-contractProduct(Id, gradS(v)), interface);
-    problem.addBilinear((jump(grad(H) * n), jump(grad(v) * n)) * 1, Kh, INTEGRAL_INNER_FACET);
+    problem.addBilinear((jump(grad(H) * n), jump(grad(v) * n)) * 1., Kh, INTEGRAL_INNER_FACET);
 
     // if (deg == 2) {
     TestFunction<mesh_t> grad2un = grad(grad(H) * n) * n;

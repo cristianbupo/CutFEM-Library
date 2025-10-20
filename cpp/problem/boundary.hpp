@@ -188,7 +188,7 @@ BoundaryDirichlet<M>::BoundaryDirichlet(const cutspace_t &Vh, std::vector<int> l
                 // case 1: dof is on node. E.g. (0, 1, 2) if triangle
                 if (id_item < T.nv) {
                     for (int i = 0; i < elt_t::nva; ++i) {
-                        std::cout << "idx_bdry_face = " << idx_bdry_face << ", i = " << i << "\n";
+                        //std::cout << "idx_bdry_face = " << idx_bdry_face << ", i = " << i << "\n";
                         int i_e = elt_t::nvedge.at(idx_bdry_face).at(i);
                         if (i_e == id_item) {
                             is_on_border = true;

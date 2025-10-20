@@ -102,6 +102,9 @@ int main(int argc, char **argv) {
     std::vector<double> error_div;
     std::vector<double> max_div;
 
+    std::list<int> dirichlet_labels = {1, 2, 3, 4}; // Dirichlet boundary conditions
+    std::list<int> neumann_labels   = {};
+
     for (int i = 0; i < n_iter; ++i) {
         mesh_t Kh(nx, nx, -1., -1., 2., 2.);
         Kh.info();
@@ -116,8 +119,10 @@ int main(int argc, char **argv) {
         cutmesh_t Khi(Kh, interface);
 
         // Build spaces and cut spaces
-        space_t Wh(Kh, DataFE<Mesh2>::BDM1);
-        space_t Qh(Kh, DataFE<Mesh2>::P0);
+        // space_t Wh(Kh, DataFE<Mesh2>::BDM1);
+        auto FEu = Lagrange2(2);
+        space_t Wh(Kh, FEu);
+        space_t Qh(Kh, DataFE<Mesh2>::P1);
         cutspace_t Vh(Khi, Wh);
         cutspace_t Ph(Khi, Qh);
 
@@ -125,7 +130,8 @@ int main(int argc, char **argv) {
         fct_t gh(Vh, u_exact), fh(Vh, rhs);
 
         // Solve Stokes interface problem
-        auto data_stokes = solver::cutfem::stokes::solve(Vh, Ph, interface, gh, fh, mu, sigma / rad, delta);
+        auto data_stokes = solver::cutfem::stokes::solve(Vh, Ph, interface, gh, fh, mu, sigma / rad, delta,
+                                                         dirichlet_labels, neumann_labels);
 
         // Extract solution
         std::span<double> data_uh{std::span(data_stokes.data(), Vh.get_nb_dof())};
@@ -138,6 +144,8 @@ int main(int argc, char **argv) {
             paraview_t writer(Khi, "stokes_interface_dynamic_drop_" + std::to_string(i) + ".vtk");
             writer.add(uh, "velocity", 0, 2);
             writer.add(ph, "pressure", 0, 1);
+
+            // paraview_t writerV(Kh, "stokes_interface_dynamic_drop_backmesh.vtk");
         }
 
         auto dxu = dx(uh.expr(0));
@@ -157,6 +165,7 @@ int main(int argc, char **argv) {
         nx = 2 * nx - 1;
     }
 
+    LOG_INFO << "Mesh sizes h : \n " << h << logger::endl;
     LOG_INFO << "L2 error u : \n " << error_u << logger::endl;
     LOG_INFO << "L2 error p : \n " << error_p << logger::endl;
     LOG_INFO << "L2 error div : \n " << error_div << logger::endl;

@@ -58,6 +58,7 @@ endif()
 add_library(solver SHARED ${SOLVER_SOURCES})
 target_include_directories(solver
 PRIVATE
+${MUMPS_INCLUDES}
 "${CMAKE_CURRENT_SOURCE_DIR}"
 "${CMAKE_CURRENT_BINARY_DIR}"
 "${PROJECT_BINARY_DIR}"

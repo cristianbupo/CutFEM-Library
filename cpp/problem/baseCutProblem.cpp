@@ -108,6 +108,8 @@ void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF,
 }
 
 
+
+
 // template <>
 // void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In) {
 
@@ -359,9 +361,34 @@ template <> void BaseCutFEM<Mesh2>::addBilinearInnerBorder(const itemVFlist_t &V
 }
 
 
-
-template <> void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+template<>
+void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t& VF,
+                                               const BarycentricActiveMesh2& Th)
+{
+    using Element = typename BarycentricActiveMesh2::Element;
     assert(!VF.isRHS());
+
+    #pragma omp parallel for num_threads(this->get_num_threads())
+    for (int km = 0; km < (int)Th.active_macro_elements.size(); ++km) {
+        if (!Th.is_macro_cut(km)) continue;
+
+        const auto& micro = Th.active_macro_elements[km];
+        for (int k_micro : micro) {
+            for (int ifac = 0; ifac < Element::nea; ++ifac) {
+                int jfac = ifac;
+                const int kn_micro = Th.ElementAdj(k_micro, jfac);
+                if (kn_micro != -1) continue;         // only outer boundary
+
+                BaseFEM<Mesh2>::addOuterBorderContribution(VF, k_micro, ifac,
+                                                           /*user*/nullptr, /*w*/0, /*coef*/1.0);
+            }
+        }
+    }
+}
+
+
+template <> void BaseCutFEM<Mesh2>::addLinearOuterBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(VF.isRHS());
 #pragma omp parallel for num_threads(this->get_num_threads())
 
     for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
@@ -378,7 +405,9 @@ template <> void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t &V
                 int jfac = ifac;
                 int kn_micro = Th.ElementAdj(k_micro, jfac);
 
-                if ((kn_micro != -1) ||(Th.inverse_active_macro_map[k_micro] == Th.inverse_active_macro_map[kn_micro]))
+                // if ((kn_micro != -1) ||(Th.inverse_active_macro_map[k_micro] == Th.inverse_active_macro_map[kn_micro]))
+                //     continue;
+                if (kn_micro != -1)
                     continue;
                 
                 // std::cout << "Integrating on edge between micro elements " << k_micro << " (macro element " << Th.inverse_active_macro_map[k_micro] << ") and " << kn_micro << " (macro element " << Th.inverse_active_macro_map[kn_micro] << ")\n";
@@ -388,40 +417,97 @@ template <> void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t &V
         
         }
 
-        // Find the face that neighbors an interior element
-        // for (int iface = 0; iface < Element::nea; ++iface) {
-        //     int kn_macro = Th.macro_adjacent(km, iface);
-            
-        //     if ((kn_macro == -1) || Th.is_macro_cut(kn_macro))
-        //         continue;
-            
-        //     std::cout << "Integrating on iface = " << iface << ", kn_macro = " << kn_macro << "\n";
-
-
-        //     for (int k_micro : micro_elements) 
-        //         BaseFEM<Mesh2>::addInnerBorderContribution(VF, k_micro, ifac, nullptr, 0, 1.);
-        // }
-    //     
-    //     if (!Th.isCut(k, 0)) {
-    //         continue;
-    //     } 
-        
-    //     // Find the face that neighbors an interior element
-    //     for (int ifac = 0; ifac < Element::nea; ++ifac) { 
-    //         int jfac = ifac;
-    //         int kn   = Th.ElementAdj(k, jfac);
-
-    //         // an neighboring element can be 1) outside of the domain, 2) another cut element or 3) inside of the domain 
-    //         if ((kn == -1) || Th.isCut(kn, 0))
-    //             continue;
-            
-    //         assert(!Th.isCut(kn, 0) && Th.isCut(k, 0));
-
-    //         BaseFEM<Mesh2>::addInnerBorderContribution(VF, k, ifac, nullptr, 0, 1.);
-            
-    //     }
-        
-    //     this->addLocalContribution();
     }
 
 }
+
+
+
+
+
+
+
+// template <> void BaseCutFEM<Mesh2>::addElementStabilization(const itemVFlist_t &VF, const Interface<Mesh2> &interface, const CutMesh &Th) {
+//     assert(!VF.isRHS());
+//     progress bar("Add Bilinear Mesh", Th.last_element(), globalVariable::verbose);
+// #pragma omp parallel for num_threads(this->get_num_threads())
+//     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+//         bar += Th.next_element();
+        
+//         // Compute parameter coonected to the mesh.
+//         // on can take the one from the first test function
+//         const FESpace &Vh(*VF[0].fespaceV);
+//         const FElement &FK(Vh[k]);
+//         const Element &K(FK.T);
+//         double meas = K.measure();
+//         double h    = K.get_h();
+//         int domain  = FK.get_domain();
+//         int kb      = Vh.idxElementInBackMesh(k);
+//         int iam     = omp_get_thread_num();
+
+//         // GET THE QUADRATURE RULE
+//         const QF &qf(this->get_quadrature_formular_K());
+    
+//         double tid = 0.;
+
+//         // LOOP OVER THE VARIATIONAL FORMULATION ITEMS
+//         for (int l = 0; l < VF.size(); ++l) {
+//             if (!VF[l].on(domain))
+//                 continue; 
+
+//             // FINTE ELEMENT SPACES && ELEMENTS
+//             const FESpace &Vhv(VF.get_spaceV(l));
+//             const FESpace &Vhu(VF.get_spaceU(l));
+//             const FElement &FKv(Vhv[k]);
+//             const FElement &FKu(Vhu[k]);
+//             this->initIndex(FKu, FKv); //, iam);
+//             // BF MEMORY MANAGEMENT -
+//             bool same   = (&Vhu == &Vhv);
+//             int lastop  = getLastop(VF[l].du, VF[l].dv);
+//             // RNMK_ fv(this->databf_,FKv.NbDoF(),FKv.N,lastop); //  the value for
+//             // basic fonction RNMK_ fu(this->databf_+ (same
+//             // ?0:FKv.NbDoF()*FKv.N*lastop) ,FKu.NbDoF(),FKu.N,lastop); //  the value
+//             // for basic fonction
+//             long offset = iam * this->offset_bf_;
+//             RNMK_ fv(this->databf_ + offset, FKv.NbDoF(), FKv.N,
+//                     lastop); //  the value for basic fonction
+//             RNMK_ fu(this->databf_ + offset + (same ? 0 : FKv.NbDoF() * FKv.N * lastop), FKu.NbDoF(), FKu.N, lastop);
+//             What_d Fop = Fwhatd(lastop);
+
+//             // COMPUTE COEFFICIENT
+//             double coef = VF[l].computeCoefElement(h, meas, meas, meas, domain);
+
+//             // LOOP OVER QUADRATURE IN SPACE
+//             for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+//                 typename QF::QuadraturePoint ip(qf[ipq]);
+//                 const Rd mip = K.mapToPhysicalElement(ip);
+//                 double Cint  = meas * ip.getWeight() * cst_time;
+
+//                 // EVALUATE THE BASIS FUNCTIONS
+//                 FKv.BF(Fop, ip, fv);
+//                 if (!same)
+//                     FKu.BF(Fop, ip, fu);
+//                 //   VF[l].applyFunNL(fu,fv);
+
+//                 // FIND AND COMPUTE ALL THE COEFFICENTS AND PARAMETERS
+//                 Cint *= VF[l].evaluateFunctionOnBackgroundMesh(kb, domain, mip, tid);
+//                 Cint *= coef * VF[l].c;
+
+//                 if (In) {
+//                     if (VF.isRHS())
+//                         this->addToRHS(VF[l], *In, FKv, fv, Cint);
+//                     else
+//                         this->addToMatrix(VF[l], *In, FKu, FKv, fu, fv, Cint);
+//                 } else {
+//                     if (VF.isRHS())
+//                         this->addToRHS(VF[l], FKv, fv, Cint);
+//                     else
+//                         this->addToMatrix(VF[l], FKu, FKv, fu, fv, Cint); //, iam);
+//                 }
+//             }
+//         }
+
+//         this->addLocalContribution();
+//     }
+//     bar.end();
+// }

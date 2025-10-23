@@ -452,7 +452,7 @@ void BarycentricActiveMesh2::createSurfaceMesh(const TimeInterface<Mesh2> &inter
 }
 
 int BarycentricActiveMesh2::get_macro_in_background_mesh(int k_active) const {
-    assert(0 <= k_active <= nb_active_macros);
+    assert(0 <= k_active && k_active <= nb_active_macros);
     return macro_in_background_mesh[k_active];
 }
 int BarycentricActiveMesh2::get_macro_in_active_mesh(int k_bg) const {

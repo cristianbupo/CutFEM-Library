@@ -1253,7 +1253,7 @@ void BaseFEM<M>::addOuterBorderContribution(const itemVFlist_t &VF, const int k,
     double measK = K.measure();
     double meas  = K.mesureBord(ifac);
     double h     = K.get_h();
-    Rd normal    = K.N(ifac);  // when calling this function, we are coming from a cut element into an interior element, but we want the normal to point outwards from the inner domain, so we change the sign!
+    Rd normal    = K.N(ifac);  // when calling this function, we are coming from a cut element into an exterior element
 
     // U and V HAS TO BE ON THE SAME MESH
     int kb = Vh.idxElementInBackMesh(k);

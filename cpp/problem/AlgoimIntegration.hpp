@@ -360,6 +360,8 @@ double L2H1_norm(const FunFEM<MeshQuad2> &fh, const FunFEM<MeshQuad2> &f, const 
     using Rd        = typename FElement::Rd;
     using Element   = typename mesh_t::Element;
 
+    //! REQUIRES F TO BE SCALAR
+
     double val = 0.;
 
     const int domain = 0; // do only for main domain

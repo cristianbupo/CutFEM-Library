@@ -1802,6 +1802,93 @@ void BaseFEM<M>::addLinear(const Fct &f, const itemVFlist_t &VF, const TimeInter
 }
 
 template <typename M>
+void BaseFEM<M>::addElementInterfaceContribution(const itemVFlist_t &VF, const Interface<M> &interface, int ifac, int k,
+                                          const TimeSlab *In, double cst_time, int itq) {
+    typedef typename FElement::RdHatBord RdHatBord;
+
+
+    // k is the element index in the active mesh
+
+    // GET IDX ELEMENT CONTAINING FACE ON backMes
+    const int kb = interface.idxElementOfFace(ifac);
+    const Element &K(interface.get_element(kb));
+    double measK = K.measure();
+    double h     = K.get_h();
+    double meas  = interface.measure(ifac);
+
+    const FESpace &Vh(*VF[0].fespaceV);
+    const FElement &FK(Vh[k]);
+    int domain  = FK.get_domain();
+
+    const Rd normal(-interface.normal(ifac));
+
+    int iam     = omp_get_thread_num();
+
+    // GET THE QUADRATURE RULE
+    const QF &qf(this->get_quadrature_formular_K());
+    auto tq    = this->get_quadrature_time(itq);
+    double tid = (In) ? (double)In->map(tq) : 0.;
+
+    for (int l = 0; l < VF.size(); ++l) {
+        if(!VF[l].on(domain)) continue;
+
+        // FINTE ELEMENT SPACES && ELEMENTS
+        const FESpace &Vhv(VF.get_spaceV(l));
+        const FESpace &Vhu(VF.get_spaceU(l));
+        const FElement &FKv(Vhv[k]);
+        const FElement &FKu(Vhu[k]);
+        this->initIndex(FKu, FKv); //, iam);
+        // BF MEMORY MANAGEMENT -
+        bool same   = (&Vhu == &Vhv);
+        int lastop  = getLastop(VF[l].du, VF[l].dv);
+        // RNMK_ fv(this->databf_,FKv.NbDoF(),FKv.N,lastop); //  the value for
+        // basic fonction RNMK_ fu(this->databf_+ (same
+        // ?0:FKv.NbDoF()*FKv.N*lastop) ,FKu.NbDoF(),FKu.N,lastop); //  the value
+        // for basic fonction
+        long offset = iam * this->offset_bf_;
+        RNMK_ fv(this->databf_ + offset, FKv.NbDoF(), FKv.N,
+                 lastop); //  the value for basic fonction
+        RNMK_ fu(this->databf_ + offset + (same ? 0 : FKv.NbDoF() * FKv.N * lastop), FKu.NbDoF(), FKu.N, lastop);
+        What_d Fop = Fwhatd(lastop);
+
+        // COMPUTE COEFFICIENT
+        double coef = VF[l].computeCoefElement(h, meas, meas, meas, domain);
+        coef *= VF[l].computeCoefFromNormal(normal);    
+
+        // LOOP OVER QUADRATURE IN SPACE
+        for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+            typename QF::QuadraturePoint ip(qf[ipq]);
+            const Rd mip = K.mapToPhysicalElement(ip);
+            double Cint  = meas * ip.getWeight() * cst_time;
+
+            // EVALUATE THE BASIS FUNCTIONS
+            FKv.BF(Fop, ip, fv);
+            if (!same)
+                FKu.BF(Fop, ip, fu);
+            //   VF[l].applyFunNL(fu,fv);
+
+            // FIND AND COMPUTE ALL THE COEFFICENTS AND PARAMETERS
+            Cint *= VF[l].evaluateFunctionOnBackgroundMesh(kb, domain, mip, tid);
+            Cint *= coef * VF[l].c;
+
+            if (In) {
+                if (VF.isRHS())
+                    this->addToRHS(VF[l], *In, FKv, fv, Cint);
+                else
+                    this->addToMatrix(VF[l], *In, FKu, FKv, fu, fv, Cint);
+            } else {
+                if (VF.isRHS())
+                    this->addToRHS(VF[l], FKv, fv, Cint);
+                else
+                    this->addToMatrix(VF[l], FKu, FKv, fu, fv, Cint); //, iam);
+            }
+        }
+    }
+}
+
+
+
+template <typename M>
 void BaseFEM<M>::addInterfaceContribution(const itemVFlist_t &VF, const Interface<M> &interface, int ifac, double tid,
                                           const TimeSlab *In, double cst_time, int itq) {
     typedef typename FElement::RdHatBord RdHatBord;

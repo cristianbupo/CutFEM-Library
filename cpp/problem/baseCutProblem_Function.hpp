@@ -3203,6 +3203,28 @@ template <typename M> void BaseCutFEM<M>::addBilinearInnerBorder(const itemVFlis
 }
 
 
+
+template <typename M> void BaseCutFEM<M>::addElementStabilization(const itemVFlist_t &VF, const Interface<M> &gamma, const CutMesh &Th) {
+    assert(Th.get_nb_domain()==1);
+    assert(!VF.isRHS());
+    progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
+#pragma omp parallel for num_threads(this->get_num_threads())
+    
+    for (int iface = gamma.first_element(); iface < gamma.last_element(); iface += gamma.next_element()) {
+        
+        const int kb  = gamma.idxElementOfFace(iface);
+        const int dom = 0;
+        const int k   = Th.idxElementFromBackMesh(kb, dom);   // ASSUMES nb_domain = 1
+
+        this->addElementInterfaceContribution(VF, gamma, iface, k, nullptr, 1., 0);
+
+        this->addLocalContribution();
+    }
+    bar.end();
+}
+
+
+
 //! CHECK DOCUMENTATION ON THE TWO BELOW METHODS
 /**
  * @brief Initializes the solution vector `u0` based on the `mapU0_` data.

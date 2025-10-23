@@ -197,6 +197,8 @@ template <typename Mesh> class BaseFEM : public ShapeOfProblem<Mesh>, public Qua
     template <typename Fct>
     void addElementContribution(const Fct &f, const itemVFlist_t &VF, const int k, const TimeSlab *In, int itq,
                                 double cst_time);
+    void addElementInterfaceContribution(const itemVFlist_t &VF, const Interface<Mesh> &interface, int ifac, int k,
+                                          const TimeSlab *In, double cst_time, int itq);
 
     // integral on innerFace
     void addBilinear(const itemVFlist_t &VF, const Mesh &, const CFacet &b);

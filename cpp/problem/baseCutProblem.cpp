@@ -247,7 +247,6 @@ void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF,
 template <> void BaseCutFEM<Mesh2>::addBilinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
     assert(!VF.isRHS());
     progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
-#pragma omp parallel for num_threads(this->get_num_threads())
 
     for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
         
@@ -270,7 +269,6 @@ template <> void BaseCutFEM<Mesh2>::addBilinearInner(const itemVFlist_t &VF, con
 template <> void BaseCutFEM<Mesh2>::addLinearInner(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
     assert(VF.isRHS());
     progress bar(" Add Bilinear CutMesh", Th.last_element(), globalVariable::verbose);
-#pragma omp parallel for num_threads(this->get_num_threads())
     for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
         
         if (Th.is_macro_cut(km))
@@ -291,7 +289,6 @@ template <> void BaseCutFEM<Mesh2>::addLinearInner(const itemVFlist_t &VF, const
 
 template <> void BaseCutFEM<Mesh2>::addBilinearInnerBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
     assert(!VF.isRHS());
-#pragma omp parallel for num_threads(this->get_num_threads())
 
     for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
 
@@ -309,6 +306,7 @@ template <> void BaseCutFEM<Mesh2>::addBilinearInnerBorder(const itemVFlist_t &V
 
             // a neighboring element can be 1) outside of the domain, 2) another cut element, 
             // 3) inside of the domain but in the same macro element, or 4) inside of the domain and in another macro element
+                //! THIS WILL BE PROBLEMATIC IF kn_micro == -1
                 if ((Th.inverse_active_macro_map[k_micro] == Th.inverse_active_macro_map[kn_micro]) || (kn_micro == -1) || Th.isCut(kn_micro, 0))
                     continue;
                 
@@ -368,7 +366,6 @@ void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t& VF,
     using Element = typename BarycentricActiveMesh2::Element;
     assert(!VF.isRHS());
 
-    #pragma omp parallel for num_threads(this->get_num_threads())
     for (int km = 0; km < (int)Th.active_macro_elements.size(); ++km) {
         if (!Th.is_macro_cut(km)) continue;
 
@@ -389,7 +386,6 @@ void BaseCutFEM<Mesh2>::addBilinearOuterBorder(const itemVFlist_t& VF,
 
 template <> void BaseCutFEM<Mesh2>::addLinearOuterBorder(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
     assert(VF.isRHS());
-#pragma omp parallel for num_threads(this->get_num_threads())
 
     for (int km = 0; km < Th.active_macro_elements.size(); ++km) {
 

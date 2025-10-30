@@ -87,15 +87,17 @@ template <>
 BoundaryDirichlet<Mesh2>::BoundaryDirichlet(const cutspace_t &Vh, const BarycentricActiveMesh2& active_mesh, const int domain) {
     const auto &Th_background = Vh.Th;  // background mesh
     
-    for (int km = 0; km < active_mesh.active_macro_elements.size(); ++km) {
-
+    for (int km = 0; km < active_mesh.active_macro_elements_d[domain].size(); ++km) {
+    
         // Loop only over cut elements for efficiency
         if (!active_mesh.is_macro_cut(km))
             continue;
 
-        const auto& micro_elements = active_mesh.active_macro_elements[km];
+        const auto& micro_elements = active_mesh.active_macro_elements_d[domain][km];
 
         for (int k_micro : micro_elements) {
+
+            assert(active_mesh.get_domain_element(k_micro) == domain);
             
             for (int ifac = 0; ifac < elt_t::nea; ++ifac) {
                 int jfac = ifac;

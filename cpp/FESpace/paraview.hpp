@@ -303,7 +303,7 @@ template <class M> class Paraview {
             }
             shrinkToFit(kk + 1);
         }
-                void build_face_stab(const ActiveMesh<Mesh> &cutTh, int domain) {
+        void build_face_stab(const ActiveMesh<Mesh> &cutTh, int domain) {
 
             ntCut_    = 0;
             ntNotcut_ = 0;
@@ -352,7 +352,7 @@ template <class M> class Paraview {
             std::vector<Rd> list_node;
             int kk = 0;
             for (int k = 0; k < cutTh.NbElement(); ++k) {
-                int k_macro = cutTh.inverse_active_macro_map[k];
+                int k_macro = cutTh.inverse_active_macro_map_d[domain][k];
                 int kb = cutTh.idxElementInBackMesh(k);
                 
                 if (cutTh.stabilize_macro(k_macro)) {

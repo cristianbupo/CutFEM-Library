@@ -257,6 +257,8 @@ template <typename Mesh> class ActiveMesh {
     virtual int last_boundary_element() const { return this->Th.nbBrdElmts(); }
 
 
+    virtual ~ActiveMesh() = default;
+
     // Private Member Functions
   private:
     void init(const Interface<Mesh> &interface);
@@ -273,6 +275,7 @@ class BarycentricActiveMesh2 : public ActiveMesh<Mesh2> {
 public:
 
     BarycentricActiveMesh2(const BarycentricMesh2 &th);
+    BarycentricActiveMesh2(const BarycentricMesh2& th, const Interface<Mesh2> &gamma);
 
     // ActiveMesh overrides
     void truncate(const Interface<Mesh2> &interface, int sign_domain) override;
@@ -280,9 +283,11 @@ public:
     // void truncate_global(const TimeInterface<Mesh2> &interface, int sign_domain) override;
     void createSurfaceMesh(const Interface<Mesh2> &interface) override;
     void createSurfaceMesh(const TimeInterface<Mesh2> &interface) override;
+    void init(const Interface<Mesh2>& interface);
 
     // Queries (stationary: itq=0)
     bool is_macro_cut(int kept_macro_id, int itq = 0) const;
+    bool is_macro_cut(int kept_macro_id, int domain, int itq) const;
     bool is_macro_interior(int kept_macro_id, int itq = 0) const;
     bool is_macro_inactive(int macro_k, int itq) const;
     bool is_macro_exterior(int macro_k) const;
@@ -290,13 +295,30 @@ public:
 
     int macro_adjacent(const int macro_k, const int iface_adj) const;
     int get_macro_in_background_mesh(int k_active) const;
-    int get_macro_in_active_mesh(int k_bg) const;
+    int get_macro_in_active_mesh(int k_bg, int domain) const;
 
-    std::vector<std::array<int, 3>> active_macro_elements;
-    std::vector<int> inverse_active_macro_map;              // inverse_active_macro_map[idx_micro] -> idx_macro (in active mesh)
-    std::vector<int> macro_in_background_mesh;              // takes active index as argument
-    std::unordered_map<int,int> macro_in_active_mesh;       // takes background index as argument
-    int nb_active_macros;
+    // std::vector<std::array<int, 3>> active_macro_elements;
+    // std::vector<int> inverse_active_macro_map;              // inverse_active_macro_map[idx_micro] -> idx_macro (in active mesh)
+    // std::vector<int> macro_in_background_mesh;              // takes active index as argument
+    // std::map<int,int> macro_in_active_mesh;       // takes background index as argument
+    // int nb_active_macros;
+
+    // For several domains
+    int nb_domains() const { return this->get_nb_domain(); }
+    
+    std::vector<std::vector<std::array<int,3>>> active_macro_elements_d; // [d][am] -> 3 local micro ids
+    std::vector<std::vector<int>>               inverse_active_macro_map_d; // [d][local_micro] -> active macro idx (in domain d)
+    // std::vector<std::vector<int>>               macro_in_background_mesh_d; // [d][am] -> bg macro id
+    // std::vector<std::unordered_map<int,int>>    macro_in_active_mesh_d;     // [d][bg macro id] -> active macro idx
+    std::vector<int>                            nb_active_macros_d;         // [d]
+
+    std::vector<std::vector<int>> macro_idx_in_background_mesh_;    // [d][active_macro_idx] -> bg_macro_idx
+    std::vector<std::map<int, int>> macro_idx_from_background_mesh_;
+
+    int macro_of_micro(int k) const;
+    bool isStabilizeElement(int k) const;
+
+    virtual ~BarycentricActiveMesh2() = default;
 // private:
     
 

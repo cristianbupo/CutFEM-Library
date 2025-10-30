@@ -145,37 +145,49 @@ void BarycentricActiveMesh2::truncate(const Interface<Mesh2>& interface,
 void BarycentricActiveMesh2::truncate(const TimeInterface<Mesh2>& interface,
                                       int sign_domain_remove)
 {
-    /*
-    // reset ALL per-mesh state
-    macro_in_background_mesh.clear();
-    macro_in_active_mesh.clear();
-    inverse_active_macro_map.clear();
-    active_macro_elements.clear();
-    nb_active_macros = 0;
+    
+    // reset macro containers state
+    macro_idx_in_background_mesh_.clear();
+    macro_idx_from_background_mesh_.clear();
+    inverse_active_macro_map_d.clear();
+    active_macro_elements_d.clear();
+    nb_active_macros_d.clear();
 
-    interface_id_.clear();              // important (you reuse interface_id_ later)
-    not_in_active_mesh_.clear();
+    // reset active mesh containers
+    idx_in_background_mesh_.clear();
+    idx_from_background_mesh_.clear();
+    interface_id_.clear();
     idx_element_domain.clear();
-    for (int d = 0; d < this->get_nb_domain(); ++d) {
-        idx_in_background_mesh_[d].clear();
-        idx_from_background_mesh_[d].clear();
-    }
+    not_in_active_mesh_.clear();
 
-    
-    
-    const int n_tid = interface.size();
+    // initialize containers
+    macro_idx_in_background_mesh_.resize(1);
+    macro_idx_from_background_mesh_.resize(1);
+    active_macro_elements_d.resize(1);
+    inverse_active_macro_map_d.resize(1);
+    nb_active_macros_d.resize(1);
+
+    int n_tid = interface.size();
     nb_quadrature_time_ = n_tid;
 
-    const int dom_size = this->get_nb_domain();
-    assert(dom_size == 1);
-    const auto& Th_bary = static_cast<const BarycentricMesh2&>(this->Th);
-
+    interface_id_.resize(21);
     interface_id_.assign(nb_quadrature_time_, {}); // time slices
-    not_in_active_mesh_.assign(21, {});
-    for (int i = 0; i < 21; ++i) not_in_active_mesh_[i].assign(nb_quadrature_time_, {});
+    not_in_active_mesh_.resize(10);
+    for (int i = 0; i < 10; ++i)
+        not_in_active_mesh_[i].resize(nb_quadrature_time_);
 
-    std::vector<int> nt(dom_size, 0);
+    idx_in_background_mesh_.resize(1);
+    idx_in_background_mesh_[0].reserve(Th.nt);
+    idx_from_background_mesh_.resize(1);
+
+    const int domain = 0;
+    int nt = 0;
     int nt_macros = 0; // number of active macro elements 
+
+    const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
+
+    macro_idx_in_background_mesh_[domain].reserve(Th_bary.macro_elements.size());
+
 
     // --- decide kept macros (exists t where inside OR cut OR sign flips) ---
     for (int macro_k = 0; macro_k < (int)Th_bary.macro_elements.size(); ++macro_k) {
@@ -199,8 +211,8 @@ void BarycentricActiveMesh2::truncate(const TimeInterface<Mesh2>& interface,
         }
         if (!keep_macro) continue;
 
-        macro_in_background_mesh.push_back(macro_k);
-        macro_in_active_mesh[macro_k] = nt_macros;
+        macro_idx_in_background_mesh_[domain].push_back(macro_k);
+        macro_idx_from_background_mesh_[domain][macro_k] = nt_macros;
         
         std::array<int, 3> sub_elems_active;
 
@@ -208,229 +220,42 @@ void BarycentricActiveMesh2::truncate(const TimeInterface<Mesh2>& interface,
         for (int i = 0; i < 3; ++i) {
             const int sub_k = sub[i];
 
-            for (int d = 0; d < dom_size; ++d) {
-                const int local_id = nt[d];
-                sub_elems_active[i] = local_id;
-                this->idx_in_background_mesh_[d].push_back(sub_k);
-                this->idx_from_background_mesh_[d][sub_k] = local_id;
-                inverse_active_macro_map.push_back(nt_macros);
+            
+            const int local_id = nt;
+            sub_elems_active[i] = local_id;
+            idx_in_background_mesh_[domain].push_back(sub_k);
+            idx_from_background_mesh_[domain][sub_k] = local_id;
+            inverse_active_macro_map_d[domain].push_back(nt_macros);
 
-                // per-time bookkeeping
-                for (int it = 0; it < n_tid; ++it) {
-                    const bool is_cut = interface(it)->isCut(sub_k);
-                    const int sign    = interface(it)->get_SignElement(sub_k).sign();
+            // per-time bookkeeping
+            for (int it = 0; it < n_tid; ++it) {
+                const bool is_cut = interface(it)->isCut(sub_k);
+                const int sign    = interface(it)->get_SignElement(sub_k).sign();
 
-                    if (is_cut) {
-                        interface_id_[it][{d, local_id}].emplace_back(interface[it], -sign_domain_remove);
-                    } else if (sign == sign_domain_remove) {
-                        not_in_active_mesh_[d][it][local_id] = true; // outside at this t
-                    }
+                if (is_cut) {
+                    interface_id_[it][{domain, local_id}].emplace_back(interface[it], -sign_domain_remove);
+                } else if (sign == sign_domain_remove) {
+                    not_in_active_mesh_[domain][it][local_id] = true; // outside at this t
                 }
-
-                ++nt[d];
             }
+
+            ++nt;
+            
         }
-        active_macro_elements.push_back(sub_elems_active);
+        active_macro_elements_d[domain].push_back(sub_elems_active);
         nt_macros++;
     }
 
-    nb_active_macros = nt_macros;
+    nb_active_macros_d[domain] = nt_macros;
 
     // finalize prefix sums
     idx_element_domain.push_back(0);
-    for (int d = 0; d < dom_size; ++d) {
-        this->idx_in_background_mesh_[d].shrink_to_fit();
-        idx_element_domain.push_back(idx_element_domain.back() + nt[d]);
-    }
-    
-*/
+    idx_element_domain.push_back(nt);
+    idx_in_background_mesh_[domain].shrink_to_fit();
+
 }
 
 
-
-// void BarycentricActiveMesh2::truncate_global(const TimeInterface<Mesh2>& interface,
-//                                       int sign_domain_remove)
-// {
-//     const int n_tid = interface.size();
-//     nb_quadrature_time_ = n_tid;
-    
-//     const int dom_size = this->get_nb_domain();
-//     assert(dom_size == 1);
-
-//     const auto& Th_bary = static_cast<const BarycentricMesh2&>(this->Th);
-
-//     assert(dom_size == 1);
-
-//     // reset containers
-//     idx_element_domain.clear();
-//     for (int d = 0; d < dom_size; ++d) {
-//         this->idx_in_background_mesh_[d].clear();
-//         this->idx_from_background_mesh_[d].clear();
-//     }
-
-//     interface_id_.assign(nb_quadrature_time_, {}); // time slices
-//     not_in_active_mesh_.resize(21);
-//     for (int i = 0; i < 21; ++i)
-//         not_in_active_mesh_[i].resize(nb_quadrature_time_);
-        
-//     std::vector<int> nt(dom_size, 0);
-//     int nt_macros = 0; // number of active macro elements 
-
-//     // --- decide kept macros (exists t where inside OR cut OR sign flips) ---
-//     for (int macro_k = 0; macro_k < (int)Th_bary.macro_elements.size(); ++macro_k) {
-//         const auto& sub = Th_bary.macro_elements[macro_k];
-
-//         bool keep_macro = false;
-//         for (int i = 0; i < 3 && !keep_macro; ++i) {
-//             const int sub_k = sub[i];
-
-//             for (int it = 0; it + 1 < n_tid; ++it) {
-//                 const int s_i  = interface(it)->get_SignElement(sub_k).sign();
-//                 const int s_ip = interface(it+1)->get_SignElement(sub_k).sign();
-//                 const bool cut_i  = interface(it)->isCut(sub_k);
-//                 const bool cut_ip = interface(it+1)->isCut(sub_k);
-
-//                 if (cut_i || cut_ip || s_i != sign_domain_remove || s_i * s_ip <= 0) {
-//                     keep_macro = true;
-//                     break;
-//                 }
-//             }
-//         }
-
-
-//         // if (!keep_macro) continue;
-
-//         macro_in_background_mesh.push_back(macro_k);
-//         macro_in_active_mesh[macro_k] = nt_macros;
-        
-//         std::array<int, 3> sub_elems_active;
-
-//         // keep all three subelements
-//         for (int i = 0; i < 3; ++i) {
-//             const int sub_k = sub[i];
-
-//             for (int d = 0; d < dom_size; ++d) {
-//                 const int local_id = nt[d];
-//                 sub_elems_active[i] = local_id;
-//                 this->idx_in_background_mesh_[d].push_back(sub_k);
-//                 this->idx_from_background_mesh_[d][sub_k] = local_id;
-//                 inverse_active_macro_map.push_back(nt_macros);
-
-//                 // per-time bookkeeping
-//                 for (int it = 0; it < n_tid; ++it) {
-//                     const bool is_cut = interface(it)->isCut(sub_k);
-//                     const int sign    = interface(it)->get_SignElement(sub_k).sign();
-
-//                     if (is_cut) {
-//                         interface_id_[it][{d, nt[d]}].emplace_back(interface[it], -sign_domain_remove);
-//                     } else if (sign == sign_domain_remove && !is_cut) {
-//                         not_in_active_mesh_[d][it][nt[d]] = true; // outside at this t
-//                     }
-//                 }
-
-//                 ++nt[d];
-//             }
-//         }
-//         active_macro_elements.push_back(sub_elems_active);
-//         nt_macros++;
-//     }
-
-//     // finalize prefix sums
-//     idx_element_domain.push_back(0);
-//     for (int d = 0; d < dom_size; ++d) {
-//         this->idx_in_background_mesh_[d].shrink_to_fit();
-//         idx_element_domain.push_back(idx_element_domain.back() + nt[d]);
-//     }
-    
-
-// }
-
-
-// void BarycentricActiveMesh2::createSurfaceMesh(const Interface<Mesh2> &interface) {
-//     // reset ALL per-mesh state
-//     macro_in_background_mesh.clear();
-//     macro_in_active_mesh.clear();
-//     inverse_active_macro_map.clear();
-//     active_macro_elements.clear();
-//     nb_active_macros = 0;
-
-//     interface_id_.clear();              // important (you reuse interface_id_ later)
-//     not_in_active_mesh_.clear();
-//     idx_element_domain.clear();
-//     for (int d = 0; d < this->get_nb_domain(); ++d) {
-//         idx_in_background_mesh_[d].clear();
-//         idx_from_background_mesh_[d].clear();
-//     }
-
-
-//     int dom_size = this->get_nb_domain();
-//     assert(dom_size == 1);
-//     interface_id_.assign(nb_quadrature_time_, {}); // time slices
-//     not_in_active_mesh_.assign(21, {});
-//     for (int i = 0; i < 21; ++i) not_in_active_mesh_[i].assign(nb_quadrature_time_, {});
-
-//     std::vector<int> nt(dom_size, 0);
-//     int nt_macros = 0; // number of active macro elements 
-
-//     const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
-
-//     for (int macro_k = 0; macro_k < Th_bary.macro_elements.size(); ++macro_k) {
-//         const auto &sub_elems = Th_bary.macro_elements[macro_k];
-
-//         bool keep_macro = false;
-//         for (int i = 0; i < 3; ++i) {
-//             int sub_k = sub_elems[i];
-//             const auto signK = interface.get_SignElement(sub_k);
-
-//             if (interface.isCut(sub_k)) {
-//                 keep_macro = true;
-//                 break;
-//             }
-//         }
-
-//         if (!keep_macro)
-//             continue;
-
-//         macro_in_background_mesh.push_back(macro_k);
-//         macro_in_active_mesh[macro_k] = nt_macros;
-        
-//         std::array<int, 3> sub_elems_active;
-
-//         // Keep all three subelements
-//         for (int i = 0; i < 3; ++i) {
-//             int sub_k = sub_elems[i];
-//             const auto signK = interface.get_SignElement(sub_k);
-
-//             for (int d = 0; d < dom_size; ++d) {
-//                 int local_id = nt[d];
-//                 sub_elems_active[i] = local_id;
-//                 idx_in_background_mesh_[d].push_back(sub_k);
-//                 idx_from_background_mesh_[d][sub_k] = local_id;
-//                 inverse_active_macro_map.push_back(nt_macros);
-
-
-//                 if (interface.isCut(sub_k)) {
-//                     interface_id_[0][{d, local_id}].emplace_back(&interface, 0);
-//                 } else {
-//                     // std::cout << "sub_k = " << sub_k << "\n";
-//                     not_in_active_mesh_[d][0][local_id] = true; //! to exclude elements completely outside of domain from isInactive
-//                 }
-
-//                 ++nt[d];
-//             }
-//         }
-//         active_macro_elements.push_back(sub_elems_active);
-//         nt_macros++;
-//     }
-
-//     nb_active_macros = nt_macros;
-
-//     idx_element_domain.push_back(0);
-//     for (int d = 0; d < dom_size; ++d) {
-//         idx_in_background_mesh_[d].shrink_to_fit();
-//         idx_element_domain.push_back(idx_element_domain.back() + nt[d]);
-//     }
-// }
 void BarycentricActiveMesh2::createSurfaceMesh(const Interface<Mesh2> &interface) {
     // reset macro containers state
     macro_idx_in_background_mesh_.clear();
@@ -464,15 +289,15 @@ void BarycentricActiveMesh2::createSurfaceMesh(const Interface<Mesh2> &interface
     for (int i = 0; i < 21; ++i)
         not_in_active_mesh_[i].resize(nb_quadrature_time_);
 
-    
-    int dom_size = 1;
 
     int nt = 0;
     int nt_macros = 0; // number of active macro elements 
 
+    const int domain = 0;
+
     const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
 
-    macro_idx_in_background_mesh_[0].reserve(Th_bary.macro_elements.size());
+    macro_idx_in_background_mesh_[domain].reserve(Th_bary.macro_elements.size());
 
     for (int macro_k = 0; macro_k < Th_bary.macro_elements.size(); ++macro_k) {
         const auto &sub_elems = Th_bary.macro_elements[macro_k];
@@ -491,8 +316,8 @@ void BarycentricActiveMesh2::createSurfaceMesh(const Interface<Mesh2> &interface
         if (!keep_macro)
             continue;
 
-        macro_idx_in_background_mesh_[0].push_back(macro_k);
-        macro_idx_from_background_mesh_[0][macro_k] = nt_macros;
+        macro_idx_in_background_mesh_[domain].push_back(macro_k);
+        macro_idx_from_background_mesh_[domain][macro_k] = nt_macros;
         
         std::array<int, 3> sub_elems_active;
 
@@ -503,65 +328,76 @@ void BarycentricActiveMesh2::createSurfaceMesh(const Interface<Mesh2> &interface
 
             const int local_id = nt;
             sub_elems_active[i] = local_id;
-            idx_in_background_mesh_[0].push_back(sub_k);
-            idx_from_background_mesh_[0][sub_k] = local_id;
-            inverse_active_macro_map_d[0].push_back(nt_macros);
+            idx_in_background_mesh_[domain].push_back(sub_k);
+            idx_from_background_mesh_[domain][sub_k] = local_id;
+            inverse_active_macro_map_d[domain].push_back(nt_macros);
 
 
             if (interface.isCut(sub_k)) {
-                interface_id_[0][{0, local_id}].emplace_back(&interface, 0);
+                interface_id_[0][{domain, local_id}].emplace_back(&interface, 0);
             } else {
                 // std::cout << "sub_k = " << sub_k << "\n";
-                not_in_active_mesh_[0][0][local_id] = true; //! to exclude elements completely outside of domain from isInactive
+                not_in_active_mesh_[domain][0][local_id] = true; //! to exclude elements completely outside of domain from isInactive
             }
 
             ++nt;
             
         }
-        active_macro_elements_d[0].push_back(sub_elems_active);
+        active_macro_elements_d[domain].push_back(sub_elems_active);
         nt_macros++;
     }
 
-    nb_active_macros_d[0] = nt_macros;
+    nb_active_macros_d[domain] = nt_macros;
 
     idx_element_domain.push_back(0);
     idx_element_domain.push_back(nt);
-    idx_in_background_mesh_[0].shrink_to_fit();
+    idx_in_background_mesh_[domain].shrink_to_fit();
 
 }
 
 void BarycentricActiveMesh2::createSurfaceMesh(const TimeInterface<Mesh2> &interface) {
     
-    /*
-    // reset ALL per-mesh state
-    macro_in_background_mesh.clear();
-    macro_in_active_mesh.clear();
-    inverse_active_macro_map.clear();
-    active_macro_elements.clear();
-    nb_active_macros = 0;
+    // reset macro containers state
+    macro_idx_in_background_mesh_.clear();
+    macro_idx_from_background_mesh_.clear();
+    inverse_active_macro_map_d.clear();
+    active_macro_elements_d.clear();
+    nb_active_macros_d.clear();
 
-    interface_id_.clear();              // important (you reuse interface_id_ later)
-    not_in_active_mesh_.clear();
+    // reset active mesh containers
+    idx_in_background_mesh_.clear();
+    idx_from_background_mesh_.clear();
+    interface_id_.clear();
     idx_element_domain.clear();
-    for (int d = 0; d < this->get_nb_domain(); ++d) {
-        idx_in_background_mesh_[d].clear();
-        idx_from_background_mesh_[d].clear();
-    }
+    not_in_active_mesh_.clear();
 
+    // initialize containers
+    macro_idx_in_background_mesh_.resize(1);
+    macro_idx_from_background_mesh_.resize(1);
+    active_macro_elements_d.resize(1);
+    inverse_active_macro_map_d.resize(1);
+    nb_active_macros_d.resize(1);
 
     int n_tid = interface.size();
     nb_quadrature_time_ = n_tid;
 
+    interface_id_.resize(21);
     interface_id_.assign(nb_quadrature_time_, {}); // time slices
-    not_in_active_mesh_.assign(21, {});
-    for (int i = 0; i < 21; ++i) not_in_active_mesh_[i].assign(nb_quadrature_time_, {});
+    not_in_active_mesh_.resize(10);
+    for (int i = 0; i < 10; ++i)
+        not_in_active_mesh_[i].resize(nb_quadrature_time_);
 
-    int dom_size = this->get_nb_domain();
+    idx_in_background_mesh_.resize(1);
+    idx_in_background_mesh_[0].reserve(Th.nt);
+    idx_from_background_mesh_.resize(1);
 
-    std::vector<int> nt(dom_size, 0);
+    const int domain = 0;
+    int nt = 0;
     int nt_macros = 0; // number of active macro elements 
 
     const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
+
+    macro_idx_in_background_mesh_[domain].reserve(Th_bary.macro_elements.size());
 
     for (int macro_k = 0; macro_k < Th_bary.macro_elements.size(); ++macro_k) {
         const auto &sub_elems = Th_bary.macro_elements[macro_k];
@@ -587,8 +423,8 @@ void BarycentricActiveMesh2::createSurfaceMesh(const TimeInterface<Mesh2> &inter
         if (!macro_is_active)
             continue;
         
-        macro_in_background_mesh.push_back(macro_k);
-        macro_in_active_mesh[macro_k] = nt_macros;
+        macro_idx_in_background_mesh_[domain].push_back(macro_k);
+        macro_idx_from_background_mesh_[domain][macro_k] = nt_macros;
         
         std::array<int, 3> sub_elems_active;
 
@@ -596,39 +432,38 @@ void BarycentricActiveMesh2::createSurfaceMesh(const TimeInterface<Mesh2> &inter
         for (int i = 0; i < 3; ++i) {
             int sub_k = sub_elems[i];
 
-            for (int d = 0; d < dom_size; ++d) {
-                int local_id = nt[d];
-                sub_elems_active[i] = local_id;
+            int local_id = nt;
+            sub_elems_active[i] = local_id;
 
-                idx_in_background_mesh_[d].push_back(sub_k);
-                idx_from_background_mesh_[d][sub_k] = local_id;
-                inverse_active_macro_map.push_back(nt_macros);
+            idx_in_background_mesh_[domain].push_back(sub_k);
+            idx_from_background_mesh_[domain][sub_k] = local_id;
+            inverse_active_macro_map_d[domain].push_back(nt_macros);
 
 
-                for (int t = 0; t < n_tid; ++t) {
-                    bool is_cut = interface(t)->isCut(sub_k);
+            for (int t = 0; t < n_tid; ++t) {
+                bool is_cut = interface(t)->isCut(sub_k);
 
-                    if (is_cut) {
-                        interface_id_[t][{d, local_id}].emplace_back(interface[t], 0);
-                    } else {
-                        not_in_active_mesh_[d][t][local_id] = true;
-                    }
+                if (is_cut) {
+                    interface_id_[t][{domain, local_id}].emplace_back(interface[t], 0);
+                } else {
+                    not_in_active_mesh_[domain][t][local_id] = true;
                 }
-
-                ++nt[d];
             }
+
+            ++nt;
+            
         }
-        active_macro_elements.push_back(sub_elems_active);
+        active_macro_elements_d[domain].push_back(sub_elems_active);
         nt_macros++;
     }
 
-    nb_active_macros = nt_macros;
+    nb_active_macros_d[domain] = nt_macros;
+    
     idx_element_domain.push_back(0);
-    for (int d = 0; d < dom_size; ++d) {
-        idx_in_background_mesh_[d].shrink_to_fit();
-        idx_element_domain.push_back(idx_element_domain.back() + nt[d]);
-    }
-    */
+    idx_element_domain.push_back(nt);
+    idx_in_background_mesh_[domain].shrink_to_fit();
+        
+    
 }
 
 
@@ -787,154 +622,14 @@ void BarycentricActiveMesh2::init(const Interface<Mesh2>& interface)
     idx_element_domain.push_back(nt0);
     idx_element_domain.push_back(nt0 + nt1);
     
-    // for (int j=0; j < idx_element_domain.size(); ++j) 
-    //     std::cout << idx_element_domain[j] << ", ";
-    // std::cout << "\n";
-
-    // not_in_active_mesh_.resize(10);
-    // for (int i = 0; i < 10; ++i)
-    //     not_in_active_mesh_[i].resize(nb_quadrature_time_);
-
-
 }
 
-// CHATGPTS suggestion
 
-// cut_mesh.cpp  (two-domain stationary)
-// void BarycentricActiveMesh2::init(const Interface<Mesh2>& interface)
-// {
-//     // ---- sizing (stationary) ----
-//     idx_in_background_mesh_[0].reserve(Th.nt);
-//     idx_in_background_mesh_[1].reserve(Th.nt);
-
-//     // idx_element_domain.clear();
-//     std::cout << "idx_element_domain.size() first in init = " << idx_element_domain.size() << "\n";
-//     idx_element_domain.push_back(0);
-
-//     not_in_active_mesh_.assign(10, {});
-//     for (int i = 0; i < 10; ++i)
-//         not_in_active_mesh_[i].assign(1, {});     // maps created
-
-//     int nt0 = 0, nt1 = 0;            // micro counters per domain
-//     int nt0_macro = 0, nt1_macro = 0;
-
-//     const auto& Th_bary = static_cast<const BarycentricMesh2&>(this->Th);
-
-//     macro_idx_in_background_mesh_[0].reserve(Th_bary.macro_elements.size());
-//     macro_idx_in_background_mesh_[1].reserve(Th_bary.macro_elements.size());
-
-//     // active_macro_elements_d[0].clear();
-//     // active_macro_elements_d[1].clear();
-//     // inverse_active_macro_map_d[0].clear();
-//     // inverse_active_macro_map_d[1].clear();
-
-//     // ---- iterate macros of the background barycentric mesh ----
-//     for (size_t macro_k = 0; macro_k < Th_bary.macro_elements.size(); ++macro_k) {
-//         const std::array<int,3> micro_elems = Th_bary.macro_elements[macro_k];
-
-//         // macro is kept if ANY of its micros is cut
-//         bool macro_cut = false;
-//         for (int i = 0; i < 3 && !macro_cut; ++i)
-//             macro_cut = interface.isCut(micro_elems[i]);
-
-//         if (!macro_cut) {
-
-//             // not cut: put the whole macro into the domain given by the average sign
-//             int avg_s = 0;
-//             for (int i = 0; i < 3; ++i) avg_s += interface.get_SignElement(micro_elems[i]).sign();
-//             avg_s = (avg_s > 0) ? +1 : -1;
-//             const int d = (avg_s < 0);  // 0 -> positive domain, 1 -> negative domain
-
-//             std::array<int,3> act;
-//             macro_idx_in_background_mesh_[d].push_back(macro_k);
-//             macro_idx_from_background_mesh_[d][macro_k] = (d==0) ? nt0_macro : nt1_macro;
-
-//             for (int i = 0; i < 3; ++i) {
-//                 const int kb = micro_elems[i];
-//                 if (d == 0) {
-//                     idx_in_background_mesh_[0].push_back(kb);
-//                     idx_from_background_mesh_[0][kb] = nt0;
-//                     inverse_active_macro_map_d[0].push_back(nt0_macro);
-//                     act[i] = nt0++;
-//                 } else {
-//                     idx_in_background_mesh_[1].push_back(kb);
-//                     idx_from_background_mesh_[1][kb] = nt1;
-//                     inverse_active_macro_map_d[1].push_back(nt1_macro);
-//                     act[i] = nt1++;
-//                 }
-//             }
-//             if (d == 0) { active_macro_elements_d[0].push_back(act); ++nt0_macro; }
-//             else         { active_macro_elements_d[1].push_back(act); ++nt1_macro; }
-
-//         } else {
-//             std::array<int,3> act0, act1;
-
-//             // keep macro in both domains
-//             macro_idx_in_background_mesh_[0].push_back(macro_k);
-//             macro_idx_from_background_mesh_[0][macro_k] = nt0_macro;
-//             macro_idx_in_background_mesh_[1].push_back(macro_k);
-//             macro_idx_from_background_mesh_[1][macro_k] = nt1_macro;
-
-//             for (int i = 0; i < 3; ++i) {
-//                 const int kb = micro_elems[i];
-//                 const int s  = interface.get_SignElement(kb).sign();   // ±1
-
-//                 // ---- domain 0 (positive) ----
-//                 idx_in_background_mesh_[0].push_back(kb);
-//                 idx_from_background_mesh_[0][kb] = nt0;
-//                 inverse_active_macro_map_d[0].push_back(nt0_macro);
-//                 act0[i] = nt0;
-
-//                 if (interface.isCut(kb)) {
-//                     interface_id_[0][{0, nt0}].emplace_back(&interface, +1);
-//                 } else if (s < 0) {
-//                     // opposite sign -> inactive in domain 0
-//                     not_in_active_mesh_[0][0][nt0] = true;
-//                 }
-//                 ++nt0;
-
-//                 // ---- domain 1 (negative) ----
-//                 idx_in_background_mesh_[1].push_back(kb);
-//                 idx_from_background_mesh_[1][kb] = nt1;
-//                 inverse_active_macro_map_d[1].push_back(nt1_macro);
-//                 act1[i] = nt1;
-
-//                 if (interface.isCut(kb)) {
-//                     interface_id_[0][{1, nt1}].emplace_back(&interface, -1);
-//                 } else if (s > 0) {
-//                     // opposite sign -> inactive in domain 1
-//                     not_in_active_mesh_[1][0][nt1] = true;
-//                 }
-//                 ++nt1;
-//             }
-
-//             active_macro_elements_d[0].push_back(act0);
-//             active_macro_elements_d[1].push_back(act1);
-//             ++nt0_macro; ++nt1_macro;            
-//         }
-//     }
-
-//     nb_active_macros_d[0] = nt0_macro;
-//     nb_active_macros_d[1] = nt1_macro;
-
-//     // domain prefix sums
-//     idx_element_domain.push_back(nt0);
-//     idx_element_domain.push_back(nt0 + nt1);
-// }
-
-// cut_mesh.cpp
 int BarycentricActiveMesh2::macro_of_micro(int k) const {
     const int d     = this->get_domain_element(k);            // 0 or 1, uses idx_element_domain
     const int k_loc = k - this->idx_element_domain[d];
     assert(0 <= k_loc && k_loc < (int)inverse_active_macro_map_d[d].size());
     return inverse_active_macro_map_d[d][k_loc];
-}
-
-//! Remove
-bool BarycentricActiveMesh2::isStabilizeElement(int k) const {
-    const int d  = this->get_domain_element(k);
-    const int am = macro_of_micro(k);
-    return is_macro_cut(am, d, /*t=*/0) || this->isInactive(k, /*t=*/0);
 }
 
 
@@ -959,16 +654,6 @@ int BarycentricActiveMesh2::get_macro_in_active_mesh(int k_bg, int domain) const
     return this->idx_element_domain[domain] + it->second; // 
 }
 
-
-// bool BarycentricActiveMesh2::is_macro_cut(int macro_k, int domain, int t /*=0*/) const {
-//     // std::cout << "macro_k = " << macro_k << ", (int)active_macro_elements_d[domain].size() = " << (int)active_macro_elements_d[domain].size() << "\n";
-//     assert(0 <= macro_k && macro_k < (int)active_macro_elements_d[domain].size());
-//     std::array<int,3> sub = active_macro_elements_d[domain][macro_k]; // 3 active micro ids
-
-//     for (int k_micro : sub)
-//         if (this->isCut(k_micro, t)) return true;
-//     return false;
-// }
 
 bool BarycentricActiveMesh2::is_macro_cut(int macro_k, int domain, int t) const {
     assert(0 <= macro_k && macro_k < (int)active_macro_elements_d[domain].size());
@@ -1072,109 +757,3 @@ int BarycentricActiveMesh2::macro_adjacent(const int macro_k, const int iface_ad
 
 }
 
-
-// void BarycentricActiveMesh2::truncate(const Interface<Mesh2> &interface, int sign_domain_remove) {
-//     int dom_size = this->get_nb_domain();
-//     idx_element_domain.resize(0);
-//     not_in_active_mesh_.resize(21);
-
-//     for (int i = 0; i < 21; ++i)
-//         not_in_active_mesh_[i].resize(1);   // 1 quadrature point in time when stationary
-
-
-//     {
-//         // Iterate through number of remaining subdomains
-//         for (int d = 0; d < dom_size; ++d) {
-//             idx_in_background_mesh_[d].resize(0);
-//             // Compute number of elements in subdomain d
-//             int nt_max = idx_from_background_mesh_[d].size();
-//             // Reserve memory for these elements
-//             idx_in_background_mesh_[d].reserve(nt_max);
-//         }
-//     }
-
-//     std::vector<int> nt(dom_size, 0);
-//     const auto &Th_bary = static_cast<const BarycentricMesh2 &>(this->Th);
-
-//     for (int d = 0; d < dom_size; ++d) {
-        
-//         for (auto it_k = idx_from_background_mesh_[d].begin(); it_k != idx_from_background_mesh_[d].end();) {
-            
-//             int kb = it_k->first;  // background mesh element index
-//             int k  = it_k->second; // active mesh element index
-
-//             // Get interface segment
-//             auto it_gamma = interface_id_[0].find(std::make_pair(d, k));
-            
-//             // Get the sign of the level set function in the element kb
-//             const auto signK = interface.get_SignElement(kb);
-//             bool is_cut = interface.isCut(kb);
-
-//             // Skip elements fully in the remove domain *unless* someone in the macro is cut
-//             if ((signK.sign() == sign_domain_remove) && !is_cut) {
-
-//                 const auto &elements_in_macro = Th_bary.macro_elements[Th_bary.get_macro_element(kb)];
-//                 bool is_macro_cut = false;
-
-//                 std::cout << "Element kb = " << kb << " is NOT cut and OUTSIDE domain\n";
-//                 // Check subelements
-//                 for (int sub_k : elements_in_macro) {
-//                     if (sub_k == kb) continue;  // already checked in "is_cut"
-//                         std::cout << "Neighbor sub_k = " << sub_k << "\n";
-//                     if (interface.isCut(sub_k)) {
-//                         is_macro_cut = true;
-//                         not_in_active_mesh_[d][0][kb] = false;   //! added to try to make isInactive method exclude elements that are entirely outside the domain but in the active mesh
-
-//                         std::cout << "Neighbor sub_k = " << sub_k << " IS CUT\n";
-//                         break; // no need to check further
-//                     }
-//                 }
-
-//                 // Exclude macro if none of its elements are cut
-//                 if (!is_macro_cut) {
-//                     // std::cout << "it_k = " << it_k->first << ", " << it_k->second << "\n";
-//                     std::cout << "Macro element belonging to kb = " << kb << " is NOT active\n";
-//                     it_k = idx_from_background_mesh_[d].erase(it_k);
-                    
-//                     continue; // skip to next
-//                 }
-//             }
-
-//             // Save and erase old interfaces
-//             int nb_interface = (it_gamma == interface_id_[0].end()) ? 0 : it_gamma->second.size();
-//             std::vector<const Interface<Mesh2> *> old_interface(nb_interface);
-//             std::vector<int> ss(nb_interface);
-//             for (int i = 0; i < nb_interface; ++i)
-//                 old_interface[i] = it_gamma->second[i].first;
-//             for (int i = 0; i < nb_interface; ++i)
-//                 ss[i] = it_gamma->second[i].second;
-//             if (it_gamma != interface_id_[0].end()) {
-//                 auto ittt = interface_id_[0].erase(it_gamma);
-//             }
-
-//             // Set new indices and put back interfaces
-//             idx_in_background_mesh_[d].push_back(kb);
-//             it_k->second = nt[d];
-//             for (int i = 0; i < nb_interface; ++i) {
-//                 interface_id_[0][std::make_pair(d, nt[d])].push_back(std::make_pair(old_interface[i], ss[i]));
-//             }
-
-//             // Is cut so need to add interface and sign
-//             // if (signK.cut()) {    //! Was like this before
-//             if (is_cut) {
-//                 interface_id_[0][std::make_pair(d, nt[d])].push_back(std::make_pair(&interface, -sign_domain_remove));
-//             }
-//             nt[d]++;
-//             it_k++;
-//         }
-//     }
-
-//     idx_element_domain.push_back(0);
-//     for (int d = 0; d < dom_size; ++d) {
-//         idx_in_background_mesh_[d].resize(nt[d]);
-//         idx_in_background_mesh_[d].shrink_to_fit();
-//         int sum_nt = idx_element_domain[d] + nt[d];
-//         idx_element_domain.push_back(sum_nt);
-//     }
-// }
-    

@@ -58,16 +58,16 @@ BaseCutFEM<M>::get_dof_data(const FESpace &Vh, const CutMesh &Th) {
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
-        int cut_index = -1;
-
         if (Th.isInactive(k, 0))
             continue;
 
-        std::cout << "Element k = " << k << " belongs to domain " << Th.get_domain_element(k) << std::endl;
-        const int domain = Th.get_domain_element(k);
-        
-        if (Th.isCut(k, 0)) {
+        std::cout << "Element k = " << k
+                  << " belongs to domain " << Th.get_domain_element(k) << std::endl;
 
+        const int domain = Th.get_domain_element(k);
+        int cut_index    = -1;
+
+        if (Th.isCut(k, 0)) {
             if (domain == 0) {
                 cut_index = 1;
             } else if (domain == 1) {
@@ -85,20 +85,38 @@ BaseCutFEM<M>::get_dof_data(const FESpace &Vh, const CutMesh &Th) {
 
         assert(cut_index >= 0);
 
+        const bool is_cut = (cut_index == 1 || cut_index == 3);
+
         const FElement &FK(Vh[k]);
 
         // Loop over the dofs
         for (int i = FK.dfcbegin(0); i < FK.dfcend(0); ++i) {
             for (int j = FK.dfcbegin(0); j < FK.dfcend(0); ++j) {
 
-                // Add the contribution to the local matrix
-                dof_data[std::make_pair(FK.loc2glb(i), FK.loc2glb(j))] = cut_index;
+                auto key = std::make_pair(FK.loc2glb(i), FK.loc2glb(j));
+                auto it  = dof_data.find(key);
+
+                if (it == dof_data.end()) {
+                    // First time we see this (i,j): just insert
+                    dof_data.emplace(key, cut_index);
+                } else {
+                    // Already have a value: overwrite only if current is cut
+                    const int existing        = it->second;
+                    const bool existing_is_cut = (existing == 1 || existing == 3);
+
+                    if (!existing_is_cut && is_cut) {
+                        // Upgrade non-cut -> cut
+                        it->second = cut_index;
+                    }
+                    // else: keep existing (already cut, or current not cut)
+                }
             }
         }
     }
 
     return dof_data;
 }
+
 
 /**
  * @brief Bilinear form integrated over cut mesh and over time slab

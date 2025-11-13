@@ -51,6 +51,55 @@ template <typename M> void BaseCutFEM<M>::addBilinear(const itemVFlist_t &VF, co
     bar.end();
 }
 
+template <typename M> 
+const std::map<std::pair<int,int>, int>&
+BaseCutFEM<M>::get_dof_data(const FESpace &Vh, const CutMesh &Th) {
+    dof_data.clear();
+
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+        int cut_index = -1;
+
+        if (Th.isInactive(k, 0))
+            continue;
+
+        std::cout << "Element k = " << k << " belongs to domain " << Th.get_domain_element(k) << std::endl;
+        const int domain = Th.get_domain_element(k);
+        
+        if (Th.isCut(k, 0)) {
+
+            if (domain == 0) {
+                cut_index = 1;
+            } else if (domain == 1) {
+                cut_index = 3;
+            }
+            std::cout << ".... the element is cut\n";
+        } else {
+            std::cout << ".... the element is NOT cut\n";
+            if (domain == 0) {
+                cut_index = 0;
+            } else if (domain == 1) {
+                cut_index = 2;
+            }
+        }
+
+        assert(cut_index >= 0);
+
+        const FElement &FK(Vh[k]);
+
+        // Loop over the dofs
+        for (int i = FK.dfcbegin(0); i < FK.dfcend(0); ++i) {
+            for (int j = FK.dfcbegin(0); j < FK.dfcend(0); ++j) {
+
+                // Add the contribution to the local matrix
+                dof_data[std::make_pair(FK.loc2glb(i), FK.loc2glb(j))] = cut_index;
+            }
+        }
+    }
+
+    return dof_data;
+}
+
 /**
  * @brief Bilinear form integrated over cut mesh and over time slab
  *
@@ -1804,6 +1853,7 @@ template <typename M> void BaseCutFEM<M>::addFaceStabilization(const itemVFlist_
 // }
 
 template <typename M> void BaseCutFEM<M>::addFaceStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th) {
+    //assert(0);  //! DO NOT USE, INNER EDGE SPECIAL CASE NOT FIXED
     assert(!VF.isRHS());
     assert(Th.get_nb_domain() == 1);
     progress bar(" Add Face Stabilization CutMesh", Th.last_element(), globalVariable::verbose);
@@ -1818,6 +1868,7 @@ template <typename M> void BaseCutFEM<M>::addFaceStabilizationMixed(const itemVF
             int jfac = ifac;
             int kn   = Th.ElementAdj(k, jfac);
             // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
+            if (kn == -1) continue;
             if ((kn < k) && Th.isCut(kn, 0))
                 continue;
 
@@ -1916,7 +1967,7 @@ template <typename M> void BaseCutFEM<M>::addPatchStabilization(const itemVFlist
 }
 
 template <typename M> void BaseCutFEM<M>::addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th) {
-    assert(0);  //! DO NOT USE, INNER EDGE SPECIAL CASE NOT FIXED
+    //assert(0);  //! DO NOT USE, INNER EDGE SPECIAL CASE NOT FIXED
     assert(!VF.isRHS());
     progress bar(" Add Mixed Patch Stabilization CutMesh", Th.last_element(), globalVariable::verbose);
 

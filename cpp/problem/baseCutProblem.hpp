@@ -38,6 +38,7 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     using itemVFlist_t = ListItemVF<mesh_t>;
 
     int number_of_stabilized_edges;
+    std::map<std::pair<int, int>, int> dof_data;    // (i, j), cut_index (0 - not cut, in Omega0; 1 - cut, in Omega0; 2 - not cut, in Omega1: 3 - cut, in Omega1)
 
   public:
     BaseCutFEM(const ProblemOption &option) : BaseFEM<Mesh>(option) {}
@@ -141,7 +142,9 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
 
     // Face stabilization
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &);
+    void addFaceStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &);
     void addFaceStabilizationMixed(const itemVFlist_t &VF, const CutMesh &);
+    void addFaceStabilizationMixed(const itemVFlist_t &VF, const BarycentricActiveMesh2 &);
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In);
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In, int itq);
     void addFaceStabilization(const itemVFlist_t &VF, const CutMesh &, int itq, const TimeSlab &In);
@@ -175,6 +178,7 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     // void addPatchStabilizationExterior(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th, const TimeSlab &In);
     void addPatchStabilization(const itemVFlist_t &VF, const CutMesh &, const TimeSlab &In, const int itq);
     void addPatchStabilizationMixed(const itemVFlist_t &VF, const CutMesh &Th);
+    void addPatchStabilizationMixed(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th);
     void addElementStabilization(const itemVFlist_t &VF, const Interface<Mesh> &interface, const CutMesh &Th);
 
 
@@ -206,6 +210,7 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
 
     void saveSolutionBackMesh(std::span<double> sol, FunFEM<Mesh>& f_back);
 
+    const std::map<std::pair<int,int>, int>& get_dof_data(const FESpace &Vh, const CutMesh &Th);
 
     int get_number_of_stabilized_edges() { return number_of_stabilized_edges; }
 };

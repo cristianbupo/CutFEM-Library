@@ -1,6 +1,50 @@
 #include "baseProblem.hpp" 
 #include "baseCutProblem.hpp" 
 
+template <> void BaseCutFEM<Mesh2>::addFaceStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(!VF.isRHS());
+    assert(Th.get_nb_domain() == 1);
+    progress bar(" Add Face Stabilization CutMesh", Th.last_element(), globalVariable::verbose);
+
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        bar += Th.next_element();
+
+        int domain = Th.get_domain_element(k);
+        
+        // const int active_micro_idx_d = k - ((domain == 0) ? 0 : Th.get_nb_element(0));  // the to domain local active mesh index
+        // const int k_macro = Th.inverse_active_macro_map_d[domain].at(active_micro_idx_d);
+        const int k_macro = Th.macro_of_micro(k);
+        // std::cout << "Element " << k << " (local in active mesh = " << k - idx_shift << "), belongs to domain " << domain << " and macro element " << k_macro << "\n";
+        if (!Th.is_macro_cut(k_macro, domain, 0))
+            continue;
+
+        
+        for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+            // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
+            if (kn == -1) continue;
+
+            //if (Th.get_domain_element(kn) != domain) continue; // <- critical fix
+
+            const int kn_macro = Th.macro_of_micro(kn);
+
+            if ((kn < k) && Th.is_macro_cut(kn_macro, domain, 0))
+                continue;
+            
+
+            int kb  = Th.idxElementInBackMesh(k);
+            int kbn = Th.idxElementInBackMesh(kn);
+
+            std::pair<int, int> e1 = std::make_pair(kb, ifac);
+            std::pair<int, int> e2 = std::make_pair(kbn, jfac);
+            BaseFEM<Mesh2>::addFaceContribution(VF, e1, e2, nullptr, 0, 1.);
+        }
+        this->addLocalContribution();
+    }
+    bar.end();
+}
 
 template <> void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
     assert(!VF.isRHS());
@@ -48,12 +92,118 @@ template <> void BaseCutFEM<Mesh2>::addPatchStabilization(const itemVFlist_t &VF
             const int kb  = Th.idxElementInBackMesh(k, domain);
             const int kbn = Th.idxElementInBackMesh(kn, domain);
             
-            const int kbn_macro = Th.macro_idx_in_background_mesh_[domain][kn_macro];
-            const int kb_macro = Th.macro_idx_in_background_mesh_[domain][k_macro];
+            // const int kbn_macro = Th.macro_idx_in_background_mesh_[domain][kn_macro];
+            // const int kb_macro = Th.macro_idx_in_background_mesh_[domain][k_macro];
 
             // std::cout << "Domain " << domain << " stabilizing face between micro elements " << kb << " and " << kbn << " in the macros " << kb_macro << ", " << kbn_macro <<  "\n";
             // std::cout << "The element " << kb << " is (" << Th.Th[kb][0] << "), (" << Th.Th[kb][1] << "), (" << Th.Th[kb][2] << ")\n";
             BaseFEM<Mesh2>::addPatchContribution(VF, k, kn, nullptr, 0, 1.);
+            num_stab_faces++;
+        }
+        this->addLocalContribution();
+    }
+    bar.end();
+    //std::cout << "Number of stabilized faces: " << num_stab_faces << "\n";
+}
+
+
+template <> void BaseCutFEM<Mesh2>::addFaceStabilizationMixed(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(!VF.isRHS());
+    assert(Th.get_nb_domain() == 1);
+    progress bar(" Add Face Stabilization CutMesh", Th.last_element(), globalVariable::verbose);
+
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        bar += Th.next_element();
+
+        int domain = Th.get_domain_element(k);
+        
+        // const int active_micro_idx_d = k - ((domain == 0) ? 0 : Th.get_nb_element(0));  // the to domain local active mesh index
+        // const int k_macro = Th.inverse_active_macro_map_d[domain].at(active_micro_idx_d);
+        const int k_macro = Th.macro_of_micro(k);
+        // std::cout << "Element " << k << " (local in active mesh = " << k - idx_shift << "), belongs to domain " << domain << " and macro element " << k_macro << "\n";
+        if (!Th.is_macro_cut(k_macro, domain, 0))
+            continue;
+
+        
+        for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+            // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
+            if (kn == -1) continue;
+
+            //if (Th.get_domain_element(kn) != domain) continue; // <- critical fix
+
+            const int kn_macro = Th.macro_of_micro(kn);
+
+            if ((kn < k) && Th.is_macro_cut(kn_macro, domain, 0))
+                continue;
+            
+
+            int kb  = Th.idxElementInBackMesh(k);
+            int kbn = Th.idxElementInBackMesh(kn);
+
+            std::pair<int, int> e1 = std::make_pair(kb, ifac);
+            std::pair<int, int> e2 = std::make_pair(kbn, jfac);
+            BaseFEM<Mesh2>::addFaceContributionMixed(VF, e1, e2, nullptr, 0, 1.);
+        }
+        this->addLocalContribution();
+    }
+    bar.end();
+}
+
+template <> void BaseCutFEM<Mesh2>::addPatchStabilizationMixed(const itemVFlist_t &VF, const BarycentricActiveMesh2 &Th) {
+    assert(!VF.isRHS());
+    progress bar(" Add Patch Stabilization BarycentricActiveMesh2", Th.last_element(), globalVariable::verbose);
+
+    size_t num_stab_faces = 0;
+
+    // Loop over micro element
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+        bar += Th.next_element();
+
+        int domain = Th.get_domain_element(k);
+        
+        // const int active_micro_idx_d = k - ((domain == 0) ? 0 : Th.get_nb_element(0));  // the to domain local active mesh index
+        // const int k_macro = Th.inverse_active_macro_map_d[domain].at(active_micro_idx_d);
+        const int k_macro = Th.macro_of_micro(k);
+        // std::cout << "Element " << k << " (local in active mesh = " << k - idx_shift << "), belongs to domain " << domain << " and macro element " << k_macro << "\n";
+        if (!Th.is_macro_cut(k_macro, domain, 0))
+            continue;
+
+        // if (!Th.isCut(k, 0) && !Th.isInactive(k, 0))
+        //     continue;
+        for (int ifac = 0; ifac < Element::nea; ++ifac) { // loop over the edges / faces
+
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+        
+            // ONLY INNER EDGE && LOWER INDEX TAKE CARE OF THE INTEGRATION
+            // if (kn < k)
+            //     continue;
+            if (kn == -1) continue;
+
+            // int kn_macro = Th.inverse_active_macro_map_d[domain][kn];
+            // if (kn < k && Th.is_macro_cut(kn, domain, 0))
+
+            // if (Th.get_domain_element(kn) != domain) continue; // <- critical fix
+
+            const int kn_macro = Th.macro_of_micro(kn);
+
+            if ((kn < k) && Th.is_macro_cut(kn_macro, domain, 0))
+                continue;
+            
+                // std::pair<int, int> e1 = std::make_pair(k, ifac);
+            // std::pair<int, int> e2 = std::make_pair(kn, jfac);
+            const int kb  = Th.idxElementInBackMesh(k, domain);
+            const int kbn = Th.idxElementInBackMesh(kn, domain);
+            
+            // const int kbn_macro = Th.macro_idx_in_background_mesh_[domain][kn_macro];
+            // const int kb_macro = Th.macro_idx_in_background_mesh_[domain][k_macro];
+
+            // std::cout << "Domain " << domain << " stabilizing face between micro elements " << kb << " and " << kbn << " in the macros " << kb_macro << ", " << kbn_macro <<  "\n";
+            // std::cout << "The element " << kb << " is (" << Th.Th[kb][0] << "), (" << Th.Th[kb][1] << "), (" << Th.Th[kb][2] << ")\n";
+            BaseFEM<Mesh2>::addPatchContributionMixed(VF, kb, kbn, nullptr, 0, 1.);
             num_stab_faces++;
         }
         this->addLocalContribution();

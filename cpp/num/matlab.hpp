@@ -101,6 +101,19 @@ void Export(std::map<std::pair<A, A>, R> &dF, std::string filename) {
 }
 
 template <class A>
+void Export(std::map<std::pair<A, A>, int> &dF, std::string filename) {
+   std::ofstream plot;
+   plot.open(filename.c_str(), std::ofstream::out);
+   plot << std::setprecision(16);
+   for (std::map<std::pair<int, int>, int>::const_iterator q = dF.begin();
+        q != dF.end(); ++q) {
+      plot << q->first.first + 1 << "\t" << q->first.second + 1 << "\t"
+           << q->second << std::endl;
+   }
+   plot.close();
+}
+
+template <class A>
 void Export(std::map<std::pair<int, int>, R> &dF, const A &mapp,
             std::string filename) {
    std::ofstream plot;

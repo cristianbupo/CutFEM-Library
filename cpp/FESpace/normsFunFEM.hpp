@@ -14,6 +14,7 @@ You should have received a copy of the GNU General Public License along with
 CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 */
 
+#include <limits>
 
 template <typeMesh mesh_t, FunctionDomain fct>
 double L2normCut(const std::vector<std::shared_ptr<ExpressionVirtual>>& components, fct fex, const ActiveMesh<mesh_t> &Th, const MacroElement<mesh_t> *macro = nullptr) {
@@ -1215,6 +1216,82 @@ double max_norm_surface(const std::shared_ptr<ExpressionVirtual> &fh, const Inte
             Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
 
             val = std::max(val, std::fabs(fh->evalOnBackMesh(kb, 0, mip, normal)));
+        }
+    }
+    double val_receive = 0;
+#ifdef USE_MPI
+    MPIcf::AllReduce(val, val_receive, MPI_MAX);
+#else
+    val_receive = val;
+#endif
+
+    return val_receive;
+}
+
+
+template <typename Mesh>
+double max_val_surface(const std::shared_ptr<ExpressionVirtual> &fh, const Interface<Mesh> &interface) {
+    typedef GFESpace<Mesh> FESpace;
+    typedef typename FESpace::FElement FElement;
+    typedef typename FElement::QFB QFB;
+    typedef typename FElement::Rd Rd;
+    typedef typename QFB::QuadraturePoint QuadraturePoint;
+
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8)); //? should it be 2 instead of 3 here?
+    What_d Fop = Fwhatd(op_id);
+
+    double val = 0.;
+
+    for (int iface = interface.first_element(); iface < interface.last_element(); iface += interface.next_element()) {
+
+        const int kb = interface.idxElementOfFace(iface); // idx on backMesh
+
+        const Rd normal(-interface.normal(iface));
+
+
+        for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+
+            QuadraturePoint ip(qfb[ipq]);                                                  // integration point
+            Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
+
+            val = std::max(val, fh->evalOnBackMesh(kb, 0, mip, normal));
+        }
+    }
+    double val_receive = 0;
+#ifdef USE_MPI
+    MPIcf::AllReduce(val, val_receive, MPI_MAX);
+#else
+    val_receive = val;
+#endif
+
+    return val_receive;
+}
+template <typename Mesh>
+double min_val_surface(const std::shared_ptr<ExpressionVirtual> &fh, const Interface<Mesh> &interface) {
+    typedef GFESpace<Mesh> FESpace;
+    typedef typename FESpace::FElement FElement;
+    typedef typename FElement::QFB QFB;
+    typedef typename FElement::Rd Rd;
+    typedef typename QFB::QuadraturePoint QuadraturePoint;
+
+    const QFB &qfb(*QF_Simplex<typename FElement::RdHatBord>(8)); //? should it be 2 instead of 3 here?
+    What_d Fop = Fwhatd(op_id);
+
+    double val = std::numeric_limits<double>::max();
+
+    for (int iface = interface.first_element(); iface < interface.last_element(); iface += interface.next_element()) {
+
+        const int kb = interface.idxElementOfFace(iface); // idx on backMesh
+
+        const Rd normal(-interface.normal(iface));
+
+
+        for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+
+            QuadraturePoint ip(qfb[ipq]);                                                  // integration point
+            Rd mip = interface.mapToPhysicalFace(iface, (typename FElement::RdHatBord)ip); // mip - map quadrature point
+
+            val = std::min(val, fh->evalOnBackMesh(kb, 0, mip, normal));
         }
     }
     double val_receive = 0;

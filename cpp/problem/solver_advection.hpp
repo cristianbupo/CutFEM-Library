@@ -27,9 +27,14 @@ template <typename mesh_t> class StreamLineDiffusion : public DefaultExpression 
     StreamLineDiffusion(const fct_t &u, double hh, double ddt) : U(u), h(hh), dt(ddt) {}
 
     double evalOnBackMesh(const int k, int dom, const R *x, const R t, const R *normal) const final {
-        double ux = U.eval(k, x, 0, op_id);
-        double uy = U.eval(k, x, 1, op_id);
-        return 2. / std::sqrt(1. / (dt * dt) + sqrt(ux * ux + uy * uy) / (h * h));
+
+        double norm_sq = 0.;
+        for (int d = 0; d < mesh_t::D; ++d) {
+            norm_sq += U.eval(k, x, d, op_id)*U.eval(k, x, d, op_id);
+        }
+
+        return 2. / std::sqrt(1. / (dt * dt) + sqrt(norm_sq) / (h * h)); 
+            
     }
 
   private:
@@ -75,6 +80,58 @@ std::vector<double> solve(const FunFEM<Mesh2> &u_init, const FunFEM<Mesh2> &beta
     return problem.rhs_;
 }
 
+/// @brief Solve PDE advection in R3 using Crang Nicolson scheme for the time derivative
+/// @param u_init Solution at time n
+/// @param betap velocity field at time n
+/// @param beta velocity at time n+1
+/// @param dt time step
+/// @return vector containing the dof of the solution
+std::vector<double> solve(const FunFEM<Mesh3> &u_init, const FunFEM<Mesh3> &betap, const FunFEM<Mesh3> &beta,
+                          double dt) {
+
+    const auto &Vh = u_init.getSpace();
+    const auto &Th = Vh.Th;
+    FEM<Mesh3> problem(Vh);
+    TestFunction<Mesh3> u(Vh, 1), v(Vh, 1);
+
+    // double h = Th[0].hElement();
+    double h = Th.get_mesh_size();
+    auto U   = beta.exprList();
+    auto Up  = betap.exprList();
+    auto u0  = u_init.expr();
+
+    auto tauSD = std::make_shared<StreamLineDiffusion<Mesh3>>(beta, h, dt);
+
+    problem.addBilinear((u + (U * (0.5 * dt * grad(u))), v + U * (tauSD * grad(v))), Th);
+    problem.addLinear(innerProduct(u0 - 0.5 * dt * (Up[0] * dx(u0) + Up[1] * dy(u0) + Up[2] * dz(u0)), v + U * (tauSD * grad(v))), Th);
+
+    problem.solve();
+
+    return problem.rhs_;
+}
+
+
+void solve(const FunFEM<Mesh3> &u_init, const FunFEM<Mesh3> &betap, const FunFEM<Mesh3> &beta, double dt, FunFEM<Mesh3> &ls) {
+    const auto &Vh = u_init.getSpace();
+    const auto &Th = Vh.Th;
+    FEM<Mesh3> problem(Vh);
+    TestFunction<Mesh3> u(Vh, 1), v(Vh, 1);
+
+    // double h = Th[0].hElement();
+    double h = Th.get_mesh_size();
+    auto U   = beta.exprList();
+    auto Up  = betap.exprList();
+    auto u0  = u_init.expr();
+
+    auto tauSD = std::make_shared<StreamLineDiffusion<Mesh3>>(beta, h, dt);
+
+    problem.addBilinear((u + (U * (0.5 * dt * grad(u))), v + U * (tauSD * grad(v))), Th);
+    problem.addLinear(innerProduct(u0 - 0.5 * dt * (Up[0] * dx(u0) + Up[1] * dy(u0) + Up[2] * dz(u0)), v + U * (tauSD * grad(v))), Th);
+
+    problem.solve("mumps");
+
+    ls.init(problem.rhs_);
+}
 } // namespace streamline_diffusion
 } // namespace advection
 } // namespace fem

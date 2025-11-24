@@ -292,9 +292,11 @@ template <typename T, typename B, typename V> class GenericMesh {
         delete[] vertices;
     }
 
-  private:
-    GenericMesh(const GenericMesh &);    // pas de construction par copie
-    void operator=(const GenericMesh &); // pas affectation par copy
+    GenericMesh(const GenericMesh &) = delete;
+    GenericMesh& operator=(const GenericMesh &) = delete;
+    GenericMesh(GenericMesh &&) = delete;
+    GenericMesh& operator=(GenericMesh &&) = delete;
+
 };
 
 template <typename GMesh> class BuildAdjacencyOfMesh {

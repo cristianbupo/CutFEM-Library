@@ -396,7 +396,7 @@ class ExpressionVirtual {
     virtual R evalOnBackMesh(const int k, int dom, const R *x, const R *normal = nullptr) const            = 0;
     virtual R evalOnBackMesh(const int k, int dom, const R *x, const R t, const R *normal = nullptr) const = 0;
     virtual int idxElementFromBackMesh(int kb, int dd = 0) const                                           = 0;
-    virtual std::vector<int> getAllDomainId(int k) const { assert(0); };
+    virtual std::vector<int> getAllDomainId(int k) const { assert(0); return std::vector<int>();};
 
   public:
     R GevalOnBackMesh(const int k, int dom, const R *x, const R *normal) const {
@@ -408,7 +408,7 @@ class ExpressionVirtual {
         return evalOnBackMesh(k, theDomain, x, t, normal);
     }
 
-    virtual int size() const { assert(0); };
+    virtual int size() const { assert(0); return 0;};
 
     ExpressionVirtual &operator=(const ExpressionVirtual &L) {
         cu  = L.cu;

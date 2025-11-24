@@ -752,6 +752,7 @@ template <> bool RefPartition<Hexa>::assign(const SignPattern<Hexa> &cut) {
 template <>
 Ubyte RefPartition<Hexa>::first_uncut_edge(const SignPattern<Hexa> &cut) const {
    assert(0);
+   return static_cast<Ubyte>(0);
 }
 template <>
 void Partition<Edge2>::get_list_node(std::vector<R2> &node, int s) const {

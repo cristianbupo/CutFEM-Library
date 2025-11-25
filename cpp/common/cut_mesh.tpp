@@ -899,6 +899,7 @@ template <typename Mesh> int ActiveMesh<Mesh>::get_domain_element(const int k) c
     }
     std::cout << " Mesh::Element " << k << std::endl;
     assert(0);
+    return -1;
 }
 
 template <typename Mesh> bool ActiveMesh<Mesh>::isCut(int k, int itq) const {

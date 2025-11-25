@@ -1304,6 +1304,52 @@ double min_val_surface(const std::shared_ptr<ExpressionVirtual> &fh, const Inter
     return val_receive;
 }
 
+template <typeMesh mesh_t> double max_val(const std::shared_ptr<ExpressionVirtual> &fh, const mesh_t &Th) {
+    using fespace_t = GFESpace<mesh_t>;
+    using fe_t      = typename fespace_t::FElement;
+    using e_t       = typename mesh_t::Element;
+    using QF        = typename fe_t::QF;
+    using QFB       = typename fe_t::QFB;
+    using v_t       = typename fe_t::Rd;
+    using qp_t      = typename QF::QuadraturePoint;
+
+    const QF &qf(*QF_Simplex<typename fe_t::RdHat>(8));
+    const QFB &qfb(*QF_Simplex<typename fe_t::RdHatBord>(8));
+
+    What_d Fop = Fwhatd(op_id);
+    double val = 0.;
+
+    for (int kb = Th.first_element(); kb < Th.last_element(); kb += Th.next_element()) {
+
+        const e_t &K(Th[kb]);
+
+        for (int ipq = 0; ipq < qf.getNbrOfQuads(); ++ipq) {
+            auto ip(qf[ipq]); // integration point
+            v_t mip = K.mapToPhysicalElement(ip);
+            val     = std::max(val, fabs(fh->eval(kb, mip)));
+        }
+
+        for (int ifac = 0; ifac < e_t::nea; ++ifac) {
+            for (int ipq = 0; ipq < qfb.getNbrOfQuads(); ++ipq) {
+                auto ip(qfb[ipq]); // integration point
+                auto ipf = K.mapToReferenceElement(ip, ifac);
+                v_t mip  = K.mapToPhysicalElement(ipf);
+                val      = std::max(val, fabs(fh->eval(kb, mip)));
+            }
+        }
+        
+    }
+    double val_receive = 0;
+#ifdef USE_MPI
+    MPIcf::AllReduce(val, val_receive, MPI_MAX);
+#else
+    val_receive = val;
+#endif
+
+    return val_receive;
+
+
+}
 template <typename M> double maxNormCut(const std::shared_ptr<ExpressionVirtual> &fh, const ActiveMesh<M> &Th) {
     int nb_dom = Th.get_nb_domain();
     double val = 0.;

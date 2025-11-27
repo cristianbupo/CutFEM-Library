@@ -93,7 +93,7 @@ const std::map<std::pair<int,int>, int>& BaseCutFEM<M>::get_dof_index_data(const
                     dof_index_data.emplace(key, cut_index);
                 } else {
                     // Already have a value: Check overwrite rules
-                    std::cout << "here1\n"; // Debug print
+                    // std::cout << "here1\n"; // Debug print
 
                     const int existing_cut_index = it->second;
                     const bool existing_is_cut   = (existing_cut_index == 1 || existing_cut_index == 3);
@@ -161,7 +161,7 @@ std::map<int, std::pair<typename BaseCutFEM<M>::Rd, int>>& BaseCutFEM<M>::get_do
                 dof_vertex_data.emplace(FK.loc2glb(i), std::make_pair(P, cut_index));
             } else {
                 // Already have a value: Check overwrite rules
-                std::cout << "here\n"; // Debug print
+                // std::cout << "here\n"; // Debug print
 
                 
                 const int existing_cut_index = it->second.second;

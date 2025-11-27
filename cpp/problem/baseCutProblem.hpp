@@ -38,7 +38,9 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
     using itemVFlist_t = ListItemVF<mesh_t>;
 
     int number_of_stabilized_edges;
-    std::map<std::pair<int, int>, int> dof_data;    // (i, j), cut_index (0 - not cut, in Omega0; 1 - cut, in Omega0; 2 - not cut, in Omega1: 3 - cut, in Omega1)
+    std::map<std::pair<int, int>, int> dof_index_data;    // (i, j), cut_index (0 - not cut, in Omega0; 1 - cut, in Omega0; 2 - not cut, in Omega1: 3 - cut, in Omega1)
+    std::map<int, std::pair<Rd, int>> dof_vertex_data;    // (global_idx, (global_dof, cut_index)), cut_index (0 - not cut, in Omega0; 1 - cut, in Omega0; 2 - not cut, in Omega1: 3 - cut, in Omega1)
+    // const std::vector<std::pair<Rd, int>> dof_vertex_data;    // dof, cut_index (0 - not cut, in Omega0; 1 - cut, in Omega0; 2 - not cut, in Omega1: 3 - cut, in Omega1)
 
   public:
     BaseCutFEM(const ProblemOption &option) : BaseFEM<Mesh>(option) {}
@@ -210,7 +212,11 @@ template <typename Mesh> class BaseCutFEM : public BaseFEM<Mesh> {
 
     void saveSolutionBackMesh(std::span<double> sol, FunFEM<Mesh>& f_back);
 
-    const std::map<std::pair<int,int>, int>& get_dof_data(const FESpace &Vh, const CutMesh &Th);
+    const std::map<std::pair<int,int>, int>& get_dof_index_data(const FESpace &Vh, const CutMesh &Th);
+
+    std::map<int, std::pair<Rd, int>>& get_dof_vertex_data(const FESpace &Vh, const CutMesh &Th);
+
+    // const std::vector<std::pair<Rd, int>> &get_dof_vertex_data(const FESpace &Vh, const CutMesh &Th);
 
     int get_number_of_stabilized_edges() { return number_of_stabilized_edges; }
 };

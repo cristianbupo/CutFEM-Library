@@ -127,6 +127,19 @@ void Export(std::map<std::pair<int, int>, R> &dF, const A &mapp,
    plot.close();
 }
 
+template <class Rd>
+void Export(std::map<int, std::pair<Rd, int>> &dF, std::string filename) {
+   std::ofstream plot;
+   plot.open(filename.c_str(), std::ofstream::out);
+   plot << std::setprecision(16);
+   for (typename std::map<int, std::pair<Rd, int>>::const_iterator q = dF.begin();
+        q != dF.end(); ++q) {
+      plot << q->first << "\t"
+           << q->second.first << "\t" << q->second.second << std::endl;
+   }
+   plot.close();
+}
+
 template <class Mesh> void Export(const Mesh &mesh) {
    std::ofstream plot;
    plot.open("nodes.dat", std::ofstream::out);

@@ -52,70 +52,134 @@ template <typename M> void BaseCutFEM<M>::addBilinear(const itemVFlist_t &VF, co
 }
 
 template <typename M> 
-const std::map<std::pair<int,int>, int>&
-BaseCutFEM<M>::get_dof_data(const FESpace &Vh, const CutMesh &Th) {
-    dof_data.clear();
+const std::map<std::pair<int,int>, int>& BaseCutFEM<M>::get_dof_index_data(const FESpace &Vh, const CutMesh &Th) {
+    dof_index_data.clear();
 
     for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
 
         if (Th.isInactive(k, 0))
             continue;
 
-        std::cout << "Element k = " << k
-                  << " belongs to domain " << Th.get_domain_element(k) << std::endl;
-
-        const int domain = Th.get_domain_element(k);
+        const int domain = Th.get_domain_element(k); // 0 or 1
         int cut_index    = -1;
 
-        if (Th.isCut(k, 0)) {
-            if (domain == 0) {
-                cut_index = 1;
-            } else if (domain == 1) {
-                cut_index = 3;
-            }
-            std::cout << ".... the element is cut\n";
+        // Determine the current element's cut_index based on the 0/1/2/3 rule
+        const bool current_is_cut_el = Th.isCut(k, 0);
+
+        if (domain == 0) {
+            cut_index = current_is_cut_el ? 1 : 0; // 0: Not Cut, Omega0; 1: Cut, Omega0
+        } else if (domain == 1) {
+            cut_index = current_is_cut_el ? 3 : 2; // 2: Not Cut, Omega1; 3: Cut, Omega1
         } else {
-            std::cout << ".... the element is NOT cut\n";
-            if (domain == 0) {
-                cut_index = 0;
-            } else if (domain == 1) {
-                cut_index = 2;
-            }
+             // Handle unexpected domain index (optional, but safe)
+             assert(false && "Unexpected Domain Index"); 
         }
 
         assert(cut_index >= 0);
 
-        const bool is_cut = (cut_index == 1 || cut_index == 3);
+        const bool current_is_cut = (cut_index == 1 || cut_index == 3);
 
         const FElement &FK(Vh[k]);
 
-        // Loop over the dofs
+        // Loop over the DoF pairs
         for (int i = FK.dfcbegin(0); i < FK.dfcend(0); ++i) {
             for (int j = FK.dfcbegin(0); j < FK.dfcend(0); ++j) {
 
                 auto key = std::make_pair(FK.loc2glb(i), FK.loc2glb(j));
-                auto it  = dof_data.find(key);
+                auto it  = dof_index_data.find(key);
 
-                if (it == dof_data.end()) {
-                    // First time we see this (i,j): just insert
-                    dof_data.emplace(key, cut_index);
+                if (it == dof_index_data.end()) {
+                    // 1. First time: always insert
+                    dof_index_data.emplace(key, cut_index);
                 } else {
-                    // Already have a value: overwrite only if current is cut
-                    const int existing        = it->second;
-                    const bool existing_is_cut = (existing == 1 || existing == 3);
+                    // Already have a value: Check overwrite rules
+                    std::cout << "here1\n"; // Debug print
 
-                    if (!existing_is_cut && is_cut) {
-                        // Upgrade non-cut -> cut
+                    const int existing_cut_index = it->second;
+                    const bool existing_is_cut   = (existing_cut_index == 1 || existing_cut_index == 3);
+
+                    if (current_is_cut && !existing_is_cut) {
+                        // Rule 1: Upgrade from interior/exterior (0 or 2) to cut (1 or 3)
                         it->second = cut_index;
-                    }
-                    // else: keep existing (already cut, or current not cut)
+                    } 
+                    // Rule 2: If existing is cut (1 or 3), we do nothing. The cut status prevails.
+                    // Rule 3: If both are non-cut (0 or 2), we keep the existing domain index.
+
+                    // We do NOT need to check domains here because the cut status (1 or 3) already implies the domain (0 or 1).
+                    // If we overwrite 0->1, the domain is preserved (Omega0).
+                    // If we overwrite 2->3, the domain is preserved (Omega1).
                 }
             }
         }
     }
 
-    return dof_data;
+    return dof_index_data;
 }
+
+template <typename M> 
+std::map<int, std::pair<typename BaseCutFEM<M>::Rd, int>>& BaseCutFEM<M>::get_dof_vertex_data(const FESpace &Vh, const CutMesh &Th) {
+    dof_vertex_data.clear();
+
+    // dof_vertex_data[i] = (global_idx, (global_dof, cut_index))
+
+    for (int k = Th.first_element(); k < Th.last_element(); k += Th.next_element()) {
+
+        if (Th.isInactive(k, 0))
+            continue;
+
+        const int domain = Th.get_domain_element(k); // 0 or 1
+        int cut_index    = -1;
+
+        // Determine the current element's cut_index based on the 0/1/2/3 rule
+        const bool current_is_cut_el = Th.isCut(k, 0);
+
+        if (domain == 0) {
+            cut_index = current_is_cut_el ? 1 : 0; // 0: Not Cut, Omega0; 1: Cut, Omega0
+        } else if (domain == 1) {
+            cut_index = current_is_cut_el ? 3 : 2; // 2: Not Cut, Omega1; 3: Cut, Omega1
+        } else {
+             // Handle unexpected domain index (optional, but safe)
+             assert(false && "Unexpected Domain Index"); 
+        }
+
+        assert(cut_index >= 0);
+
+        const bool current_is_cut = (cut_index == 1 || cut_index == 3);
+
+        const FElement &FK(Vh[k]);
+
+        // Loop over the DoFs (nodes) associated with vertices
+        for (int i = FK.dfcbegin(0); i < FK.dfcend(0); ++i) {
+            
+            const Rd P = FK.Pt(i); // Get the physical coordinate of the DoF
+            // auto key = std::make_pair(FK.loc2glb(i), std::make_pair(P, cut_index));
+            
+            auto it  = dof_vertex_data.find(FK.loc2glb(i));
+            
+            if (it == dof_vertex_data.end()) {
+                // 1. First time: always insert
+                dof_vertex_data.emplace(FK.loc2glb(i), std::make_pair(P, cut_index));
+            } else {
+                // Already have a value: Check overwrite rules
+                std::cout << "here\n"; // Debug print
+
+                
+                const int existing_cut_index = it->second.second;
+                const bool existing_is_cut   = (existing_cut_index == 1 || existing_cut_index == 3);
+
+                if (current_is_cut && !existing_is_cut) {
+                    // Rule 1: Upgrade from interior/exterior (0 or 2) to cut (1 or 3)
+                    it->second.second = cut_index;
+                }
+                // Rule 2: If existing is cut (1 or 3), we do nothing (preserve cut status).
+                // Rule 3: If both are non-cut (0 or 2), we preserve the existing domain index (0 or 2).
+            }
+        }
+    }
+
+    return dof_vertex_data;
+}
+
 
 
 /**

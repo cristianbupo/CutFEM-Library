@@ -66,14 +66,29 @@ const std::map<std::pair<int,int>, int>& BaseCutFEM<M>::get_dof_index_data(const
         // Determine the current element's cut_index based on the 0/1/2/3 rule
         const bool current_is_cut_el = Th.isCut(k, 0);
 
+        // actually i want to consider a dof if it belongs to a cut element or its neighbor element is cut
+        bool neighbor_is_cut_el = false;
+        for (int ifac = 0; ifac < Element::nea; ++ifac) { 
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+            if (Th.isCut(kn, 0)) {
+                neighbor_is_cut_el = true;
+                break;
+            }
+        }
+
+        const bool is_cut = current_is_cut_el || neighbor_is_cut_el;
+        
+
         if (domain == 0) {
-            cut_index = current_is_cut_el ? 1 : 0; // 0: Not Cut, Omega0; 1: Cut, Omega0
+            cut_index = is_cut ? 1 : 0; // 0: Not Cut, Omega0; 1: Cut, Omega0
         } else if (domain == 1) {
-            cut_index = current_is_cut_el ? 3 : 2; // 2: Not Cut, Omega1; 3: Cut, Omega1
+            cut_index = is_cut ? 3 : 2; // 2: Not Cut, Omega1; 3: Cut, Omega1
         } else {
              // Handle unexpected domain index (optional, but safe)
              assert(false && "Unexpected Domain Index"); 
         }
+
 
         assert(cut_index >= 0);
 
@@ -133,18 +148,34 @@ std::map<int, std::pair<typename BaseCutFEM<M>::Rd, int>>& BaseCutFEM<M>::get_do
         // Determine the current element's cut_index based on the 0/1/2/3 rule
         const bool current_is_cut_el = Th.isCut(k, 0);
 
+        // actually i want to consider a dof if it belongs to a cut element or its neighbor element is cut
+        bool neighbor_is_cut_el = false;
+        for (int ifac = 0; ifac < Element::nea; ++ifac) { 
+            int jfac = ifac;
+            int kn   = Th.ElementAdj(k, jfac);
+            if (Th.isCut(kn, 0)) {
+                neighbor_is_cut_el = true;
+                break;
+            }
+        }
+
+        const bool is_cut = current_is_cut_el || neighbor_is_cut_el;
+        
+
         if (domain == 0) {
-            cut_index = current_is_cut_el ? 1 : 0; // 0: Not Cut, Omega0; 1: Cut, Omega0
+            cut_index = is_cut ? 1 : 0; // 0: Not Cut, Omega0; 1: Cut, Omega0
         } else if (domain == 1) {
-            cut_index = current_is_cut_el ? 3 : 2; // 2: Not Cut, Omega1; 3: Cut, Omega1
+            cut_index = is_cut ? 3 : 2; // 2: Not Cut, Omega1; 3: Cut, Omega1
         } else {
              // Handle unexpected domain index (optional, but safe)
              assert(false && "Unexpected Domain Index"); 
         }
 
         assert(cut_index >= 0);
-
+        
         const bool current_is_cut = (cut_index == 1 || cut_index == 3);
+
+        std::cout << "k = " << k << ", cut_index = " << cut_index << ", current_is_cut = " << current_is_cut << "\n";
 
         const FElement &FK(Vh[k]);
 

@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
         double maxErrDiv = maxNormCut(femSol_0dx + femSol_1dy, fun_div, Kh_i);
         // [PLOTTING]
 
-        if (MPIcf::IamMaster()) {
+        if (true) {
             fct_t divSolh(Ph, fun_div);
             auto femDiv = divSolh.expr();
 

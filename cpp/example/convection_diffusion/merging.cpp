@@ -252,6 +252,8 @@ int main(int argc, char **argv) {
 
     // Space integration quadrature
     const std::string solver("umfpack");
+    std::cout << "FORCING OUTPUT NOW..." << std::endl;
+    std::string path_output_figures = "/mnt/nvme0n1p4/output_figures/merging/";
 
     CutFEM<mesh_t> convdiff(qTime);
 
@@ -500,13 +502,15 @@ int main(int argc, char **argv) {
             global_conservation_errors_t.push_back(global_conservation_error);
 
 
-            if ((iterations == 1) && (h > 0.001)) {
+            //if ((iterations == 1) && (h > 0.001)) {
+            if (true) {
                 //Fun_h sol_h(Wh, sol);
-                Paraview<mesh_t> writerTh(Th, "Th.vtk");
+                Paraview<mesh_t> writerTh(Th, path_output_figures + "Th.vtk");
+                std::cout << path_output_figures + "Th.vtk" << std::endl;
                 #if defined(merging2D)
-                Paraview<mesh_t> writer(Thi, "merging_circles_" + std::to_string(iter + 1) + ".vtk");
+                Paraview<mesh_t> writer(Thi, path_output_figures + "merging_circles_" + std::to_string(iter + 1) + ".vtk");
                 #elif defined(merging3D)
-                Paraview<mesh_t> writer(Thi, "merging_spheres_" + std::to_string(iter + 1) + ".vtk");
+                Paraview<mesh_t> writer(Thi, path_output_figures + "merging_spheres_" + std::to_string(iter + 1) + ".vtk");
                 #endif
                 writer.add(uh0, "bulk_0", 0, 1);
                 writer.add(funuh, "bulk_N", 0, 1);

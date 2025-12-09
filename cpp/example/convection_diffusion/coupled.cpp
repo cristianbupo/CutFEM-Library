@@ -223,6 +223,8 @@ int main(int argc, char **argv) {
 
     std::string method(TOSTRING(METHOD));
     std::string stabilization(TOSTRING(STABILIZATION));
+    std::cout << "FORCING OUTPUT NOW..." << std::endl;
+    std::string path_output_figures = "/mnt/nvme0n1p4/output_figures/convection_diffusion/";
 
     // Data file to hold problem data
     
@@ -510,29 +512,29 @@ int main(int argc, char **argv) {
                         //     , In
                         //     , TimeMacroSurf);
 
-                    
-
                         // if (iterations == 1 && h >= 0.01) {
-                        //     Paraview<mesh_t> writerMacro(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.add(ls[0], "levelSet0.vtk", 0, 1);
-                        //     writerMacro.add(ls[1], "levelSet1.vtk", 0, 1);
-                        //     writerMacro.add(ls[2], "levelSet2.vtk", 0, 1);
+                        if (true){   
+                            std::cout << "Output stabilization visualization..." << std::endl;
+                            Paraview<mesh_t> writerMacro(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
+                            writerMacro.add(ls[0], "levelSet0.vtk", 0, 1);
+                            writerMacro.add(ls[1], "levelSet1.vtk", 0, 1);
+                            writerMacro.add(ls[2], "levelSet2.vtk", 0, 1);
 
-                        //     // domain = 0,
+                            // domain = 0,
 
-                        //     writerMacro.writeFaceStab(
-                        //         Thi, 0, path_output_figures + "FullStabilization" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.writeActiveMesh(Thi,
-                        //                                 path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.writeMacroElement(TimeMacro, 0,
-                        //                                 path_output_figures + "macro" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.writeMacroInnerEdge(
-                        //         TimeMacro, 0, path_output_figures + "macro_inner_edge" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.writeMacroOutterEdge(
-                        //         TimeMacro, 0, path_output_figures + "macro_outer_edge" + std::to_string(iter + 1) + ".vtk");
-                        //     writerMacro.writeSmallElements(
-                        //         TimeMacro, 0, path_output_figures + "small_element" + std::to_string(iter + 1) + ".vtk");
-                        // }
+                            writerMacro.writeFaceStab(
+                                Thi, 0, path_output_figures + "FullStabilization" + std::to_string(iter + 1) + ".vtk");
+                            writerMacro.writeActiveMesh(Thi,
+                                                        path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
+                            writerMacro.writeMacroElement(TimeMacro, 0,
+                                                        path_output_figures + "macro" + std::to_string(iter + 1) + ".vtk");
+                            writerMacro.writeMacroInnerEdge(
+                                TimeMacro, 0, path_output_figures + "macro_inner_edge" + std::to_string(iter + 1) + ".vtk");
+                            writerMacro.writeMacroOutterEdge(
+                                TimeMacro, 0, path_output_figures + "macro_outer_edge" + std::to_string(iter + 1) + ".vtk");
+                            writerMacro.writeSmallElements(
+                                TimeMacro, 0, path_output_figures + "small_element" + std::to_string(iter + 1) + ".vtk");
+                        }
 
                     }
 
@@ -705,55 +707,55 @@ int main(int argc, char **argv) {
             local_conservation_errors.push_back(std::fabs(local_conservation_error));
             global_conservation_errors_t.push_back(std::fabs(global_conservation_error));
 
-            // // Write numerical solutions to paraview if iterations == 1
+            // Write numerical solutions to paraview if iterations == 1
             // if ((iterations == 1) && (h >= 0.01)) {
+            if (true){    
+                Paraview<mesh_t> writerTh(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
+                writerTh.add(ls[0], "levelSet0", 0, 1);
+                writerTh.add(ls[1], "levelSet1", 0, 1);
+                writerTh.add(ls[2], "levelSet2", 0, 1);
                 
-            //     Paraview<mesh_t> writerTh(Th, path_output_figures + "Th" + std::to_string(iter + 1) + ".vtk");
-            //     writerTh.add(ls[0], "levelSet0", 0, 1);
-            //     writerTh.add(ls[1], "levelSet1", 0, 1);
-            //     writerTh.add(ls[2], "levelSet2", 0, 1);
+                Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_" + std::to_string(iter + 1) + ".vtk");
+                Paraview<mesh_t> writer_surf(ThGamma, path_output_figures + "surf_" + std::to_string(iter + 1) + ".vtk");
+                // writer.add(b0h, "bulk", 0, 1);
+                // writer.add(sol_h, "bulk_end", 0, 1);
+
+                writer.add(fun_uhB, "bulk", 0, 1);
+                writer_surf.add(fun_uhS, "surf", 0, 1);
+                writer_surf.add(ls[0], "levelSet0", 0, 1);
+                writer_surf.add(ls[1], "levelSet1", 0, 1);
+                writer_surf.add(ls[2], "levelSet2", 0, 1);
+
+                fct_t uBex(Wh, fun_uBulk, current_time);
+                fct_t fB(Wh, fun_rhsBulk, current_time);
                 
-            //     Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_" + std::to_string(iter + 1) + ".vtk");
-            //     Paraview<mesh_t> writer_surf(ThGamma, path_output_figures + "surf_" + std::to_string(iter + 1) + ".vtk");
-            //     // writer.add(b0h, "bulk", 0, 1);
-            //     // writer.add(sol_h, "bulk_end", 0, 1);
+                fct_t uSex(WhGamma, fun_uSurf, current_time);
+                fct_t fS(WhGamma, fun_rhsSurf, current_time);
 
-            //     writer.add(fun_uhB, "bulk", 0, 1);
-            //     writer_surf.add(fun_uhS, "surf", 0, 1);
-            //     writer_surf.add(ls[0], "levelSet0", 0, 1);
-            //     writer_surf.add(ls[1], "levelSet1", 0, 1);
-            //     writer_surf.add(ls[2], "levelSet2", 0, 1);
+                writer.add(uBex, "bulk_exact", 0, 1);
+                writer.add(fB, "bulk_rhs", 0, 1);
 
-            //     fct_t uBex(Wh, fun_uBulk, current_time);
-            //     fct_t fB(Wh, fun_rhsBulk, current_time);
-                
-            //     fct_t uSex(WhGamma, fun_uSurf, current_time);
-            //     fct_t fS(WhGamma, fun_rhsSurf, current_time);
+                writer_surf.add(uSex, "surf_exact", 0, 1);
+                writer_surf.add(fS, "surf_rhs", 0, 1);
 
-            //     writer.add(uBex, "bulk_exact", 0, 1);
-            //     writer.add(fB, "bulk_rhs", 0, 1);
-
-            //     writer_surf.add(uSex, "surf_exact", 0, 1);
-            //     writer_surf.add(fS, "surf_rhs", 0, 1);
-
-            //     //writer.add(fabs(b0h.expr() - uBex.expr()), "bulk_error");
-            //     writer.add(fabs(fun_uhB.expr() - uBex.expr()), "bulk_error");
-            //     writer_surf.add(fabs(fun_uhS.expr() - uSex.expr()), "surf_error");
+                //writer.add(fabs(b0h.expr() - uBex.expr()), "bulk_error");
+                writer.add(fabs(fun_uhB.expr() - uBex.expr()), "bulk_error");
+                writer_surf.add(fabs(fun_uhS.expr() - uSex.expr()), "surf_error");
                 
                 
-            //     writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
-            //     writer.writeFaceStab(Thi, 0, path_output_figures + "Edges" + std::to_string(iter + 1) + ".vtk");
+                writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh" + std::to_string(iter + 1) + ".vtk");
+                writer.writeFaceStab(Thi, 0, path_output_figures + "Edges" + std::to_string(iter + 1) + ".vtk");
 
-            //     writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 0, 2,
-            //                                  path_output_figures + "AlgoimQuadrature_0_" + std::to_string(iter + 1) +
-            //                                      ".vtk");
-            //     writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 1, 2,
-            //                                  path_output_figures + "AlgoimQuadrature_1_" + std::to_string(iter + 1) +
-            //                                      ".vtk");
-            //     writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 2, 2,
-            //                                  path_output_figures + "AlgoimQuadrature_2_" + std::to_string(iter + 1) +
-            //                                      ".vtk");
-            // }
+                // writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 0, 2,
+                //                              path_output_figures + "AlgoimQuadrature_0_" + std::to_string(iter + 1) +
+                //                                  ".vtk");
+                // writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 1, 2,
+                //                              path_output_figures + "AlgoimQuadrature_1_" + std::to_string(iter + 1) +
+                //                                  ".vtk");
+                // writer.writeAlgoimQuadrature(Thi, phi, In, qTime, 2, 2,
+                //                              path_output_figures + "AlgoimQuadrature_2_" + std::to_string(iter + 1) +
+                //                                  ".vtk");
+            }
 
             iter++;
         }

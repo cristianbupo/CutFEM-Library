@@ -1,0 +1,1 @@
+/usr/bin/mpicxx -fPIC     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/parallel.dir/link.d -shared -Wl,-soname,libparallel.so -o ../../lib/libparallel.so CMakeFiles/parallel.dir/cfmpi.cpp.o

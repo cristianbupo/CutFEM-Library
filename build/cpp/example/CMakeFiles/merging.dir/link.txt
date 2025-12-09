@@ -1,0 +1,1 @@
+/usr/bin/mpicxx     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/merging.dir/link.d CMakeFiles/merging.dir/convection_diffusion/merging.cpp.o -o ../../bin/merging  -Wl,-rpath,/mnt/nvme0n1p4/git/CutFEM-Library/build/lib ../../lib/libproblem.so ../../lib/libFESpace.so ../../lib/libsolver.so ../../lib/libcommon.so ../../lib/libparallel.so

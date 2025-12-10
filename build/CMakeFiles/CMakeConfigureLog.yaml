@@ -909,3 +909,76 @@ events:
         
       exitCode: 0
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/FindMPI.cmake:1283 (try_compile)"
+      - "/usr/share/cmake-3.31/Modules/FindMPI.cmake:1327 (_MPI_try_staged_settings)"
+      - "/usr/share/cmake-3.31/Modules/FindMPI.cmake:1650 (_MPI_check_lang_works)"
+      - "cpp/CMakeLists.txt:17 (find_package)"
+    description: "The MPI test test_mpi for CXX in mode normal"
+    directories:
+      source: "/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD"
+      binary: "/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "    -std=c++2a -fPIC -O3"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/mnt/nvme0n1p4/git/CutFEM-Library/cmake/"
+    buildResult:
+      variable: "MPI_RESULT_CXX_test_mpi_normal"
+      cached: true
+      stdout: |
+        Change Dir: '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_851ed/fast
+        gmake[1]: Entering directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_851ed.dir/build.make CMakeFiles/cmTC_851ed.dir/build
+        gmake[2]: Entering directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD'
+        Building CXX object CMakeFiles/cmTC_851ed.dir/test_mpi.cpp.o
+        /usr/bin/c++  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -std=c++2a -fPIC -O3  -std=gnu++20 -o CMakeFiles/cmTC_851ed.dir/test_mpi.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD/test_mpi.cpp
+        Linking CXX executable cmTC_851ed
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_851ed.dir/link.txt --verbose=1
+        /usr/bin/c++     -std=c++2a -fPIC -O3  CMakeFiles/cmTC_851ed.dir/test_mpi.cpp.o -o cmTC_851ed  -Wl,-rpath,/usr/lib/x86_64-linux-gnu/openmpi/lib /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
+        gmake[2]: Leaving directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD'
+        gmake[1]: Leaving directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-AV5mfD'
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.31/Modules/FindMPI.cmake:1283 (try_compile)"
+      - "/usr/share/cmake-3.31/Modules/FindMPI.cmake:1677 (_MPI_try_staged_settings)"
+      - "cpp/CMakeLists.txt:17 (find_package)"
+    description: "The MPI test test_mpi for CXX in mode MPICXX"
+    directories:
+      source: "/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU"
+      binary: "/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "    -std=c++2a -fPIC -O3"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: "/mnt/nvme0n1p4/git/CutFEM-Library/cmake/"
+    buildResult:
+      variable: "MPI_RESULT_CXX_test_mpi_MPICXX"
+      cached: true
+      stdout: |
+        Change Dir: '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_2e999/fast
+        gmake[1]: Entering directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_2e999.dir/build.make CMakeFiles/cmTC_2e999.dir/build
+        gmake[2]: Entering directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU'
+        Building CXX object CMakeFiles/cmTC_2e999.dir/test_mpi.cpp.o
+        /usr/bin/c++  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -std=c++2a -fPIC -O3  -std=gnu++20 -o CMakeFiles/cmTC_2e999.dir/test_mpi.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU/test_mpi.cpp
+        Linking CXX executable cmTC_2e999
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2e999.dir/link.txt --verbose=1
+        /usr/bin/c++     -std=c++2a -fPIC -O3  CMakeFiles/cmTC_2e999.dir/test_mpi.cpp.o -o cmTC_2e999  -Wl,-rpath,/usr/lib/x86_64-linux-gnu/openmpi/lib /usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so
+        gmake[2]: Leaving directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU'
+        gmake[1]: Leaving directory '/mnt/nvme0n1p4/git/CutFEM-Library/build/CMakeFiles/CMakeScratch/TryCompile-Q7aRYU'
+        
+      exitCode: 0
+...

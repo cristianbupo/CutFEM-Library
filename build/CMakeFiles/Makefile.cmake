@@ -89,4 +89,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "cpp/example/CMakeFiles/bulk.dir/DependInfo.cmake"
   "cpp/example/CMakeFiles/coupled.dir/DependInfo.cmake"
   "cpp/example/CMakeFiles/merging.dir/DependInfo.cmake"
+  "cpp/example/CMakeFiles/merging_quad.dir/DependInfo.cmake"
   )

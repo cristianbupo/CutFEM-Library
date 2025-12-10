@@ -298,6 +298,20 @@ merging/fast:
 	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging.dir/build.make cpp/example/CMakeFiles/merging.dir/build
 .PHONY : merging/fast
 
+# Convenience name for target.
+cpp/example/CMakeFiles/merging_quad.dir/rule:
+	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cpp/example/CMakeFiles/merging_quad.dir/rule
+.PHONY : cpp/example/CMakeFiles/merging_quad.dir/rule
+
+# Convenience name for target.
+merging_quad: cpp/example/CMakeFiles/merging_quad.dir/rule
+.PHONY : merging_quad
+
+# fast build rule for target.
+merging_quad/fast:
+	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging_quad.dir/build.make cpp/example/CMakeFiles/merging_quad.dir/build
+.PHONY : merging_quad/fast
+
 convection_diffusion/bulk.o: convection_diffusion/bulk.cpp.o
 .PHONY : convection_diffusion/bulk.o
 
@@ -369,6 +383,30 @@ convection_diffusion/merging.s: convection_diffusion/merging.cpp.s
 convection_diffusion/merging.cpp.s:
 	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging.dir/build.make cpp/example/CMakeFiles/merging.dir/convection_diffusion/merging.cpp.s
 .PHONY : convection_diffusion/merging.cpp.s
+
+convection_diffusion/merging_quad.o: convection_diffusion/merging_quad.cpp.o
+.PHONY : convection_diffusion/merging_quad.o
+
+# target to build an object file
+convection_diffusion/merging_quad.cpp.o:
+	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging_quad.dir/build.make cpp/example/CMakeFiles/merging_quad.dir/convection_diffusion/merging_quad.cpp.o
+.PHONY : convection_diffusion/merging_quad.cpp.o
+
+convection_diffusion/merging_quad.i: convection_diffusion/merging_quad.cpp.i
+.PHONY : convection_diffusion/merging_quad.i
+
+# target to preprocess a source file
+convection_diffusion/merging_quad.cpp.i:
+	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging_quad.dir/build.make cpp/example/CMakeFiles/merging_quad.dir/convection_diffusion/merging_quad.cpp.i
+.PHONY : convection_diffusion/merging_quad.cpp.i
+
+convection_diffusion/merging_quad.s: convection_diffusion/merging_quad.cpp.s
+.PHONY : convection_diffusion/merging_quad.s
+
+# target to generate assembly for a file
+convection_diffusion/merging_quad.cpp.s:
+	cd /mnt/nvme0n1p4/git/CutFEM-Library/build && $(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging_quad.dir/build.make cpp/example/CMakeFiles/merging_quad.dir/convection_diffusion/merging_quad.cpp.s
+.PHONY : convection_diffusion/merging_quad.cpp.s
 
 darcy_fictitious/DF_example1.o: darcy_fictitious/DF_example1.cpp.o
 .PHONY : darcy_fictitious/DF_example1.o
@@ -630,6 +668,7 @@ help:
 	@echo "... limiter_non_smooth_initial_data"
 	@echo "... limiter_smooth_solution"
 	@echo "... merging"
+	@echo "... merging_quad"
 	@echo "... meshing"
 	@echo "... convection_diffusion/bulk.o"
 	@echo "... convection_diffusion/bulk.i"
@@ -640,6 +679,9 @@ help:
 	@echo "... convection_diffusion/merging.o"
 	@echo "... convection_diffusion/merging.i"
 	@echo "... convection_diffusion/merging.s"
+	@echo "... convection_diffusion/merging_quad.o"
+	@echo "... convection_diffusion/merging_quad.i"
+	@echo "... convection_diffusion/merging_quad.s"
 	@echo "... darcy_fictitious/DF_example1.o"
 	@echo "... darcy_fictitious/DF_example1.i"
 	@echo "... darcy_fictitious/DF_example1.s"

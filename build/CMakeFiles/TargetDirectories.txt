@@ -30,5 +30,6 @@
 /mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example/CMakeFiles/bulk.dir
 /mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example/CMakeFiles/coupled.dir
 /mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example/CMakeFiles/merging.dir
+/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example/CMakeFiles/merging_quad.dir
 /mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example/CMakeFiles/edit_cache.dir
 /mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example/CMakeFiles/rebuild_cache.dir

@@ -350,6 +350,19 @@ merging/fast:
 	$(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging.dir/build.make cpp/example/CMakeFiles/merging.dir/build
 .PHONY : merging/fast
 
+#=============================================================================
+# Target rules for targets named merging_quad
+
+# Build rule for target.
+merging_quad: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 merging_quad
+.PHONY : merging_quad
+
+# fast build rule for target.
+merging_quad/fast:
+	$(MAKE) $(MAKESILENT) -f cpp/example/CMakeFiles/merging_quad.dir/build.make cpp/example/CMakeFiles/merging_quad.dir/build
+.PHONY : merging_quad/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -372,6 +385,7 @@ help:
 	@echo "... limiter_non_smooth_initial_data"
 	@echo "... limiter_smooth_solution"
 	@echo "... merging"
+	@echo "... merging_quad"
 	@echo "... meshing"
 	@echo "... parallel"
 	@echo "... problem"

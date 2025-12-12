@@ -1,0 +1,368 @@
+[
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/parallel",
+  "command": "/usr/bin/mpicxx -Dparallel_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/parallel     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/parallel.dir/cfmpi.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/parallel/cfmpi.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/parallel/cfmpi.cpp",
+  "output": "cpp/parallel/CMakeFiles/parallel.dir/cfmpi.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/global.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/global.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/global.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/global.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/logger.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/logger.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/logger.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/logger.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/dataStruct1D.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/dataStruct1D.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/dataStruct1D.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/dataStruct1D.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/dataStruct2D.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/dataStruct2D.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/dataStruct2D.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/dataStruct2D.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/dataStruct3D.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/dataStruct3D.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/dataStruct3D.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/dataStruct3D.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/GenericMesh.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/GenericMesh.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/GenericMesh.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/GenericMesh.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/Mesh1dn.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/Mesh1dn.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/Mesh1dn.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/Mesh1dn.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/Mesh2dn.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/Mesh2dn.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/Mesh2dn.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/Mesh2dn.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/Mesh3dn.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/Mesh3dn.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/Mesh3dn.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/Mesh3dn.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/base_interface.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/base_interface.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/base_interface.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/base_interface.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/interface_levelSet.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/interface_levelSet.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/interface_levelSet.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/interface_levelSet.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/AlgoimInterface.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/AlgoimInterface.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/AlgoimInterface.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/AlgoimInterface.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/cut_mesh.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/cut_mesh.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/cut_mesh.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/cut_mesh.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/cut_method.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/cut_method.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/cut_method.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/cut_method.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/SparseMatMap.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/SparseMatMap.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/SparseMatMap.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/SparseMatMap.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common",
+  "command": "/usr/bin/mpicxx -Dcommon_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/common -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/common.dir/geometry.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/geometry.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/common/geometry.cpp",
+  "output": "cpp/common/CMakeFiles/common.dir/geometry.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/QuadratureFormular.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/QuadratureFormular.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/QuadratureFormular.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/QuadratureFormular.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P0.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P0.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P0.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P0.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P1.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P1.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P1.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P1.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P1dc.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P1dc.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P1dc.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P1dc.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P2.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P2.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P2.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P2.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P2dc.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P2dc.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P2dc.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P2dc.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P3dc.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P3dc.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P3dc.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P3dc.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P3.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P3.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P3.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P3.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P4.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P4.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P4.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P4.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/RT0.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/RT0.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/RT0.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/RT0.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/RT2.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/RT2.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/RT2.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/RT2.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/BDM1.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/BDM1.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/BDM1.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/BDM1.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/BDM2.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/BDM2.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/BDM2.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/BDM2.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/Ned0.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/Ned0.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/Ned0.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/Ned0.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/P2BR.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P2BR.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/P2BR.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/P2BR.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/transformation.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/transformation.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/transformation.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/transformation.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/finiteElement.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/finiteElement.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/finiteElement.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/finiteElement.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/GTypeOfFE.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/GTypeOfFE.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/GTypeOfFE.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/GTypeOfFE.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/FESpace.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/FESpace.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/FESpace.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/FESpace.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/expression.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/expression.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/expression.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/expression.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/macroElement.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/macroElement.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/macroElement.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/macroElement.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/FESpace",
+  "command": "/usr/bin/mpicxx -DFESpace_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/FESpace.dir/paraview.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/paraview.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace/paraview.cpp",
+  "output": "cpp/FESpace/CMakeFiles/FESpace.dir/paraview.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/solver",
+  "command": "/usr/bin/mpicxx -Dsolver_EXPORTS -I/usr/include/suitesparse -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/solver -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/solver -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/solver.dir/solver.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/solver/solver.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/solver/solver.cpp",
+  "output": "cpp/solver/CMakeFiles/solver.dir/solver.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/solver",
+  "command": "/usr/bin/mpicxx -Dsolver_EXPORTS -I/usr/include/suitesparse -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/solver -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/solver -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/solver.dir/solverMumpsMPI.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/solver/solverMumpsMPI.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/solver/solverMumpsMPI.cpp",
+  "output": "cpp/solver/CMakeFiles/solver.dir/solverMumpsMPI.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/problem",
+  "command": "/usr/bin/mpicxx -Dproblem_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/problem.dir/CutFEM_parameter.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/CutFEM_parameter.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/CutFEM_parameter.cpp",
+  "output": "cpp/problem/CMakeFiles/problem.dir/CutFEM_parameter.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/problem",
+  "command": "/usr/bin/mpicxx -Dproblem_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/problem.dir/testFunction.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/testFunction.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/testFunction.cpp",
+  "output": "cpp/problem/CMakeFiles/problem.dir/testFunction.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/problem",
+  "command": "/usr/bin/mpicxx -Dproblem_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/problem.dir/itemVF.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/itemVF.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/itemVF.cpp",
+  "output": "cpp/problem/CMakeFiles/problem.dir/itemVF.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/problem",
+  "command": "/usr/bin/mpicxx -Dproblem_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/problem.dir/problem.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/problem.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/problem.cpp",
+  "output": "cpp/problem/CMakeFiles/problem.dir/problem.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/problem",
+  "command": "/usr/bin/mpicxx -Dproblem_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/problem.dir/baseProblem.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/baseProblem.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/baseProblem.cpp",
+  "output": "cpp/problem/CMakeFiles/problem.dir/baseProblem.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/problem",
+  "command": "/usr/bin/mpicxx -Dproblem_EXPORTS -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -fPIC -o CMakeFiles/problem.dir/levelSet.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/levelSet.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem/levelSet.cpp",
+  "output": "cpp/problem/CMakeFiles/problem.dir/levelSet.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/meshing.dir/meshing.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/meshing.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/meshing.cpp",
+  "output": "cpp/example/CMakeFiles/meshing.dir/meshing.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/DG_CutFEM_ex_1.dir/hyberbolic_conservation_law/DG_CutFEM_ex_1.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/DG_CutFEM_ex_1.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/DG_CutFEM_ex_1.cpp",
+  "output": "cpp/example/CMakeFiles/DG_CutFEM_ex_1.dir/hyberbolic_conservation_law/DG_CutFEM_ex_1.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/DG_CutFEM_ex_2.dir/hyberbolic_conservation_law/DG_CutFEM_ex_2.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/DG_CutFEM_ex_2.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/DG_CutFEM_ex_2.cpp",
+  "output": "cpp/example/CMakeFiles/DG_CutFEM_ex_2.dir/hyberbolic_conservation_law/DG_CutFEM_ex_2.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/limiter_smooth_solution.dir/hyberbolic_conservation_law/limiter_smooth_solution.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/limiter_smooth_solution.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/limiter_smooth_solution.cpp",
+  "output": "cpp/example/CMakeFiles/limiter_smooth_solution.dir/hyberbolic_conservation_law/limiter_smooth_solution.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/limiter_accuracy_conservation_test.dir/hyberbolic_conservation_law/limiter_accuracy_conservation_test.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/limiter_accuracy_conservation_test.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/limiter_accuracy_conservation_test.cpp",
+  "output": "cpp/example/CMakeFiles/limiter_accuracy_conservation_test.dir/hyberbolic_conservation_law/limiter_accuracy_conservation_test.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/limiter_non_smooth_initial_data.dir/hyberbolic_conservation_law/limiter_non_smooth_initial_data.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/limiter_non_smooth_initial_data.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/hyberbolic_conservation_law/limiter_non_smooth_initial_data.cpp",
+  "output": "cpp/example/CMakeFiles/limiter_non_smooth_initial_data.dir/hyberbolic_conservation_law/limiter_non_smooth_initial_data.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/DF_example1.dir/darcy_fictitious/DF_example1.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_fictitious/DF_example1.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_fictitious/DF_example1.cpp",
+  "output": "cpp/example/CMakeFiles/DF_example1.dir/darcy_fictitious/DF_example1.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/DI_example1.dir/darcy_interface/DI_example1.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_interface/DI_example1.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_interface/DI_example1.cpp",
+  "output": "cpp/example/CMakeFiles/DI_example1.dir/darcy_interface/DI_example1.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/DI_example1_3D.dir/darcy_interface/DI_example1_3D.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_interface/DI_example1_3D.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_interface/DI_example1_3D.cpp",
+  "output": "cpp/example/CMakeFiles/DI_example1_3D.dir/darcy_interface/DI_example1_3D.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/DI_example2.dir/darcy_interface/DI_example2.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_interface/DI_example2.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/darcy_interface/DI_example2.cpp",
+  "output": "cpp/example/CMakeFiles/DI_example2.dir/darcy_interface/DI_example2.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/bulk.dir/convection_diffusion/bulk.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/bulk.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/bulk.cpp",
+  "output": "cpp/example/CMakeFiles/bulk.dir/convection_diffusion/bulk.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/coupled.dir/convection_diffusion/coupled.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/coupled.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/coupled.cpp",
+  "output": "cpp/example/CMakeFiles/coupled.dir/convection_diffusion/coupled.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/merging.dir/convection_diffusion/merging.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/merging.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/merging.cpp",
+  "output": "cpp/example/CMakeFiles/merging.dir/convection_diffusion/merging.cpp.o"
+},
+{
+  "directory": "/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example",
+  "command": "/usr/bin/mpicxx  -I/mnt/nvme0n1p4/git/CutFEM-Library/build/cpp/example -I/mnt/nvme0n1p4/git/CutFEM-Library -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/FESpace -I/mnt/nvme0n1p4/git/CutFEM-Library/build -I/mnt/nvme0n1p4/git/CutFEM-Library/cpp/problem     -std=c++2a -fPIC -O3 -O3 -DNDEBUG -std=gnu++20 -o CMakeFiles/merging_quad.dir/convection_diffusion/merging_quad.cpp.o -c /mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/merging_quad.cpp",
+  "file": "/mnt/nvme0n1p4/git/CutFEM-Library/cpp/example/convection_diffusion/merging_quad.cpp",
+  "output": "cpp/example/CMakeFiles/merging_quad.dir/convection_diffusion/merging_quad.cpp.o"
+}
+]

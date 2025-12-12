@@ -39,6 +39,7 @@ CutFEM-Library. If not, see <https://www.gnu.org/licenses/>
 #include "../cutfem.hpp"
 #include "../problem/AlgoimIntegration.hpp"
 #include "../num/matlab.hpp"
+#include <filesystem>
 #include <string>
 using namespace globalVariable; // to access some globally defined constants
 
@@ -351,6 +352,9 @@ std::vector<const GTypeOfFE<Mesh1> *> FE_time   = {&DataFE<Mesh1>::P0Poly, &Data
 #define K 2          // polynomial order in time (0/1/2/3)
 #define M 2          // polynomial order in space (1/2/3)
 
+// Directory for VTK exports
+std::string path_output_figures = "/mnt/nvme0n1p4/output_figures/bulk/";
+
 
 int main(int argc, char **argv) {
 
@@ -383,7 +387,11 @@ int main(int argc, char **argv) {
 #error "No stabilization defined"
 #endif
 
-    //MPIcf cfMPI(argc, argv);
+    std::filesystem::create_directories(path_output_figures);
+
+#ifdef USE_MPI
+    MPIcf cfMPI(argc, argv); // initialize MPI before using MPI-dependent solvers
+#endif
 
     const int k = K;
     const int m = M;
@@ -514,6 +522,11 @@ int main(int argc, char **argv) {
 
         // Iterate over time-slabs
         while (iter < total_number_iteration) {
+
+            // Export the background mesh once per mesh size
+            if (iter == 0) {
+                Paraview<mesh_t> writerTh(Th, path_output_figures + "Th_h" + std::to_string(j + 1) + ".vtk");
+            }
 
             int current_iteration = iter;
             double current_time   = iter * dT;
@@ -682,6 +695,13 @@ int main(int argc, char **argv) {
 
             std::cout << " t_n -> || u-uex||_L2 = " << L2_error << '\n';
             std::cout << " t_n -> || u-uex||_H1 = " << H1_error << '\n';
+
+            // Export solution/mesh for visualization
+            Paraview<mesh_t> writer(Thi, path_output_figures + "bulk_h" + std::to_string(j + 1) + "_t" +
+                                               std::to_string(iter + 1) + ".vtk");
+            writer.add(funuh, "bulk", 0, 1);
+            writer.writeActiveMesh(Thi, path_output_figures + "ActiveMesh_h" + std::to_string(j + 1) + "_t" +
+                                                  std::to_string(iter + 1) + ".vtk");
 
             // Compute conservation error
             intF = integral_algoim(fun_rhsBulk, 0, Thi, phi, In, qTime,

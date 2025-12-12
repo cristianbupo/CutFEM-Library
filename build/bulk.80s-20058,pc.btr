@@ -1,0 +1,14 @@
+
+bulk:20058 terminated with signal 6 at PC=70a543aa49bc SP=7ffe878d4b40.  Backtrace:
+/lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x11c) [0x70a543aa49bc]
+/lib/x86_64-linux-gnu/libc.so.6(gsignal+0x1e) [0x70a543a4579e]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0x2c) [0x70a543a288cd]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xab05f) [0x70a543eab05f]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xc10aa) [0x70a543ec10aa]
+/lib/x86_64-linux-gnu/libstdc++.so.6(_ZSt10unexpectedv+0x0) [0x70a543eaaa9e]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xc1361) [0x70a543ec1361]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xb5b48) [0x70a543eb5b48]
+./bin/bulk(+0x13dee) [0x60f3dcc90dee]
+/lib/x86_64-linux-gnu/libc.so.6(+0x2a578) [0x70a543a2a578]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x70a543a2a63b]
+./bin/bulk(+0x1b785) [0x60f3dcc98785]
